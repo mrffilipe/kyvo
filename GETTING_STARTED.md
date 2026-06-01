@@ -341,7 +341,7 @@ With `Jwt__Issuer=https://auth.example.com` and TLS on that host, users and the 
 |----------------------|-----|-----------|
 | Admin console (SPA) | `https://auth.example.com/` | `kyvo-frontend` (nginx :80) |
 | OAuth callback | `https://auth.example.com/auth/callback` | `kyvo-frontend` |
-| API (JSON, OIDC, login pages) | `https://auth.example.com/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...` | `kyvo-api` (:8080) |
+| API (JSON, OIDC, login pages) | `https://auth.example.com/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...`, `/js/...` | `kyvo-api` (:8080) |
 
 Set **`Jwt__Issuer`** to exactly the URL browsers use (scheme + host, no trailing slash). The frontend image is built with empty `VITE_*` URLs so the SPA uses `window.location.origin` at runtime.
 
@@ -352,7 +352,7 @@ Set **`Jwt__Issuer`** to exactly the URL browsers use (scheme + host, no trailin
 - `/account/`
 - `/.well-known/`
 - `/swagger`
-- `/css/` (Blazor account static assets)
+- `/css/`, `/js/`, and `/brand/` (Blazor account static assets — e.g. `account-theme.js`, `firebase-google-signin.js`, logos)
 
 ### Suggested deploy directory
 
@@ -564,6 +564,7 @@ docker compose --env-file .env restart api
 | OAuth redirect mismatch | Align `Jwt__Issuer` with the browser URL; verify OAuth client redirect URI (`https://<host>/auth/callback`) |
 | SPA calls wrong API URL | Same-origin: set `Jwt__Issuer` to the browser URL; split hosts: rebuild frontend with `VITE_*` build-args |
 | 404 on `/connect` or `/account` | Proxy must route API path prefixes to `kyvo-api`, not `kyvo-frontend` |
+| 404 on `firebase-google-signin.js` or `account-theme.js` | `/js/` not routed to API (only `/css/` configured) | Add `PathPrefix(\`/js\`)` to the API Traefik rule |
 
 ---
 
