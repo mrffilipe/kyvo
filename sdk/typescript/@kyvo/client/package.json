@@ -1,0 +1,35 @@
+{
+  "name": "@kyvo-client/client",
+  "version": "1.0.0",
+  "description": "Kyvo product SDK — OIDC, session, claims, REST v1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrffilipe/idpplatformproject.git",
+    "directory": "sdk/typescript/@kyvo/client"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "~5.8.3"
+  }
+}

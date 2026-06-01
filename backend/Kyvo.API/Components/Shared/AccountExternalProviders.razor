@@ -1,0 +1,69 @@
+@using Kyvo.Application.Services.IdentityProvider
+@using Kyvo.Domain.Enums
+
+@if (ShowDivider && Providers.Count > 0)
+{
+    <div class="account-divider"><span>ou continue com</span></div>
+}
+
+@if (Providers.Count > 0)
+{
+    <form id="external-login-form" method="post" action="/account/external-signin" class="account-hidden-form">
+        <input type="hidden" name="__RequestVerificationToken" value="@AntiforgeryToken" />
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <input type="hidden" name="providerAlias" id="external-provider-alias" />
+        <input type="hidden" name="idToken" id="external-id-token" />
+    </form>
+
+    <div class="account-social">
+        @foreach (var provider in Providers)
+        {
+            if (provider.ProviderType == IdentityProviderType.Firebase && provider.ClientConfig is not null)
+            {
+                <button type="button"
+                        class="account-btn account-btn-social account-btn-google firebase-login-btn"
+                        data-alias="@provider.Alias"
+                        data-api-key="@provider.ClientConfig["webApiKey"]"
+                        data-project-id="@provider.ClientConfig["projectId"]"
+                        data-auth-domain="@provider.ClientConfig["authDomain"]">
+                    <span class="account-social-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21.35 11.1H12v2.84h5.36c-.23 1.5-1.7 4.41-5.36 4.41-3.23 0-5.87-2.68-5.87-5.98 0-3.3 2.64-5.98 5.87-5.98 1.84 0 3.07.78 3.78 1.46l2.58-2.49C16.93 3.94 14.7 3 12 3 6.99 3 2.95 7.04 2.95 12c0 4.96 4.04 9 9.05 9 5.23 0 8.7-3.68 8.7-8.86 0-.59-.07-1.05-.16-1.49z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    Continuar com Google
+                </button>
+            }
+            else
+            {
+                <div class="account-hint">
+                    @provider.DisplayName: login ainda não disponível para este provedor.
+                </div>
+            }
+        }
+    </div>
+}
+
+@if (_hasFirebase)
+{
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-google-signin.js"></script>
+}
+
+@code {
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
+    [Parameter]
+    public string AntiforgeryToken { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowDivider { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<AccountFederatedProviderState> Providers { get; set; } = Array.Empty<AccountFederatedProviderState>();
+
+    private bool _hasFirebase =>
+        Providers.Any(p => p.ProviderType == IdentityProviderType.Firebase && p.ClientConfig is not null);
+}

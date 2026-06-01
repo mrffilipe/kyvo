@@ -1,0 +1,16 @@
+@inherits LayoutComponentBase
+
+<AccountBrandingProvider>
+    <AccountThemeToggle />
+
+    <div class="account-shell">
+        <aside class="account-hero" aria-hidden="true">
+            <AccountHeroContent />
+        </aside>
+        <main class="account-panel">
+            <div class="account-card">
+                @Body
+            </div>
+        </main>
+    </div>
+</AccountBrandingProvider>

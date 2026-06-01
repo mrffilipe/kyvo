@@ -1,0 +1,16 @@
+{
+  "name": "@kyvo/sdk-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "@kyvo/client"
+  ],
+  "scripts": {
+    "build": "npm run build -w @kyvo-client/client",
+    "test": "npm run test -w @kyvo-client/client",
+    "generate:types": "openapi-typescript ../swagger-v1.json -o @kyvo/client/src/generated/schema.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}

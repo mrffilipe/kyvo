@@ -1,0 +1,59 @@
+# Maintainer workflow: build and push the Kyvo monolith image to Docker Hub.
+#
+# Image: mrffilipe/kyvo (API + admin SPA + nginx TLS proxy)
+# SPA uses same origin as nginx (empty VITE_API_BASE_URL at build); operators set Jwt__Issuer in .env.
+#
+# Triggers:
+#   - Push of a version tag matching v* (e.g. v1.0.0)
+#   - Manual run (workflow_dispatch)
+#
+# Required repository secret:
+#   DOCKERHUB_TOKEN — access token for user mrffilipe (push permission)
+
+name: Docker publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  # Builds and pushes the all-in-one kyvo image (see docker/Dockerfile).
+  build-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: mrffilipe
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Semver tags from git tag v1.2.3 → 1.2.3, 1.2, 1, latest
+      - name: Generate image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: mrffilipe/kyvo
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      - name: Build and push monolith image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

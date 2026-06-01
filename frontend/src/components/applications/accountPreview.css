@@ -1,0 +1,140 @@
+.account-preview-root {
+  --preview-background: #f7f7fb;
+  --preview-background-elevated: #ffffff;
+  --preview-foreground: #0b0d12;
+  --preview-foreground-muted: #4b5060;
+  --preview-border: rgba(11, 13, 18, 0.08);
+  --preview-primary: #4f46e5;
+  --preview-primary-hover: #4338ca;
+  --preview-primary-foreground: #ffffff;
+  --preview-hero-from: #4f46e5;
+  --preview-hero-to: #7c3aed;
+  --preview-radius-md: 12px;
+  --preview-radius-lg: 18px;
+  --preview-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.account-preview-root[data-theme='dark'] {
+  --preview-background: #0a0a0f;
+  --preview-background-elevated: #14141d;
+  --preview-foreground: #f4f4f8;
+  --preview-foreground-muted: #c5c8d3;
+  --preview-border: rgba(255, 255, 255, 0.08);
+  --preview-primary-foreground: #1b1b27;
+}
+
+.account-preview-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: var(--preview-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--preview-border);
+  font-family: var(--preview-font-sans);
+  font-size: 13px;
+  min-height: 280px;
+  background: var(--preview-background);
+  color: var(--preview-foreground);
+}
+
+@media (min-width: 640px) {
+  .account-preview-shell {
+    grid-template-columns: 1fr 1fr;
+    min-height: 320px;
+  }
+}
+
+.account-preview-hero {
+  display: none;
+  padding: 1.5rem;
+  background: linear-gradient(145deg, var(--preview-hero-from), var(--preview-hero-to));
+  color: #fff;
+}
+
+@media (min-width: 640px) {
+  .account-preview-hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.account-preview-hero-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: var(--preview-radius-md);
+  background: #fff;
+  padding: 6px;
+  margin-bottom: 1rem;
+}
+
+.account-preview-hero-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.account-preview-hero-subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.account-preview-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--preview-background);
+}
+
+.account-preview-card {
+  width: 100%;
+  max-width: 220px;
+  background: var(--preview-background-elevated);
+  border: 1px solid var(--preview-border);
+  border-radius: var(--preview-radius-lg);
+  padding: 1rem;
+  box-shadow: 0 12px 30px -18px rgba(15, 18, 30, 0.2);
+}
+
+.account-preview-card-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--preview-radius-md);
+  background: #fff;
+  border: 1px solid var(--preview-border);
+  padding: 4px;
+  margin: 0 auto 0.75rem;
+  display: block;
+}
+
+.account-preview-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.account-preview-card p {
+  margin: 0 0 0.75rem;
+  font-size: 0.7rem;
+  color: var(--preview-foreground-muted);
+  text-align: center;
+}
+
+.account-preview-btn {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: var(--preview-radius-md);
+  background: var(--preview-primary);
+  color: var(--preview-primary-foreground);
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: default;
+}
