@@ -20,6 +20,12 @@ namespace Kyvo.Infrastructure.Migrations
                     slug = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     type = table.Column<int>(type: "integer", nullable: false),
                     is_system = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    branding_enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    branding_primary_color = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: true),
+                    branding_secondary_color = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: true),
+                    branding_logo_path = table.Column<string>(type: "character varying(260)", maxLength: 260, nullable: true),
+                    branding_hero_title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    branding_hero_subtitle = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
