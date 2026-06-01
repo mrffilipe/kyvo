@@ -560,6 +560,7 @@ docker compose --env-file .env restart api
 |-------|----------|
 | Cannot connect to database | Verify PostgreSQL and `Database__ConnectionString` |
 | API container exits or unhealthy | `docker logs kyvo-api` — often missing or invalid `Jwt__SigningKeyPemBase64` |
+| API restart: "Configure only one of Jwt:SigningKeyPath…" | `Jwt__SigningKeyPemBase64` is set but `SigningKeyPath` still comes from defaults | Set only `Jwt__SigningKeyPemBase64`; clear path with `Jwt__SigningKeyPath=` (empty). Images after 1.0.1 ship with empty path in `appsettings.json`. |
 | OAuth redirect mismatch | Align `Jwt__Issuer` with the browser URL; verify OAuth client redirect URI (`https://<host>/auth/callback`) |
 | SPA calls wrong API URL | Same-origin: set `Jwt__Issuer` to the browser URL; split hosts: rebuild frontend with `VITE_*` build-args |
 | 404 on `/connect` or `/account` | Proxy must route API path prefixes to `kyvo-api`, not `kyvo-frontend` |

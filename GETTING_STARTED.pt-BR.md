@@ -540,6 +540,7 @@ docker compose --env-file .env restart api
 |----------|---------|
 | Não conecta ao banco | Verificar PostgreSQL e `Database__ConnectionString` |
 | API cai ou unhealthy | `docker logs kyvo-api` — `Jwt__SigningKeyPemBase64` inválido ou ausente |
+| API reinicia: "Configure only one of Jwt:SigningKeyPath…" | `Jwt__SigningKeyPemBase64` + `SigningKeyPath` do appsettings ao mesmo tempo | Use só Base64; defina `Jwt__SigningKeyPath=` vazio no Coolify. Imagens ≥1.0.1 já vêm com path vazio no template. |
 | Redirect OAuth incorreto | `Jwt__Issuer` = URL do navegador; redirect `https://<host>/auth/callback` |
 | 404 em `/connect` ou `/account` | Proxy deve rotear prefixos da API para `kyvo-api`, não para o frontend |
 | SPA chama API errada | `Jwt__Issuer` incorreto ou roteamento do proxy | Igualar `Jwt__Issuer` à URL do navegador; verificar paths da API no proxy |
