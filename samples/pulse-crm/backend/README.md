@@ -55,13 +55,15 @@ Useful access-token claims:
 
 No `tid` after login: the user has not subscribed yet, or has not refreshed the token.
 
-## 4. Kyvo SDK packages
+## 4. Kyvo SDK packages (NuGet `1.0.1`)
 
 | Package | Role in this API |
 |---------|------------------|
 | `Kyvo.AspNetCore` | JWT validation, `IKyvoUserContext` |
 | `Kyvo.Client` | `IKyvoProductClient.Auth.SubscribeAsync` |
 | `Kyvo.AspNetCore.TenancyKit` | EF filter by `tid` claim |
+
+Referenced as `PackageReference` in `PulseCrm.Api.csproj` (not monorepo project references).
 
 Onboarding returns `Kyvo.Client.Models.OidcTokenResponse` and `TenantContextResult` when the platform issues fresh tokens (`OnboardingCompleteResponse`).
 

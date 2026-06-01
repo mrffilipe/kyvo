@@ -66,4 +66,13 @@ Abra http://localhost:5173
 5. **Dashboard** — plano contratado + claims do JWT decodificado.
 6. **Contatos** — CRUD local isolado por tenant (`tid` no token).
 
+## SDKs (pacotes publicados)
+
+| App | Pacotes | Instalação |
+|-----|---------|------------|
+| SPA | `@kyvo-client/client@^1.0.1` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
+| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `1.0.1` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
+
+Para desenvolver contra os fontes do SDK no monorepo, volte a `file:` / `ProjectReference` — ver [sdk/README.md](../../sdk/README.md).
+
 Documentação OIDC/JWT do backend: [backend/README.md](./backend/README.md).

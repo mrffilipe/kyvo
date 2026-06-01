@@ -55,7 +55,17 @@ Claims úteis no access token:
 
 Sem `tid` após login: o usuário ainda não fez subscribe ou não renovou o token.
 
-## 4. `auth/subscribe` e ApplicationTenant
+## 4. Pacotes SDK Kyvo (NuGet `1.0.1`)
+
+| Pacote | Papel nesta API |
+|--------|-----------------|
+| `Kyvo.AspNetCore` | Validação JWT, `IKyvoUserContext` |
+| `Kyvo.Client` | `IKyvoProductClient.Auth.SubscribeAsync` |
+| `Kyvo.AspNetCore.TenancyKit` | Filtro EF por claim `tid` |
+
+Referenciados como `PackageReference` em `PulseCrm.Api.csproj`.
+
+## 5. `auth/subscribe` e ApplicationTenant
 
 `POST /api/onboarding/complete` chama a plataforma:
 
@@ -79,7 +89,7 @@ A plataforma cria:
 
 O CRM persiste cópia local em SQLite (`Subscriptions`) para exibir plano no dashboard.
 
-## 5. Refresh após subscribe
+## 6. Refresh após subscribe
 
 O access token emitido **antes** do subscribe não contém `tid`. O SPA deve chamar:
 
@@ -90,7 +100,7 @@ grant_type=refresh_token&refresh_token=...&client_id=pulse-crm-web
 
 Requer scope `offline_access` no client.
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 | Erro | Causa | Solução |
 |------|-------|---------|

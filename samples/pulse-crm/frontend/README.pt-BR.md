@@ -16,7 +16,7 @@ SPA consumidora do sample Pulse CRM. Dispara o fluxo OIDC **authorization code +
 | React | 19 | UI |
 | React Router | 7 | Rotas (loaders + `RequireAuth`) |
 | Material UI | 9 | Design system |
-| `@kyvo-client/client` | workspace | OIDC (PKCE), sessão, claims JWT |
+| `@kyvo-client/client` | npm `^1.0.1` | OIDC (PKCE), sessão, claims JWT |
 | Axios | 1.x | HTTP client da API CRM |
 | TypeScript | 6 | Tipagem estática |
 | Vite | 8 | Dev server e build |
@@ -59,13 +59,7 @@ npm run lint
 npm run preview
 ```
 
-O app depende de `@kyvo-client/client` via `file:../../../sdk/typescript/@kyvo-client/client`. Ao alterar o SDK, faça o build antes:
-
-```bash
-cd ../../../sdk/typescript && npm install && npm run build
-```
-
-No `npm run dev`, o Vite resolve `@kyvo-client/client` para os fontes do SDK (`vite.config.ts`), sem rebuild a cada mudança.
+O app consome `@kyvo-client/client` do npm (`npm install` resolve `^1.0.1`).
 
 ---
 

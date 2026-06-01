@@ -34,4 +34,4 @@ npm run generate:types   # requires ../swagger-v1.json (see parent README)
 
 ## Local consumers
 
-Pulse CRM links `"@kyvo-client/client": "file:../../../sdk/typescript/@kyvo/client"` and may alias `src/` in Vite dev. Run `npm run build` here before building the sample SPA.
+[Pulse CRM](../../samples/pulse-crm/frontend/) consumes `@kyvo-client/client` from npm (`^1.0.1`). For monorepo SDK development, temporarily use `file:` in the sample or link with `npm pack`.

@@ -66,13 +66,13 @@ Open http://localhost:5173
 5. **Dashboard** — CRM profile + `kyvoClient.users.getMe()` + OIDC UserInfo (all via SDKs).
 6. **Contacts** — local CRUD isolated per tenant (`tid` from the token).
 
-## SDKs (local workspace references)
+## SDKs (published packages)
 
-| App | Package | Path |
-|-----|---------|------|
-| SPA | `@kyvo-client/client` | `sdk/typescript/@kyvo/client` |
-| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` | `sdk/dotnet/` |
+| App | Packages | Install |
+|-----|----------|---------|
+| SPA | `@kyvo-client/client@^1.0.1` | `npm install` in `frontend/` (from [npm](https://www.npmjs.com/package/@kyvo-client/client)) |
+| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `1.0.1` | `dotnet restore` in `backend/PulseCrm.Api` (from [NuGet](https://www.nuget.org/packages?q=Kyvo)) |
 
-Build the TypeScript SDK before `npm run build` on the frontend (`cd sdk/typescript && npm run build`).
+To develop against SDK sources in the monorepo instead, swap back to `file:` / `ProjectReference` — see [sdk/README.md](../../sdk/README.md).
 
 Backend OIDC/JWT documentation: [backend/README.md](./backend/README.md).

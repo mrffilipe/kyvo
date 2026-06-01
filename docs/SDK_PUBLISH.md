@@ -206,4 +206,4 @@ PAT needs `write:packages`. npm can target `https://npm.pkg.github.com` with a m
 - [sdk/README.md](../sdk/README.md) — SDK overview and API surface
 - [DOCKER_PUBLISH.md](./DOCKER_PUBLISH.md) — Kyvo platform Docker image
 - [GETTING_STARTED.md](../GETTING_STARTED.md) — local development and production deploy
-- [samples/pulse-crm/README.md](../samples/pulse-crm/README.md) — reference consumer (file references today)
+- [samples/pulse-crm/README.md](../samples/pulse-crm/README.md) — reference consumer (npm + NuGet `1.0.1`)

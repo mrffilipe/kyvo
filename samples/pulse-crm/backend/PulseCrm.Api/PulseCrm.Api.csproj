@@ -17,9 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\sdk\dotnet\Kyvo.AspNetCore\Kyvo.AspNetCore.csproj" />
-    <ProjectReference Include="..\..\..\..\sdk\dotnet\Kyvo.Client\Kyvo.Client.csproj" />
-    <ProjectReference Include="..\..\..\..\sdk\dotnet\Kyvo.AspNetCore.TenancyKit\Kyvo.AspNetCore.TenancyKit.csproj" />
+    <PackageReference Include="Kyvo.AspNetCore" Version="1.0.1" />
+    <PackageReference Include="Kyvo.AspNetCore.TenancyKit" Version="1.0.1" />
+    <PackageReference Include="Kyvo.Client" Version="1.0.1" />
   </ItemGroup>
 
 </Project>
