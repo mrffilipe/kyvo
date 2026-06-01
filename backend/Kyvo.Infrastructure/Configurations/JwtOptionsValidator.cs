@@ -23,13 +23,15 @@ public sealed class JwtOptionsValidator : IValidateOptions<JwtOptions>
 
         var hasPath = !string.IsNullOrWhiteSpace(options.SigningKeyPath);
         var hasPem = !string.IsNullOrWhiteSpace(options.SigningKeyPem);
-        if (!hasPath && !hasPem)
+        var hasPemBase64 = !string.IsNullOrWhiteSpace(options.SigningKeyPemBase64);
+        var sourceCount = (hasPath ? 1 : 0) + (hasPem ? 1 : 0) + (hasPemBase64 ? 1 : 0);
+        if (sourceCount == 0)
         {
-            errors.Add("Jwt:SigningKeyPath or Jwt:SigningKeyPem is required.");
+            errors.Add("Jwt:SigningKeyPath, Jwt:SigningKeyPem, or Jwt:SigningKeyPemBase64 is required.");
         }
-        else if (hasPath && hasPem)
+        else if (sourceCount > 1)
         {
-            errors.Add("Configure only one of Jwt:SigningKeyPath or Jwt:SigningKeyPem.");
+            errors.Add("Configure only one of Jwt:SigningKeyPath, Jwt:SigningKeyPem, or Jwt:SigningKeyPemBase64.");
         }
 
         if (string.IsNullOrWhiteSpace(options.KeyId))

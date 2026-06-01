@@ -102,7 +102,7 @@ The workflow publishes **one** npm version and **three** NuGet packages at that 
 
 GitHub → **Actions** → **SDK publish** → **Run workflow** → set **version** (e.g. `1.0.0`).
 
-Use manual runs for hotfix SDK releases without retagging the monolith Docker image, or for testing credentials before a tagged release.
+Use manual runs for hotfix SDK releases without retagging the Docker images (`kyvo-api` / `kyvo-frontend`), or for testing credentials before a tagged release.
 
 ---
 

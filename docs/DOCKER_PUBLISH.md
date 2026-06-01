@@ -4,7 +4,7 @@
 
 > **Pronunciation:** *Kyvo* is pronounced like **"Key"vo** — rhymes with English *key* plus *vo*.
 
-This guide is for **repository maintainers** who build and push the Kyvo container image. Operators who deploy published images should use [GETTING_STARTED.md § Production](../GETTING_STARTED.md#7-production-deployment-docker-compose).
+This guide is for **repository maintainers** who build and push Kyvo container images. Operators who deploy published images should use [GETTING_STARTED.md § Production](../GETTING_STARTED.md#7-production-deployment-docker-compose).
 
 ---
 
@@ -12,13 +12,11 @@ This guide is for **repository maintainers** who build and push the Kyvo contain
 
 | Image | Dockerfile | Registry name (suggested) |
 |-------|------------|---------------------------|
-| Kyvo (monolith) | [docker/Dockerfile](../docker/Dockerfile) | `mrffilipe/kyvo` |
+| API | [backend/Dockerfile](../backend/Dockerfile) | `mrffilipe/kyvo-api` |
+| Admin SPA | [frontend/Dockerfile](../frontend/Dockerfile) | `mrffilipe/kyvo-frontend` |
 
-The monolith includes:
-
-- ASP.NET Core API (Kestrel on `127.0.0.1:8080` inside the container)
-- Admin SPA (static files; API/redirect URLs use **same origin** as nginx at runtime)
-- nginx (TLS on `:443`, HTTP redirect on `:80`)
+- **API:** ASP.NET Core on port `8080`, EF migrations bundle, non-root user.
+- **Frontend:** Vite build + nginx on port `80` (HTTP only). TLS at an external reverse proxy.
 
 Build context is always the **repository root**.
 
@@ -26,20 +24,17 @@ Supporting files:
 
 | Path | Purpose |
 |------|---------|
-| [docker/nginx/app.conf](../docker/nginx/app.conf) | TLS + reverse proxy + SPA |
-| [docker/scripts/entrypoint-app.sh](../docker/scripts/entrypoint-app.sh) | Migrations, API, nginx startup |
-| [backend/Dockerfile](../backend/Dockerfile) | Legacy reference (API-only local builds) |
-| [frontend/Dockerfile](../frontend/Dockerfile) | Legacy reference (SPA-only local builds) |
+| [docker/scripts/entrypoint-api.sh](../docker/scripts/entrypoint-api.sh) | Optional migrations, then `dotnet Kyvo.API.dll` |
+| [frontend/nginx/default.conf](../frontend/nginx/default.conf) | Static SPA + `try_files` |
 
 ---
 
 ## Runtime configuration (operators)
 
-Consumers configure **one** `.env` file. No image rebuild is required to change database, Redis, JWT (`Jwt__Issuer` must match the public URL), bootstrap, email, etc.
+- **API:** one `.env` on the `api` service — database, Redis, `Jwt__SigningKeyPemBase64`, `Jwt__Issuer`, bootstrap, email, data protection volume, etc.
+- **Frontend:** no application `.env` in production. Same-origin deploy uses empty `VITE_*` at build time; split hosts require custom build-args (see below).
 
-The admin SPA talks to the API on the **same host** nginx exposes (for example `https://auth.example.com/v1.0/...`). Set `Jwt__Issuer` to that public origin; do not set `VITE_*` in the deploy `.env`.
-
-Only a **new platform release** (new image tag) requires pulling/building again.
+Only a **new platform release** (new image tags) requires pulling/building again.
 
 ---
 
@@ -50,9 +45,9 @@ Workflow: [.github/workflows/docker-publish.yml](../.github/workflows/docker-pub
 | Setting | Value |
 |---------|-------|
 | **Triggers** | Git tag push matching `docker-v*` (e.g. `docker-v1.0.0`); manual `workflow_dispatch` |
-| **Job** | `build-app` |
+| **Jobs** | `build-api`, `build-frontend` (parallel) |
 | **Registry** | Docker Hub |
-| **Image** | `mrffilipe/kyvo` |
+| **Images** | `mrffilipe/kyvo-api`, `mrffilipe/kyvo-frontend` |
 
 ### Repository secrets (required)
 
@@ -60,13 +55,21 @@ Workflow: [.github/workflows/docker-publish.yml](../.github/workflows/docker-pub
 |--------|---------|
 | `DOCKERHUB_TOKEN` | Access token for Docker Hub user **mrffilipe** (push permission) |
 
-Login username is fixed in the workflow (`mrffilipe`); no `DOCKERHUB_USERNAME` secret is required.
+### Repository variables (optional)
 
-No repository variables are required for the workflow (monolith SPA build uses empty `VITE_API_BASE_URL` / `VITE_OAUTH_REDIRECT_URI` for same-origin).
+Set only when publishing a frontend image for **split-host** deployments:
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_API_BASE_URL` | API origin baked into the SPA |
+| `VITE_OAUTH_REDIRECT_URI` | OAuth callback URL baked into the SPA |
+| `VITE_API_VERSION`, `VITE_API_TIMEOUT_MS`, `VITE_OAUTH_CLIENT_ID` | Optional overrides |
+
+If unset, the workflow passes empty values — same-origin production (recommended).
 
 ### Tags produced (semver)
 
-On tag `docker-v1.2.3`, `docker/metadata-action` pushes:
+On tag `docker-v1.2.3`, **both** images receive:
 
 (`v*` tags trigger SDK publish only, not this workflow.)
 
@@ -100,39 +103,59 @@ Replace `<version>` with a semver tag (e.g. `1.0.0`).
 docker login
 ```
 
-### 2. Build and push
+### 2. Build and push API
 
 From the repository root:
 
 ```bash
-docker build -f docker/Dockerfile -t mrffilipe/kyvo:<version> .
-docker tag mrffilipe/kyvo:<version> mrffilipe/kyvo:latest
-
-docker push mrffilipe/kyvo:<version>
-docker push mrffilipe/kyvo:latest
+docker build -f backend/Dockerfile -t mrffilipe/kyvo-api:<version> .
+docker tag mrffilipe/kyvo-api:<version> mrffilipe/kyvo-api:latest
+docker push mrffilipe/kyvo-api:<version>
+docker push mrffilipe/kyvo-api:latest
 ```
 
-The image includes an EF Core **migrations bundle**. At runtime, `Database__ApplyMigrationsOnStartup=true` applies migrations before the API starts.
+The API image includes an EF Core **migrations bundle**. At runtime, `Database__ApplyMigrationsOnStartup=true` applies migrations before the API starts.
 
-### 3. Verify
+### 3. Build and push frontend
+
+Same-origin (default):
 
 ```bash
-docker pull mrffilipe/kyvo:<version>
+docker build -f frontend/Dockerfile -t mrffilipe/kyvo-frontend:<version> .
 ```
 
-Optional: `docker scout quickview mrffilipe/kyvo:<version>`
+Split hosts (example):
+
+```bash
+docker build -f frontend/Dockerfile \
+  --build-arg VITE_API_BASE_URL=https://api.example.com \
+  --build-arg VITE_OAUTH_REDIRECT_URI=https://app.example.com/auth/callback \
+  -t mrffilipe/kyvo-frontend:<version> .
+```
+
+```bash
+docker tag mrffilipe/kyvo-frontend:<version> mrffilipe/kyvo-frontend:latest
+docker push mrffilipe/kyvo-frontend:<version>
+docker push mrffilipe/kyvo-frontend:latest
+```
+
+### 4. Verify
+
+```bash
+docker pull mrffilipe/kyvo-api:<version>
+docker pull mrffilipe/kyvo-frontend:<version>
+```
 
 ---
 
 ## GitHub Container Registry (alternative)
 
-Same Dockerfile; image prefix `ghcr.io/mrffilipe/kyvo`.
+Same Dockerfiles; prefix `ghcr.io/mrffilipe/kyvo-api` and `ghcr.io/mrffilipe/kyvo-frontend`.
 
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u mrffilipe --password-stdin
-
-docker tag mrffilipe/kyvo:<version> ghcr.io/mrffilipe/kyvo:<version>
-docker push ghcr.io/mrffilipe/kyvo:<version>
+docker tag mrffilipe/kyvo-api:<version> ghcr.io/mrffilipe/kyvo-api:<version>
+docker push ghcr.io/mrffilipe/kyvo-api:<version>
 ```
 
 PAT needs `write:packages` (and `read:packages` for private images).
@@ -141,7 +164,7 @@ PAT needs `write:packages` (and `read:packages` for private images).
 
 ## Operators (not maintainers)
 
-Share [GETTING_STARTED.md § Production deployment](../GETTING_STARTED.md#7-production-deployment-docker-compose) — single `app` service, unified `.env`, TLS certs in `./certs/`.
+Share [GETTING_STARTED.md § Production deployment](../GETTING_STARTED.md#7-production-deployment-docker-compose) — `api` + `frontend` services, unified `.env` on the API, external HTTPS proxy.
 
 ---
 

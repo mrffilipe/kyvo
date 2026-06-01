@@ -15,7 +15,7 @@ Inspirado no modelo Keycloak-like: um IdP gerenciado, multi-tenant, com painel a
 | Caminho | Uso |
 |---------|-----|
 | **Desenvolvimento** | Clone o repo e siga [GETTING_STARTED.pt-BR.md](./GETTING_STARTED.pt-BR.md) seções **1–6** (código-fonte, PostgreSQL/Redis local) |
-| **Produção** | Imagem monólito `kyvo` — [GETTING_STARTED.pt-BR.md § Produção](./GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose) (um serviço, `.env` unificado) |
+| **Produção** | Imagens `kyvo-api` + `kyvo-frontend` — [GETTING_STARTED.pt-BR.md § Produção](./GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose) (imagens separadas, proxy HTTPS externo) |
 | **Mantenedores** | Build e push de imagens — [docs/DOCKER_PUBLISH.pt-BR.md](./docs/DOCKER_PUBLISH.pt-BR.md) |
 
 ---
@@ -28,7 +28,7 @@ backend/    API ASP.NET Core 8 — Clean Architecture (Domain / Application / In
 frontend/   Painel admin SPA — React 19 + MUI + React Router 7 + Vite
 samples/    Aplicações consumidoras de referência (ex.: pulse-crm — CRM SaaS + OIDC)
 rules/      Padrões e convenções: backend-rules.md, frontend-rules.md
-docker/     Artefatos de build de imagens (nginx, entrypoint da API)
+docker/     Entrypoint da API (Dockerfiles em backend/ e frontend/)
 docs/       Guias para mantenedores (ex.: publicação Docker)
 .github/    CI (publicação Docker em tags de versão)
 ```

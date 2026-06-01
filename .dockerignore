@@ -1,5 +1,4 @@
 # Docker build context is always the repository root:
-#   docker build -f docker/Dockerfile .
 #   docker build -f backend/Dockerfile .
 #   docker build -f frontend/Dockerfile .
 #
@@ -22,7 +21,7 @@ sdk/
 samples/
 **/*.md
 
-# Backend: local tooling and secrets (API + monolith)
+# Backend: local tooling and secrets
 backend/tools/
 backend/**/keys/*.pem
 backend/**/keys/data-protection/

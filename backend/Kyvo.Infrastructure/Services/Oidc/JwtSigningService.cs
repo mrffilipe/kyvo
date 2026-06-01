@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Kyvo.Application.Exceptions;
 using Kyvo.Application.Services.Oidc;
@@ -79,9 +80,21 @@ public sealed class JwtSigningService : IJwtSigningService
 
     private static RSA LoadRsaKey(JwtOptions options)
     {
-        var pem = !string.IsNullOrWhiteSpace(options.SigningKeyPem)
-            ? options.SigningKeyPem
-            : File.ReadAllText(options.SigningKeyPath!);
+        string pem;
+        if (!string.IsNullOrWhiteSpace(options.SigningKeyPemBase64))
+        {
+            var normalized = string.Concat(
+                options.SigningKeyPemBase64.Where(c => !char.IsWhiteSpace(c)));
+            pem = Encoding.UTF8.GetString(Convert.FromBase64String(normalized));
+        }
+        else if (!string.IsNullOrWhiteSpace(options.SigningKeyPem))
+        {
+            pem = options.SigningKeyPem;
+        }
+        else
+        {
+            pem = File.ReadAllText(options.SigningKeyPath!);
+        }
 
         var rsa = RSA.Create();
         rsa.ImportFromPem(pem);

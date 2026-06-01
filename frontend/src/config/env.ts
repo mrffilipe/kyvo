@@ -2,8 +2,8 @@
 // (admin console client id and redirect URI) and backend/Kyvo.API/appsettings.Development.json
 // (issuer/api base url) so the admin SPA runs without an .env file in local development.
 //
-// Monolith Docker image: VITE_API_BASE_URL and VITE_OAUTH_REDIRECT_URI are left empty at build time;
-// in the browser the SPA uses window.location.origin (same host as nginx — API + UI on one public URL).
+// Production Docker image: VITE_API_BASE_URL and VITE_OAUTH_REDIRECT_URI are left empty at build time;
+// in the browser the SPA uses window.location.origin (same public host as the API via external proxy).
 const ENV_DEFAULTS = {
   VITE_API_BASE_URL: 'http://localhost:5000',
   VITE_API_VERSION: '1.0',

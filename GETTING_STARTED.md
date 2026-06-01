@@ -318,7 +318,7 @@ Steps:
 
 ## 7. Production deployment (Docker Compose)
 
-Deploy the Kyvo using **published container images**. You do not need to clone this repository (except optionally to generate the OIDC signing key with `GenerateOidcKey`).
+Deploy Kyvo using **two published container images** (API + admin SPA). TLS termination and path routing are handled by an **external reverse proxy** (Traefik on Coolify, nginx, etc.). You do not need to clone this repository except optionally to generate the OIDC signing key.
 
 **PostgreSQL and Redis are required** and are not included in the application compose example below.
 
@@ -327,23 +327,32 @@ Deploy the Kyvo using **published container images**. You do not need to clone t
 | Tool | Purpose |
 |------|---------|
 | Docker Engine + Docker Compose v2 | Run containers |
-| PostgreSQL + Redis | Reachable from the app container |
-| Published image on Docker Hub | `mrffilipe/kyvo:<tag>` (set `IMAGE_TAG` in `.env`) |
-| TLS certificates | `fullchain.pem` and `privkey.pem` in `./certs/` |
+| PostgreSQL + Redis | Reachable from the API container |
+| Published images on Docker Hub | `mrffilipe/kyvo-api:<tag>` and `mrffilipe/kyvo-frontend:<tag>` (set `IMAGE_TAG` in `.env`) |
+| Reverse proxy with HTTPS | Routes one public host to API paths and SPA paths (see below) |
 
 You do **not** need the .NET SDK or Node.js on the host unless you generate the OIDC key from this repo.
 
-### Single public URL (how routing works)
+### Single public URL (recommended)
 
-With `Jwt__Issuer=https://auth.meudominio.com.br` (and TLS on that host), users and the SPA use the **same origin**:
+With `Jwt__Issuer=https://auth.example.com` and TLS on that host, users and the SPA use the **same origin**. The proxy forwards API paths to `kyvo-api` and everything else to `kyvo-frontend`:
 
-| What you open or call | URL | Handled by |
-|----------------------|-----|------------|
-| Admin console (SPA) | `https://auth.meudominio.com.br/` | nginx → static files |
-| API (JSON, OIDC, login pages) | `https://auth.meudominio.com.br/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...` | nginx → Kestrel (`127.0.0.1:8080`) |
-| OAuth callback after login | `https://auth.meudominio.com.br/auth/callback` | nginx → SPA (`/auth/callback` in the React app) |
+| What you open or call | URL | Routed to |
+|----------------------|-----|-----------|
+| Admin console (SPA) | `https://auth.example.com/` | `kyvo-frontend` (nginx :80) |
+| OAuth callback | `https://auth.example.com/auth/callback` | `kyvo-frontend` |
+| API (JSON, OIDC, login pages) | `https://auth.example.com/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...` | `kyvo-api` (:8080) |
 
-Set **`Jwt__Issuer`** to exactly the URL browsers use (scheme + host, no trailing slash). The SPA picks up API and OAuth redirect URLs from that same host automatically.
+Set **`Jwt__Issuer`** to exactly the URL browsers use (scheme + host, no trailing slash). The frontend image is built with empty `VITE_*` URLs so the SPA uses `window.location.origin` at runtime.
+
+**Proxy path prefixes for the API** (must not be served by the SPA container):
+
+- `/v1.0/`
+- `/connect/`
+- `/account/`
+- `/.well-known/`
+- `/swagger`
+- `/css/` (Blazor account static assets)
 
 ### Suggested deploy directory
 
@@ -353,9 +362,6 @@ Create a folder outside this repository (for example `kyvo-deploy/`) with:
 kyvo-deploy/
   docker-compose.yml
   .env
-  certs/fullchain.pem
-  certs/privkey.pem
-  keys/oidc-signing.pem    # optional if using Jwt__SigningKeyPath
 ```
 
 ### PostgreSQL and Redis (infra)
@@ -429,16 +435,16 @@ Align `Database__ConnectionString` and `Redis__ConnectionString` in `.env` with 
 
 ### `docker-compose.yml` (production)
 
-Save as `docker-compose.yml` in your deploy directory:
+Save as `docker-compose.yml` in your deploy directory. Expose ports only if your proxy runs on the same host; on Coolify/Traefik you typically attach labels instead of publishing ports.
 
 ```yaml
-# Kyvo — monolith image (API + admin SPA + HTTPS proxy)
-# Requires PostgreSQL and Redis reachable from the app container.
+# Kyvo — split images (API + admin SPA). TLS at external proxy.
+# Requires PostgreSQL and Redis reachable from the API container.
 
 services:
-  app:
-    image: mrffilipe/kyvo:${IMAGE_TAG:-latest}
-    container_name: kyvo-app
+  api:
+    image: mrffilipe/kyvo-api:${IMAGE_TAG:-latest}
+    container_name: kyvo-api
     restart: unless-stopped
     env_file:
       - path: .env
@@ -446,13 +452,16 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${PROXY_HTTP_PORT:-80}:80"
-      - "${PROXY_HTTPS_PORT:-443}:443"
+      - "${API_PORT:-8080}:8080"
     volumes:
       - app-dataprotection:/app/keys/data-protection
-      - ./certs:/etc/nginx/certs:ro
-      # Uncomment to mount JWT signing key (set Jwt__SigningKeyPath=keys/oidc-signing.pem):
-      # - ./keys/oidc-signing.pem:/app/keys/oidc-signing.pem:ro
+
+  frontend:
+    image: mrffilipe/kyvo-frontend:${IMAGE_TAG:-latest}
+    container_name: kyvo-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"
 
 volumes:
   app-dataprotection:
@@ -463,24 +472,23 @@ volumes:
 Save as `.env` next to `docker-compose.yml`:
 
 ```env
-# --- Published image (Docker Hub: mrffilipe/kyvo) ---
+# --- Published images (Docker Hub) ---
 IMAGE_TAG=1.0.0
-
-PROXY_HTTP_PORT=80
-PROXY_HTTPS_PORT=443
+API_PORT=8080
+FRONTEND_PORT=8081
 
 # --- Database (required) ---
 Database__ConnectionString=Host=host.docker.internal;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword
 Database__ApplyMigrationsOnStartup=true
 
 # --- JWT / OIDC (required) ---
-# Must match the public URL users use (same host as the HTTPS proxy).
+# Must match the public URL users use (same host as the external HTTPS proxy).
 Jwt__Issuer=https://auth.example.com
 Jwt__Audience=kyvo-api
 Jwt__KeyId=default
 Jwt__RefreshTokenDays=30
-# Jwt__SigningKeyPem=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
-Jwt__SigningKeyPath=keys/oidc-signing.pem
+# RSA private key (PEM) as Base64 — generate from oidc-signing.pem (see below). Do not mount key files.
+Jwt__SigningKeyPemBase64=
 
 # --- Redis (recommended) ---
 Redis__ConnectionString=host.docker.internal:6379,password=default_password,ssl=false
@@ -504,33 +512,46 @@ Email__SecretAccessKey=
 Email__SessionToken=
 ```
 
-ASP.NET Core uses the `Section__Property` form. You do **not** set `VITE_*` in `.env` for production — the monolith image is built for **same-origin** routing.
+**Encode the OIDC signing key for `Jwt__SigningKeyPemBase64`:**
+
+```bash
+# Linux/macOS
+openssl base64 -A -in oidc-signing.pem
+
+# PowerShell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("oidc-signing.pem"))
+```
+
+ASP.NET Core uses the `Section__Property` form. You do **not** set `VITE_*` in `.env` for production — the frontend image uses **same-origin** routing when built without custom build-args.
 
 | Variable | Rebuild image? | Notes |
 |----------|----------------|-------|
-| `Database__*`, `Redis__*`, `Jwt__*`, `Bootstrap__*`, `Email__*` | No | Edit `.env`, then `docker compose restart app` |
-| `Jwt__Issuer` | No | Must match your public URL (`https://auth.meudominio.com.br`) |
-| Platform code | Yes | Pull a new `kyvo` tag |
+| `Database__*`, `Redis__*`, `Jwt__*`, `Bootstrap__*`, `Email__*` | No | Edit `.env`, then `docker compose restart api` |
+| `Jwt__Issuer` | No | Must match your public URL (`https://auth.example.com`) |
+| Platform code | Yes | Pull new `kyvo-api` and `kyvo-frontend` tags with the same `IMAGE_TAG` |
 
 For **local development** (sections 1–6), optional `VITE_*` in `frontend/.env` still apply when using `npm run dev` on port 3000 with the API on port 5000.
+
+For **separate API/UI hosts**, rebuild `kyvo-frontend` with `--build-arg VITE_API_BASE_URL=...` and `VITE_OAUTH_REDIRECT_URI=...` (see [frontend/Dockerfile](./frontend/Dockerfile)).
 
 ### Deploy steps
 
 1. Start PostgreSQL and Redis (infra snippet or managed services).
 2. Generate `oidc-signing.pem` (step 3.2 in development, or on a trusted machine with this repo).
-3. Create the deploy directory files above; place TLS certs in `certs/`.
-4. Set `Jwt__Issuer` to your public `https://` URL (same host users will open in the browser).
-5. Start the app:
+3. Base64-encode the PEM and set `Jwt__SigningKeyPemBase64` in `.env`.
+4. Create the deploy directory files above; configure your reverse proxy (HTTPS + path routing).
+5. Set `Jwt__Issuer` to your public `https://` URL (same host users will open in the browser).
+6. Start the stack:
 
 ```bash
 cd kyvo-deploy
 docker compose --env-file .env up -d
 ```
 
-6. Open `https://your-public-host`, complete bootstrap, then remove `Bootstrap__*` from `.env` and restart:
+7. Open `https://your-public-host`, complete bootstrap, then remove `Bootstrap__*` from `.env` and restart:
 
 ```bash
-docker compose --env-file .env restart app
+docker compose --env-file .env restart api
 ```
 
 ### Production troubleshooting
@@ -538,10 +559,10 @@ docker compose --env-file .env restart app
 | Issue | Solution |
 |-------|----------|
 | Cannot connect to database | Verify PostgreSQL and `Database__ConnectionString` |
-| Container exits or unhealthy | `docker logs kyvo-app` — often missing JWT key or invalid certs |
-| OAuth redirect mismatch | Align `Jwt__Issuer` / `VITE_OAUTH_REDIRECT_URI` in `.env`, restart; verify OAuth client redirect URI |
-| HTTPS fails to start | Valid `fullchain.pem` / `privkey.pem` mounted at `./certs/` |
-| SPA calls wrong API URL | Set `Jwt__Issuer` to the URL in the browser bar, then `docker compose restart app` |
+| API container exits or unhealthy | `docker logs kyvo-api` — often missing or invalid `Jwt__SigningKeyPemBase64` |
+| OAuth redirect mismatch | Align `Jwt__Issuer` with the browser URL; verify OAuth client redirect URI (`https://<host>/auth/callback`) |
+| SPA calls wrong API URL | Same-origin: set `Jwt__Issuer` to the browser URL; split hosts: rebuild frontend with `VITE_*` build-args |
+| 404 on `/connect` or `/account` | Proxy must route API path prefixes to `kyvo-api`, not `kyvo-frontend` |
 
 ---
 
@@ -552,7 +573,7 @@ docker compose --env-file .env restart app
 | Environment variable (`__`) | Production |
 |-----------------------------|------------|
 | `Database__ConnectionString` | Managed database connection string (RDS, Cloud SQL, etc.) |
-| `Jwt__SigningKeyPem` | PEM contents of the RSA private key (inline, no file) |
+| `Jwt__SigningKeyPemBase64` | Base64-encoded PEM of the RSA private key (production; no key file mount) |
 | `Jwt__Issuer` | Public backend URL (e.g., `https://auth.mysite.com`) |
 | `Bootstrap__AdminEmail` | Only on the first deploy; remove after bootstrap |
 | `Bootstrap__AdminPassword` | Only on the first deploy; remove after bootstrap |
@@ -563,9 +584,9 @@ docker compose --env-file .env restart app
 | `SecretProtection__ApplicationName` | Logical name for key isolation (defaults to `Kyvo`) |
 In a production `appsettings.json`, use `:` instead (e.g., `Database:ConnectionString`).
 
-### Frontend in production (monolith)
+### Frontend in production
 
-The admin SPA is inside the `kyvo` image and uses the **same host** as the API. Configure only `Jwt__Issuer` in `.env` (section 7). For a custom split-host deployment from source, set `VITE_*` before `npm run build` in `frontend/`.
+The admin SPA runs in `mrffilipe/kyvo-frontend` (nginx on port 80, HTTP only). Configure `Jwt__Issuer` in `.env` (section 7) and route the public host through your proxy. For API and UI on different hosts, rebuild the frontend image with `VITE_*` build-args.
 
 ### HTTPS
 
@@ -614,5 +635,5 @@ curl -X POST http://localhost:5000/v1.0/platform/bootstrap
 | CORS error | Frontend on a different URL | Verify `VITE_API_BASE_URL` and the API's CORS settings |
 | Cannot decrypt an existing IdP configuration | Data Protection key ring lost | Restore the `SecretProtection:KeyDirectoryPath` from backup, or recreate the IdP entry |
 | Docker: cannot connect to PostgreSQL/Redis | Infra not running or wrong connection strings | Start infra or managed services; check `Database__*` and `Redis__*` in deploy `.env` |
-| Docker: OAuth redirect error after login | `Jwt__Issuer` does not match the browser URL | Set `Jwt__Issuer` to your public URL and restart the app (redirect `https://<host>/auth/callback` is registered at bootstrap and refreshed on `GET /platform/status`) |
-| Docker: HTTPS / OIDC scheme wrong | Invalid certs or wrong `Jwt__Issuer` | Mount valid `./certs/`; set `Jwt__Issuer` to `https://...` and restart `app` |
+| Docker: OAuth redirect error after login | `Jwt__Issuer` does not match the browser URL | Set `Jwt__Issuer` to your public URL and restart `api` (redirect `https://<host>/auth/callback` is registered at bootstrap) |
+| Docker: HTTPS / OIDC scheme wrong | Proxy not forwarding `X-Forwarded-Proto` or wrong `Jwt__Issuer` | Terminate TLS at the proxy; set `Jwt__Issuer` to `https://...` |

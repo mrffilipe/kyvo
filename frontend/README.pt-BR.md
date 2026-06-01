@@ -50,9 +50,9 @@ Os defaults são mantidos em sincronia com as constantes do backend (`PlatformDe
 
 ### Imagem Docker
 
-Em produção, o SPA vai na imagem monólito ([`../docker/Dockerfile`](../docker/Dockerfile)). A imagem é buildada com `VITE_API_BASE_URL` e `VITE_OAUTH_REDIRECT_URI` vazios; no navegador o app usa `window.location.origin` e `{origin}/auth/callback`. Defina `Jwt__Issuer` no `.env` de deploy com a URL pública (veja [GETTING_STARTED.pt-BR.md §7](../GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose)).
+Imagem de produção: [`Dockerfile`](./Dockerfile) → `mrffilipe/kyvo-frontend` (nginx na porta 80, somente HTTP). O build padrão deixa `VITE_API_BASE_URL` e `VITE_OAUTH_REDIRECT_URI` vazios; no navegador o app usa `window.location.origin` quando API e SPA compartilham o mesmo host público via proxy externo.
 
-O [`Dockerfile`](./Dockerfile) isolado serve para experimentos locais só com o SPA.
+Build-args opcionais para hosts separados (veja comentários no Dockerfile). Defina `Jwt__Issuer` no `.env` do serviço **api** (veja [GETTING_STARTED.pt-BR.md §7](../GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose)).
 
 **Deploy em produção:** [../GETTING_STARTED.pt-BR.md § Produção](../GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose). **Build/push:** [../docs/DOCKER_PUBLISH.pt-BR.md](../docs/DOCKER_PUBLISH.pt-BR.md).
 

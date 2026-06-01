@@ -74,7 +74,7 @@ Todas as configurações ficam em `Kyvo.API/appsettings.json` (template) e `apps
 | Seção | Chaves principais | Descrição |
 |-------|------------------|-----------|
 | `Database` | `ConnectionString` | String de conexão PostgreSQL |
-| `Jwt` | `Issuer`, `Audience`, `SigningKeyPath`, `SigningKeyPem`, `KeyId`, `RefreshTokenDays` | Configuração de tokens RS256 |
+| `Jwt` | `Issuer`, `Audience`, `SigningKeyPath`, `SigningKeyPem`, `SigningKeyPemBase64`, `KeyId`, `RefreshTokenDays` | Configuração de tokens RS256 |
 | `Bootstrap` | `AdminEmail`, `AdminPassword`, `AdminDisplayName` | Credenciais do admin raiz (ver abaixo) |
 | `RateLimit` | `BootstrapPermitLimit`, `BootstrapWindowMinutes` | Rate limit do endpoint de bootstrap |
 | `Invite` | `ExpirationHours` | Validade dos convites |
@@ -95,7 +95,7 @@ O ASP.NET Core mapeia `Secao__Propriedade` para `Secao:Propriedade` (equivalente
 | `Bootstrap__AdminPassword` | Sim | Senha inicial (nunca persiste em texto) |
 | `Bootstrap__AdminDisplayName` | Não | Nome de exibição (padrão: parte do email) |
 
-Outras chaves comuns: `Database__ConnectionString`, `Jwt__Issuer`, `Jwt__SigningKeyPem`, `Redis__ConnectionString`, `Email__FromAddress`, `SecretProtection__KeyDirectoryPath`, etc.
+Outras chaves comuns: `Database__ConnectionString`, `Jwt__Issuer`, `Jwt__SigningKeyPemBase64`, `Redis__ConnectionString`, `Email__FromAddress`, `SecretProtection__KeyDirectoryPath`, etc.
 
 Em desenvolvimento local, a seção `Bootstrap` no `appsettings.Development.json` é suficiente.
 
@@ -103,16 +103,17 @@ Em desenvolvimento local, a seção `Bootstrap` no `appsettings.Development.json
 
 ### Imagem Docker da API
 
-A API faz parte da imagem monólito em [../docker/Dockerfile](../docker/Dockerfile). **Deploy:** [../GETTING_STARTED.pt-BR.md § Produção](../GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose). **Build/push:** [../docs/DOCKER_PUBLISH.pt-BR.md](../docs/DOCKER_PUBLISH.pt-BR.md). O [`Dockerfile`](./Dockerfile) isolado permanece para build local só da API.
+Imagem de produção: [`Dockerfile`](./Dockerfile) → `mrffilipe/kyvo-api`. **Deploy:** [../GETTING_STARTED.pt-BR.md § Produção](../GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose). **Build/push:** [../docs/DOCKER_PUBLISH.pt-BR.md](../docs/DOCKER_PUBLISH.pt-BR.md).
 
 | Tópico | Detalhe |
 |--------|---------|
-| Porta | `8080` no container; compose mapeia para `5000` no host por padrão |
+| Porta | `8080` no container |
 | Migrations | Bundle EF executado quando `Database__ApplyMigrationsOnStartup=true` |
-| Chave JWT | `Jwt__SigningKeyPem` ou volume com `Jwt__SigningKeyPath` |
+| Chave JWT (produção) | `Jwt__SigningKeyPemBase64` — PEM em Base64 (sem montar arquivo) |
+| Chave JWT (dev local) | `SigningKeyPath` → `keys/oidc-signing.pem` |
 | Data Protection | Volume em `/app/keys/data-protection` |
 | Health | `GET /v1.0/platform/status` na porta `8080` |
-| HTTPS | Forwarded Headers para TLS no proxy nginx do monólito |
+| HTTPS | Forwarded Headers para TLS no proxy reverso externo |
 
 ### Chave RSA para OIDC
 
@@ -136,7 +137,7 @@ mkdir keys
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/oidc-signing.pem
 ```
 
-Configure `Jwt:SigningKeyPath` (ou env `Jwt__SigningKeyPath`) com o caminho do arquivo, ou `Jwt:SigningKeyPem` / `Jwt__SigningKeyPem` com o conteúdo PEM inline (útil em containers).
+Configure `Jwt:SigningKeyPath` em desenvolvimento local, `Jwt:SigningKeyPem` para PEM inline, ou `Jwt:SigningKeyPemBase64` / `Jwt__SigningKeyPemBase64` em produção (`openssl base64 -A -in oidc-signing.pem`). Use apenas uma fonte por vez.
 
 ---
 

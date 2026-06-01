@@ -234,7 +234,7 @@ public sealed class PlatformService : IPlatformService
     }
 
     /// <summary>
-    /// Ensures the admin SPA redirect for the configured JWT issuer (monolith / same-origin deploy).
+    /// Ensures the admin SPA redirect for the configured JWT issuer (same-origin deploy).
     /// </summary>
     private async Task EnsureAdminConsoleRedirectUriAsync(CancellationToken cancellationToken)
     {

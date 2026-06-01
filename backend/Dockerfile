@@ -1,4 +1,4 @@
-﻿# Build from repository root:
+﻿# Production API image — build from repository root:
 #   docker build -f backend/Dockerfile -t mrffilipe/kyvo-api:<tag> .
 
 # Restore and publish the API

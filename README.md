@@ -15,7 +15,7 @@ Inspired by Keycloak-style platforms: a managed, multi-tenant IdP with its own a
 | Path | Use |
 |------|-----|
 | **Development** | Clone the repo and follow [GETTING_STARTED.md](./GETTING_STARTED.md) sections **1–6** (source, local PostgreSQL/Redis) |
-| **Production** | Deploy the `kyvo` monolith image — [GETTING_STARTED.md § Production](./GETTING_STARTED.md#7-production-deployment-docker-compose) (single service, unified `.env`) |
+| **Production** | Deploy `kyvo-api` + `kyvo-frontend` — [GETTING_STARTED.md § Production](./GETTING_STARTED.md#7-production-deployment-docker-compose) (split images, external HTTPS proxy) |
 | **Maintainers** | Build and push images — [docs/DOCKER_PUBLISH.md](./docs/DOCKER_PUBLISH.md) |
 
 ---
@@ -28,7 +28,7 @@ backend/    ASP.NET Core 8 API — Clean Architecture (Domain / Application / In
 frontend/   Admin SPA — React 19 + MUI + React Router 7 + Vite
 samples/    Reference consumer applications (e.g., pulse-crm — SaaS CRM + OIDC)
 rules/      Standards and conventions: backend-rules.md, frontend-rules.md
-docker/     Image build assets (nginx configs, API entrypoint script)
+docker/     API entrypoint script (split images: backend/ and frontend/ Dockerfiles)
 docs/       Maintainer guides (e.g. Docker image publishing)
 .github/    CI workflows (Docker publish on version tags)
 ```

@@ -14,5 +14,7 @@ public sealed class JwtOptions
 
     public string? SigningKeyPem { get; init; }
 
+    public string? SigningKeyPemBase64 { get; init; }
+
     public string KeyId { get; init; } = "default";
 }
