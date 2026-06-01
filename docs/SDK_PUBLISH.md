@@ -30,10 +30,16 @@ Platform Docker image publishing is documented separately in [DOCKER_PUBLISH.md]
 ### npm (`@kyvo-client/client`)
 
 1. npm organization **`kyvo-client`** (scope **`@kyvo-client`**). Package name: `@kyvo-client/client`.
-2. Create an [npm access token](https://www.npmjs.com/settings/~your-user/tokens) with **Publish** permission.
-3. Add the token to GitHub as secret **`NPM_TOKEN`**.
+2. With **2FA** enabled on your account or org, CI **cannot** publish using a classic token or a granular token **without** bypass — publish fails with `E403` and *Two-factor authentication or granular access token with bypass 2fa enabled is required*.
+3. Create a **Granular Access Token** at [npm → Access Tokens](https://www.npmjs.com/settings/~your-user/tokens):
+   - **Packages and scopes:** **Read and write** on `@kyvo-client/client` (or org `kyvo-client`).
+   - **Organizations:** access to org `kyvo-client` if applicable.
+   - Enable **Bypass two-factor authentication for automation**.
+4. Add the token to GitHub as secret **`NPM_TOKEN`** (replace the previous value if one exists).
 
 Scoped packages require `--access public` on first publish (the CI workflow and `publishConfig` in `package.json` set this).
+
+**Re-running after npm-only failure:** NuGet push uses `--skip-duplicate`; bump the git tag (e.g. `v1.0.1`) to publish a new semver everywhere. Fix `NPM_TOKEN` before pushing the tag again.
 
 ### NuGet (.NET packages)
 

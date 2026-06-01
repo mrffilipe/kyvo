@@ -10,7 +10,8 @@
 #
 # Required repository secrets:
 #   NUGET_API_KEY — nuget.org API key (push scope)
-#   NPM_TOKEN     — npm access token with publish permission for @kyvo-client org
+#   NPM_TOKEN     — npm granular access token: Publish on @kyvo-client, "Bypass 2FA" enabled
+#                   (required when npm account/org has 2FA — classic tokens fail with E403 in CI)
 
 name: SDK publish
 

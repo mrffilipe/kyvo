@@ -4,8 +4,8 @@
 # SPA uses same origin as nginx (empty VITE_API_BASE_URL at build); operators set Jwt__Issuer in .env.
 #
 # Triggers:
-#   - Push of a version tag matching v* (e.g. v1.0.0)
-#   - Manual run (workflow_dispatch)
+#   - Manual run (workflow_dispatch) — decoupled from SDK release tags (v*)
+#   - Optional: push a docker-v* tag (e.g. docker-v1.0.0) to publish image semver tags
 #
 # Required repository secret:
 #   DOCKERHUB_TOKEN — access token for user mrffilipe (push permission)
@@ -15,7 +15,7 @@ name: Docker publish
 on:
   push:
     tags:
-      - "v*"
+      - "docker-v*"
   workflow_dispatch:
 
 jobs:
@@ -35,16 +35,16 @@ jobs:
           username: mrffilipe
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Semver tags from git tag v1.2.3 → 1.2.3, 1.2, 1, latest
+      # Semver from git tag docker-v1.2.3 → 1.2.3, 1.2, 1, latest
       - name: Generate image tags and labels
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: mrffilipe/kyvo
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},prefix=docker-v
+            type=semver,pattern={{major}}.{{minor}},prefix=docker-v
+            type=semver,pattern={{major}},prefix=docker-v
             type=raw,value=latest
 
       - name: Build and push monolith image

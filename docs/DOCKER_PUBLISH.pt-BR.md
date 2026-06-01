@@ -49,7 +49,7 @@ Workflow: [.github/workflows/docker-publish.yml](../.github/workflows/docker-pub
 
 | Item | Valor |
 |------|-------|
-| **Gatilhos** | Tag `v*`; `workflow_dispatch` |
+| **Gatilhos** | Tag `docker-v*` (ex.: `docker-v1.0.0`); `workflow_dispatch` |
 | **Job** | `build-app` |
 | **Registry** | Docker Hub |
 | **Imagem** | `mrffilipe/kyvo` |
@@ -66,16 +66,18 @@ Não são necessárias Variables no GitHub para o workflow.
 
 ### Tags (semver)
 
-Na tag `v1.2.3`: `1.2.3`, `1.2`, `1`, `latest`.
+Na tag `docker-v1.2.3`: `1.2.3`, `1.2`, `1`, `latest`. Tags `v*` disparam só o workflow de SDK, não a imagem Docker.
 
 Em produção restrita, use `IMAGE_TAG` imutável (ex.: `1.2.3`).
 
 ### Release
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag docker-v1.0.0
+git push origin docker-v1.0.0
 ```
+
+Ou: GitHub → **Actions** → **Docker publish** → **Run workflow** (sem tag Git).
 
 ---
 

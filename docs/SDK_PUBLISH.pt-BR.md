@@ -30,10 +30,16 @@ A publicação da **imagem Docker** da plataforma está em [DOCKER_PUBLISH.pt-BR
 ### npm (`@kyvo-client/client`)
 
 1. Organização npm **`kyvo-client`** (escopo **`@kyvo-client`**). Nome do pacote: `@kyvo-client/client`.
-2. Crie um [token de acesso npm](https://www.npmjs.com/settings/~your-user/tokens) com permissão de **Publish**.
-3. Adicione o token no GitHub como secret **`NPM_TOKEN`**.
+2. Com **2FA** ativo na conta ou na org, o CI **não** aceita token clássico nem granular sem bypass — o publish falha com `E403` e a mensagem *Two-factor authentication or granular access token with bypass 2fa enabled is required*.
+3. Crie um **Granular Access Token** em [npm → Access Tokens](https://www.npmjs.com/settings/~your-user/tokens):
+   - **Packages and scopes:** permissão **Read and write** no pacote `@kyvo-client/client` (ou na org `kyvo-client`).
+   - **Organizations:** acesso à org `kyvo-client`, se aplicável.
+   - Ative **Bypass two-factor authentication for automation** (ou equivalente).
+4. Adicione o token no GitHub como secret **`NPM_TOKEN`** (substitua o valor antigo se já existir).
 
 Pacotes com escopo exigem `--access public` na primeira publicação (o workflow e o `publishConfig` no `package.json` já tratam isso).
+
+**Reexecução após falha só no npm:** o push NuGet usa `--skip-duplicate`; uma nova tag `v*` (ex.: `v1.0.1`) republica todos os pacotes no mesmo semver. Corrija `NPM_TOKEN` antes de taguear de novo.
 
 ### NuGet (pacotes .NET)
 

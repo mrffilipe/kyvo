@@ -49,7 +49,7 @@ Workflow: [.github/workflows/docker-publish.yml](../.github/workflows/docker-pub
 
 | Setting | Value |
 |---------|-------|
-| **Triggers** | Git tag push matching `v*` (e.g. `v1.0.0`); manual `workflow_dispatch` |
+| **Triggers** | Git tag push matching `docker-v*` (e.g. `docker-v1.0.0`); manual `workflow_dispatch` |
 | **Job** | `build-app` |
 | **Registry** | Docker Hub |
 | **Image** | `mrffilipe/kyvo` |
@@ -66,7 +66,9 @@ No repository variables are required for the workflow (monolith SPA build uses e
 
 ### Tags produced (semver)
 
-On tag `v1.2.3`, `docker/metadata-action` pushes:
+On tag `docker-v1.2.3`, `docker/metadata-action` pushes:
+
+(`v*` tags trigger SDK publish only, not this workflow.)
 
 - `1.2.3`
 - `1.2`
@@ -82,8 +84,8 @@ GitHub → **Actions** → **Docker publish** → **Run workflow**.
 ### Release with a version tag
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag docker-v1.0.0
+git push origin docker-v1.0.0
 ```
 
 ---
