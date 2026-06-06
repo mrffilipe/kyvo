@@ -109,6 +109,7 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
             AuthSession session when entry.State == EntityState.Modified && session.Status == SessionStatus.Revoked => AuditAction.SessionRevoked,
             TenantInvite when entry.State == EntityState.Added => AuditAction.InviteCreated,
             TenantInvite invite when entry.State == EntityState.Modified && invite.ConsumedAt.HasValue => AuditAction.InviteAccepted,
+            TenantInvite invite when entry.State == EntityState.Modified && invite.RevokedAt.HasValue => AuditAction.InviteRevoked,
             _ => null
         };
     }

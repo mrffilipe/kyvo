@@ -1,4 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Button, IconButton, MenuItem, Stack, TableCell, TableRow, TextField, Tooltip, Typography } from '@mui/material'
@@ -19,14 +20,24 @@ import {
 } from '../components/ui'
 import { useTenant } from '../contexts/TenantContext'
 import { useTenantRoleOptions } from '../hooks/useTenantRoleOptions'
-import { createMembership, listMembershipsByTenant, revokeMembership, searchUsers, updateMembershipRole } from '../services'
-import type { Membership, UserPickerItem } from '../types'
+import {
+  createMembership,
+  listInvitesByTenant,
+  listMembershipsByTenant,
+  revokeInvite,
+  revokeMembership,
+  searchUsers,
+  updateMembershipRole,
+} from '../services'
+import type { Membership, TenantInvite, UserPickerItem } from '../types'
 import { getApiErrorMessage } from '../utils/apiError'
-import { tenantRoleLabel } from '../utils/enumLabels'
+import { tenantInviteStatusLabel, tenantRoleLabel } from '../utils/enumLabels'
+import { copyInviteLink } from '../utils/inviteUrl'
 
 export function MembershipsPage() {
   const { tenantId } = useTenant()
   const [items, setItems] = useState<Membership[]>([])
+  const [invites, setInvites] = useState<TenantInvite[]>([])
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
@@ -55,9 +66,11 @@ export function MembershipsPage() {
   useEffect(() => {
     if (!tenantId) {
       setItems([])
+      setInvites([])
       return
     }
     void loadMemberships(tenantId)
+    void loadInvites(tenantId)
   }, [tenantId])
 
   async function loadMemberships(currentTenantId: string): Promise<void> {
@@ -65,6 +78,15 @@ export function MembershipsPage() {
     try {
       const result = await listMembershipsByTenant(currentTenantId, { page: 1, pageSize: 100 })
       setItems(result.items)
+    } catch (loadError) {
+      setError(getApiErrorMessage(loadError))
+    }
+  }
+
+  async function loadInvites(currentTenantId: string): Promise<void> {
+    try {
+      const result = await listInvitesByTenant(currentTenantId, { page: 1, pageSize: 100 })
+      setInvites(result.items)
     } catch (loadError) {
       setError(getApiErrorMessage(loadError))
     }
@@ -144,6 +166,30 @@ export function MembershipsPage() {
     }
   }
 
+  async function handleCopyInviteLink(acceptPath: string): Promise<void> {
+    setError(null)
+    try {
+      await copyInviteLink(acceptPath)
+      setSuccess('Link do convite copiado.')
+    } catch (copyError) {
+      setError(getApiErrorMessage(copyError))
+    }
+  }
+
+  async function handleRevokeInvite(inviteId: string): Promise<void> {
+    setError(null)
+    setSuccess(null)
+    try {
+      await revokeInvite(inviteId)
+      setSuccess('Convite revogado.')
+      if (tenantId) {
+        await loadInvites(tenantId)
+      }
+    } catch (revokeError) {
+      setError(getApiErrorMessage(revokeError))
+    }
+  }
+
   return (
     <Stack spacing={3}>
       <PageHeader
@@ -157,6 +203,48 @@ export function MembershipsPage() {
       />
       <FeedbackAlerts success={success} error={error} />
       <TenantScopeNotice />
+
+      <SectionCard title="Convites pendentes">
+        <DataTable
+          columns={[
+            { id: 'email', label: 'E-mail' },
+            { id: 'roles', label: 'Papéis' },
+            { id: 'expires', label: 'Expira em' },
+            { id: 'status', label: 'Status' },
+            { id: 'actions', label: 'Ações', align: 'right' },
+          ]}
+          rows={invites.map((invite) => (
+            <TableRow key={invite.id} hover>
+              <TableCell>{invite.email}</TableCell>
+              <TableCell>{invite.roles.map(tenantRoleLabel).join(', ')}</TableCell>
+              <TableCell>{new Date(invite.expiresAt).toLocaleString()}</TableCell>
+              <TableCell>
+                <StatusChip
+                  label={tenantInviteStatusLabel(invite.status)}
+                  variant={invite.status === 'Pending' ? 'warning' : 'default'}
+                />
+              </TableCell>
+              <TableCell align="right">
+                {invite.acceptPath ? (
+                  <Tooltip title="Copiar link do convite">
+                    <IconButton size="small" onClick={() => void handleCopyInviteLink(invite.acceptPath!)}>
+                      <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null}
+                {invite.status === 'Pending' ? (
+                  <Tooltip title="Revogar convite">
+                    <IconButton color="error" size="small" onClick={() => void handleRevokeInvite(invite.id)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+          emptyDescription={tenantId ? 'Nenhum convite para este tenant.' : 'Selecione um tenant em Tenants.'}
+        />
+      </SectionCard>
 
       <SectionCard title="Membros do tenant">
         <DataTable

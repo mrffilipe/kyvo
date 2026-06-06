@@ -230,7 +230,7 @@ public sealed class KyvoProductClient : IKyvoProductClient
             await KyvoHttpResponse.EnsureSuccessAsync(response, cancellationToken);
         }
 
-        public async Task<CreatedIdResponse> InviteMemberAsync(
+        public async Task<InviteMemberResult> InviteMemberAsync(
             string userAccessToken,
             Guid tenantId,
             InviteMemberBody body,
@@ -243,8 +243,41 @@ public sealed class KyvoProductClient : IKyvoProductClient
                 body,
                 cancellationToken);
 
-            return await KyvoHttpResponse.ReadJsonAsync<CreatedIdResponse>(response, cancellationToken)
+            return await KyvoHttpResponse.ReadJsonAsync<InviteMemberResult>(response, cancellationToken)
                 ?? throw new InvalidOperationException("Kyvo invite returned empty body.");
+        }
+
+        public async Task<PagedResult<TenantInviteDto>> ListInvitesAsync(
+            string userAccessToken,
+            Guid tenantId,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await client.SendAsync(
+                userAccessToken,
+                HttpMethod.Get,
+                $"{client.V}/Tenants/{tenantId}/invites?page={page}&pageSize={pageSize}",
+                null,
+                cancellationToken);
+
+            return await KyvoHttpResponse.ReadJsonAsync<PagedResult<TenantInviteDto>>(response, cancellationToken)
+                ?? throw new InvalidOperationException("Kyvo list invites returned empty body.");
+        }
+
+        public async Task RevokeInviteAsync(
+            string userAccessToken,
+            Guid inviteId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await client.SendAsync(
+                userAccessToken,
+                HttpMethod.Delete,
+                $"{client.V}/Invites/{inviteId}",
+                null,
+                cancellationToken);
+
+            await KyvoHttpResponse.EnsureSuccessAsync(response, cancellationToken);
         }
 
         public async Task<CreatedMembershipIdResponse> AcceptInviteAsync(

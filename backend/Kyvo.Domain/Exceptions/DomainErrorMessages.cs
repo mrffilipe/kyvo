@@ -84,6 +84,10 @@ public static class DomainErrorMessages
         public const string AlreadyConsumed = "Invite was already consumed.";
         public const string Expired = "Invite has expired.";
         public const string EmailMismatch = "Invite email does not match authenticated user.";
+        public const string EncryptedTokenRequired = "Invite encrypted token is required.";
+        public const string AlreadyRevoked = "Invite was already revoked.";
+        public const string CannotRevokeConsumed = "Cannot revoke an invite that was already accepted.";
+        public const string Revoked = "Invite was revoked.";
     }
 
     public static class Application

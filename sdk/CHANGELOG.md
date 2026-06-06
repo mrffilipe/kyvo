@@ -6,6 +6,7 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Tenants: `GET /Tenants/{id}/invites`, `DELETE /Invites/{id}`; `POST` invite returns `InviteMemberResult` / `InviteMemberResponse` with `acceptPath`.
 - Auth: `DELETE /auth/account` (application-scoped account deletion).
 - Tenants: `GET /Tenants/keys/{key}/availability`.
 - Tenant roles: `DELETE /TenantRoles/{id}` for unused custom roles.

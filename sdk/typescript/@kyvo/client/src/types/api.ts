@@ -86,6 +86,24 @@ export interface InviteMemberBody {
   roles: string[]
 }
 
+export interface InviteMemberResponse {
+  id: string
+  acceptPath: string
+}
+
+export type TenantInviteStatus = 'Pending' | 'Accepted' | 'Expired' | 'Revoked'
+
+export interface TenantInviteDto {
+  id: string
+  email: string
+  roles: string[]
+  expiresAt: string
+  consumedAt?: string | null
+  revokedAt?: string | null
+  status: TenantInviteStatus
+  acceptPath?: string | null
+}
+
 export interface AcceptInviteBody {
   token: string
 }

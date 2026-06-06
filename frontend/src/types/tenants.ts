@@ -26,8 +26,22 @@ export interface AcceptInviteBody {
   token: string
 }
 
+export type TenantInviteStatus = 'Pending' | 'Accepted' | 'Expired' | 'Revoked'
+
+export interface TenantInvite {
+  id: string
+  email: string
+  roles: string[]
+  expiresAt: string
+  consumedAt?: string | null
+  revokedAt?: string | null
+  status: TenantInviteStatus
+  acceptPath?: string | null
+}
+
 export interface InviteMemberResponse {
   id: string
+  acceptPath: string
 }
 
 export interface AcceptInviteResponse {
@@ -35,3 +49,5 @@ export interface AcceptInviteResponse {
 }
 
 export type ListTenantsResponse = PagedResult<Tenant>
+
+export type ListTenantInvitesResponse = PagedResult<TenantInvite>

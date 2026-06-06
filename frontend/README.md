@@ -119,7 +119,7 @@ Logout clears `localStorage` and redirects to `GET /connect/logout`.
 | `/profile` | `ProfilePage` | JWT + plat_admin | User profile and memberships |
 | `/sessions` | `SessionsPage` | JWT + plat_admin | List and revoke sessions |
 | `/tenants` | `TenantsPage` | JWT + plat_admin | Tenant CRUD, invites, tenant switching |
-| `/memberships` | `MembershipsPage` | JWT + plat_admin | Memberships of the active tenant |
+| `/memberships` | `MembershipsPage` | JWT + plat_admin | Memberships and pending invites (copy link, revoke) |
 | `/tenant-roles` | `TenantRolesPage` | JWT + plat_admin | Tenant-scoped role configuration |
 | `/applications` | `ApplicationsPage` | JWT + plat_admin | List and create OAuth applications |
 | `/applications/:id` | `ApplicationDetailPage` | JWT + plat_admin | Details, OAuth clients, provisioning |
@@ -171,7 +171,7 @@ src/
 | `platformService.ts` | `getPlatformStatus`, `bootstrapPlatform` |
 | `authService.ts` | `subscribeTenant`, `switchTenant`, `listActiveSessions`, `revokeSession` |
 | `usersService.ts` | `getMe`, `updateMe`, `searchUsers`, `listMyMemberships` |
-| `tenantsService.ts` | `createTenant`, `listTenants`, `getTenantById`, `updateTenant`, `inviteMember`, `acceptInvite` |
+| `tenantsService.ts` | `createTenant`, `listTenants`, `getTenantById`, `updateTenant`, `inviteMember`, `listInvitesByTenant`, `revokeInvite`, `acceptInvite` |
 | `membershipsService.ts` | `createMembership`, `listMembershipsByTenant`, `updateMembershipRole`, `revokeMembership` |
 | `tenantRolesService.ts` | `listTenantRoles`, `createTenantRole`, `updateTenantRole` |
 | `applicationsService.ts` | `createApplication`, `listApplications`, `getApplicationById`, `createApplicationClient`, `provisionApplicationTenant` |

@@ -309,8 +309,14 @@ O `ExternalIdentity.Provider` gravado no banco usa o **alias** do registro (ex.:
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/v1.0/Tenants/keys/{key}/availability` | JWT | Verificar disponibilidade da tenant key |
+| POST | `/v1.0/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Enviar convite; persiste só após SES ok; retorna `id` + `acceptPath` |
+| GET | `/v1.0/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Listar convites (`acceptPath` em pendentes com token cifrado) |
+| DELETE | `/v1.0/Invites/{id}` | JWT (owner/admin/plat_admin) | Revogar convite pendente |
+| POST | `/v1.0/invites/accept` | JWT | Aceitar convite por token |
 
-Memberships, demais CRUD de applications e convites: ver `frontend/swagger.json`.
+Tokens são armazenados com hash (`token_hash`) e cifrados em repouso (`encrypted_token` via Data Protection) para permitir copiar links de convites pendentes. Convites legados sem `encrypted_token` listam com `acceptPath: null`.
+
+Memberships e demais CRUD de applications: ver `frontend/swagger.json`.
 
 ---
 

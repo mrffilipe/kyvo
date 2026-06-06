@@ -117,7 +117,7 @@ O logout limpa o `localStorage` e redireciona para `GET /connect/logout`.
 | `/profile` | `ProfilePage` | JWT + plat_admin | Perfil e memberships do usuário |
 | `/sessions` | `SessionsPage` | JWT + plat_admin | Listar e revogar sessões |
 | `/tenants` | `TenantsPage` | JWT + plat_admin | CRUD de tenants, convites, switch de tenant |
-| `/memberships` | `MembershipsPage` | JWT + plat_admin | Memberships do tenant ativo |
+| `/memberships` | `MembershipsPage` | JWT + plat_admin | Memberships e convites pendentes (copiar link, revogar) |
 | `/tenant-roles` | `TenantRolesPage` | JWT + plat_admin | Papéis configuráveis do tenant |
 | `/applications` | `ApplicationsPage` | JWT + plat_admin | Listar e criar applications OAuth |
 | `/applications/:id` | `ApplicationDetailPage` | JWT + plat_admin | Detalhes, clients OAuth, provisioning |

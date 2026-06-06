@@ -7,8 +7,10 @@ import type {
   CreateTenantBody,
   InviteMemberBody,
   InviteMemberResponse,
+  ListTenantInvitesResponse,
   ListTenantsResponse,
   Tenant,
+  TenantInvite,
   UpdateTenantBody,
 } from '../types'
 import { apiPaths } from './httpPaths'
@@ -53,6 +55,42 @@ export async function updateTenant(id: string, body: UpdateTenantBody): Promise<
 export async function inviteMember(id: string, body: InviteMemberBody): Promise<InviteMemberResponse> {
   const { data } = await api.post<InviteMemberResponse>(`${apiPaths.tenants}/${id}/invites`, body)
   return data
+}
+
+export interface ListTenantInvitesParams {
+  page?: number
+  pageSize?: number
+}
+
+function normalizeTenantInvite(item: unknown): TenantInvite {
+  const raw = item as Record<string, unknown>
+  return {
+    id: String(raw.id),
+    email: String(raw.email ?? ''),
+    roles: Array.isArray(raw.roles) ? raw.roles.map(String) : [],
+    expiresAt: String(raw.expiresAt),
+    consumedAt: raw.consumedAt != null ? String(raw.consumedAt) : null,
+    revokedAt: raw.revokedAt != null ? String(raw.revokedAt) : null,
+    status: String(raw.status) as TenantInvite['status'],
+    acceptPath: raw.acceptPath != null ? String(raw.acceptPath) : null,
+  }
+}
+
+export async function listInvitesByTenant(
+  tenantId: string,
+  params: ListTenantInvitesParams = {},
+): Promise<ListTenantInvitesResponse> {
+  const { data } = await api.get(`${apiPaths.tenants}/${tenantId}/invites`, {
+    params: {
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  })
+  return unwrapPagedResult(data, normalizeTenantInvite)
+}
+
+export async function revokeInvite(inviteId: string): Promise<void> {
+  await api.delete(`${apiPaths.invites}/${inviteId}`)
 }
 
 export async function acceptInvite(body: AcceptInviteBody): Promise<AcceptInviteResponse> {

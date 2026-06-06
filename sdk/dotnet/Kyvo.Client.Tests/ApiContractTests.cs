@@ -20,6 +20,8 @@ public sealed class ApiContractTests
     [InlineData($"{V}/auth/account")]
     [InlineData($"{V}/AuditLogs/filter-options")]
     [InlineData($"{V}/invites/accept")]
+    [InlineData($"{V}/Tenants/{{tenantId}}/invites")]
+    [InlineData($"{V}/Invites/{{id}}")]
     [InlineData($"{V}/tenants/{{tenantId}}/memberships")]
     [InlineData($"{V}/tenants/{{tenantId}}/roles")]
     [InlineData($"{V}/Memberships/{{id}}")]

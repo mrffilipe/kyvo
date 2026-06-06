@@ -16,7 +16,13 @@ public interface ITenantService
 
     Task<AvailabilityDto> IsKeyAvailableAsync(string key, CancellationToken cancellationToken = default);
 
-    Task<Guid> InviteMemberAsync(InviteMemberRequest request, CancellationToken cancellationToken = default);
+    Task<InviteMemberResult> InviteMemberAsync(InviteMemberRequest request, CancellationToken cancellationToken = default);
 
     Task<Guid> AcceptInviteAsync(AcceptInviteRequest request, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<TenantInviteDto>> ListInvitesByTenantAsync(
+        ListInvitesByTenantRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task RevokeInviteAsync(RevokeInviteRequest request, CancellationToken cancellationToken = default);
 }

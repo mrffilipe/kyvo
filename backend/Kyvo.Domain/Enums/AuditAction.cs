@@ -12,5 +12,6 @@ public enum AuditAction
     MembershipRevoked = 7,
     MembershipRoleUpdated = 8,
     InviteCreated = 9,
-    InviteAccepted = 10
+    InviteAccepted = 10,
+    InviteRevoked = 11
 }

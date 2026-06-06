@@ -1,6 +1,7 @@
 using Kyvo.Application.Interfaces;
 using Kyvo.Application.Services.Auth;
 using Kyvo.Application.Services.Email;
+using Kyvo.Application.Services.Security;
 using Kyvo.Application.Services.RefreshTokenHasher;
 using Kyvo.Application.Services.Registration;
 using Kyvo.Application.Services.TenantResolutionCache;
@@ -9,6 +10,7 @@ using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Application.Services.UserScope;
 using Kyvo.Infrastructure.Services.Auth;
 using Kyvo.Infrastructure.Services.Email;
+using Kyvo.Infrastructure.Services.Security;
 using Kyvo.Infrastructure.Services.Invite;
 using Kyvo.Infrastructure.Services.RefreshTokenHasher;
 using Kyvo.Infrastructure.Services.Registration;
@@ -30,6 +32,7 @@ public static class ServiceExtensions
         services.AddScoped<ITenantRoleResolver, TenantRoleResolver>();
         services.AddScoped<ITenantResolutionCache, DistributedTenantResolutionCache>();
         services.AddScoped<IEmailService, AwsSesEmailService>();
+        services.AddSingleton<IInviteTokenProtector, InviteTokenProtector>();
         services.AddScoped<IInvitePolicy, InvitePolicy>();
         services.AddScoped<ITenantAccountEligibilityService, TenantAccountEligibilityService>();
         services.AddScoped<ITenantDeletionService, TenantDeletionService>();

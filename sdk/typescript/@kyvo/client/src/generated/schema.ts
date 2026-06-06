@@ -1403,6 +1403,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v{version}/Auth/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deletes the authenticated user's account for the current application tenant context. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    version: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v{version}/Auth/sessions/{sessionId}": {
         parameters: {
             query?: never;
@@ -3118,7 +3163,42 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Lists invites for a tenant. */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                    version: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TenantInviteDtoPagedResult"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         put?: never;
         /** Sends an invitation to join the tenant. */
         post: {
@@ -3145,7 +3225,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["CreatedIdResponse"];
+                        "application/json": components["schemas"]["InviteMemberResponse"];
                     };
                 };
                 /** @description Validation or malformed request. */
@@ -3205,6 +3285,52 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v{version}/Invites/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revokes a pending tenant invite. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    version: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -4136,6 +4262,36 @@ export interface components {
         IdentityProviderType: "Local" | "Firebase" | "Cognito" | "Generic";
         /** @enum {string} */
         IdpCapability: "LocalPassword" | "GoogleSocial" | "MicrosoftSocial" | "AppleSocial" | "GenericOidc";
+        InviteMemberResponse: {
+            /** Format: uuid */
+            id?: string;
+            acceptPath?: string | null;
+        };
+        TenantInviteDto: {
+            /** Format: uuid */
+            id?: string;
+            email?: string | null;
+            roles?: string[] | null;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            consumedAt?: string | null;
+            /** Format: date-time */
+            revokedAt?: string | null;
+            status?: components["schemas"]["TenantInviteStatus"];
+            acceptPath?: string | null;
+        };
+        TenantInviteDtoPagedResult: {
+            items: components["schemas"]["TenantInviteDto"][] | null;
+            /** Format: int32 */
+            total?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+        };
+        /** @enum {string} */
+        TenantInviteStatus: "Pending" | "Accepted" | "Expired" | "Revoked";
         InviteMemberRequest: {
             /** Format: uuid */
             tenantId?: string;

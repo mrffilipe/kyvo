@@ -1,4 +1,5 @@
 using Kyvo.Domain.Common;
+using Kyvo.Domain.Enums;
 using Kyvo.Domain.Exceptions;
 using Kyvo.Domain.Rules;
 using Kyvo.Domain.ValueObjects;
@@ -9,8 +10,10 @@ public sealed class TenantInvite : TenantEntity
 {
     public EmailAddress Email { get; private set; } = null!;
     public string TokenHash { get; private set; } = string.Empty;
+    public string? EncryptedToken { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public DateTime? ConsumedAt { get; private set; }
+    public DateTime? RevokedAt { get; private set; }
     public Guid InvitedByUserId { get; private set; }
 
     public ICollection<TenantInviteRole> Roles { get; private set; } = new List<TenantInviteRole>();
@@ -24,6 +27,7 @@ public sealed class TenantInvite : TenantEntity
         string email,
         IEnumerable<TenantRole> roles,
         string tokenHash,
+        string encryptedToken,
         DateTime expiresAt,
         Guid invitedByUserId) : base(tenantId)
     {
@@ -37,8 +41,14 @@ public sealed class TenantInvite : TenantEntity
             throw new DomainValidationException(DomainErrorMessages.TenantInvite.TokenHashRequired);
         }
 
+        if (string.IsNullOrWhiteSpace(encryptedToken))
+        {
+            throw new DomainValidationException(DomainErrorMessages.TenantInvite.EncryptedTokenRequired);
+        }
+
         Email = new EmailAddress(email);
         TokenHash = tokenHash.Trim();
+        EncryptedToken = encryptedToken.Trim();
         ExpiresAt = expiresAt;
         InvitedByUserId = invitedByUserId;
         ReplaceRoles(roles);
@@ -48,6 +58,30 @@ public sealed class TenantInvite : TenantEntity
 
     public bool IsConsumed() => ConsumedAt.HasValue;
 
+    public bool IsRevoked() => RevokedAt.HasValue;
+
+    public bool IsPending() => !IsConsumed() && !IsRevoked() && !IsExpired();
+
+    public TenantInviteStatus GetStatus()
+    {
+        if (IsConsumed())
+        {
+            return TenantInviteStatus.Accepted;
+        }
+
+        if (IsRevoked())
+        {
+            return TenantInviteStatus.Revoked;
+        }
+
+        if (IsExpired())
+        {
+            return TenantInviteStatus.Expired;
+        }
+
+        return TenantInviteStatus.Pending;
+    }
+
     public void Consume()
     {
         if (IsConsumed())
@@ -56,6 +90,21 @@ public sealed class TenantInvite : TenantEntity
         }
 
         ConsumedAt = DateTime.UtcNow;
+    }
+
+    public void Revoke()
+    {
+        if (IsConsumed())
+        {
+            throw new DomainBusinessRuleException(DomainErrorMessages.TenantInvite.CannotRevokeConsumed);
+        }
+
+        if (IsRevoked())
+        {
+            throw new DomainBusinessRuleException(DomainErrorMessages.TenantInvite.AlreadyRevoked);
+        }
+
+        RevokedAt = DateTime.UtcNow;
     }
 
     public void ReplaceRoles(IEnumerable<TenantRole> roles)

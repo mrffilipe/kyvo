@@ -315,8 +315,14 @@ The stored `ExternalIdentity.Provider` uses the **alias** of the record (e.g., `
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | `/v1.0/Tenants/keys/{key}/availability` | JWT | Check tenant key availability |
+| POST | `/v1.0/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Send invite; persists only after SES succeeds; returns `id` + `acceptPath` |
+| GET | `/v1.0/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | List tenant invites (`acceptPath` on pending invites with encrypted token) |
+| DELETE | `/v1.0/Invites/{id}` | JWT (owner/admin/plat_admin) | Revoke a pending invite |
+| POST | `/v1.0/invites/accept` | JWT | Accept invite by token |
 
-Memberships, additional application CRUD, and tenant invite flows: see `frontend/swagger.json`.
+Invite tokens are stored hashed (`token_hash`) for validation and encrypted at rest (`encrypted_token` via Data Protection) so admins can copy pending invite links. Legacy invites without `encrypted_token` list with `acceptPath: null`.
+
+Memberships and additional application CRUD: see `frontend/swagger.json`.
 
 ---
 

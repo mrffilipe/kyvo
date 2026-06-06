@@ -11,6 +11,7 @@ export const AUDIT_ACTION_OPTIONS = [
   { value: 'MembershipRoleUpdated', label: 'Papel do membro atualizado' },
   { value: 'InviteCreated', label: 'Convite criado' },
   { value: 'InviteAccepted', label: 'Convite aceito' },
+  { value: 'InviteRevoked', label: 'Convite revogado' },
 ] as const
 
 /** Nome da entidade em audit_logs.resource_type. */

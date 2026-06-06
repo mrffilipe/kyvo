@@ -32,7 +32,7 @@ SDK for **product applications** (SPAs and consumer APIs), not the admin console
 | Auth | switch-tenant, sessions, revoke session, **delete account** | Yes | Yes |
 | Auth | subscribe | **No** | **Yes** |
 | Users | me, me/memberships, PATCH me | Yes | Yes |
-| Tenants | list (+ optional `search`), get, patch, **key availability**, invites, accept invite | Yes | Yes |
+| Tenants | list (+ optional `search`), get, patch, **key availability**, invite (`acceptPath`), **list/revoke invites**, accept invite | Yes | Yes |
 | Memberships | CRUD under `/tenants/{id}/memberships` | Yes | Yes |
 | Tenant roles | list/create under tenant; patch role; **delete** custom role | Yes | Yes |
 | Audit logs | list + **filter-options** (filters: userId, action, resourceType, from, to) | Yes | Yes |

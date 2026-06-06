@@ -235,7 +235,7 @@ No painel, vá em **Tenants** → **Criar tenant**. Informe nome e chave única 
 
 ### Convidar membros
 
-Dentro de um tenant, acesse **Tenants** → selecione o tenant → **Convidar membro**. Um link será enviado por e-mail (configure AWS SES em `Email.*` para envio real; em dev o convite é gerado mas não enviado).
+Dentro de um tenant, acesse **Tenants** → **Convidar membro** (ou **Membros** para gerenciar convites pendentes). O AWS SES deve estar configurado em `Email.*` — se o envio falhar, **nenhum convite é persistido**. Em caso de sucesso, a API retorna `acceptPath` (ex.: `/accept-invite?token=…`); copie a URL completa no console ou em **Membros** → convites pendentes.
 
 ### Registrar uma application OAuth
 

@@ -1,5 +1,6 @@
 import AddIcon from '@mui/icons-material/Add'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -46,6 +47,7 @@ import type { Tenant, UserPickerItem } from '../types'
 import { getAuthSession, updateSessionFromOidcRefresh } from '../utils/authStorage'
 import { getApiErrorMessage } from '../utils/apiError'
 import { tenantRoleLabel } from '../utils/enumLabels'
+import { copyInviteLink } from '../utils/inviteUrl'
 import { isValidTenantKey, normalizeTenantKeyInput } from '../utils/tenantKeyValidation'
 
 const tenantKeyAvailabilityMessages = {
@@ -65,6 +67,7 @@ export function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [lastInviteAcceptPath, setLastInviteAcceptPath] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -205,7 +208,8 @@ export function TenantsPage() {
     setSuccess(null)
     try {
       const result = await inviteMember(inviteTenant.id, { email, roles: [inviteRole] })
-      setSuccess(`Convite enviado: ${result.id}`)
+      setLastInviteAcceptPath(result.acceptPath)
+      setSuccess(`Convite enviado para ${email}.`)
       setInviteOpen(false)
       setInviteUser(null)
       setInviteEmail('')
@@ -276,6 +280,21 @@ export function TenantsPage() {
         }
       />
       <FeedbackAlerts success={success} error={error} />
+      {lastInviteAcceptPath ? (
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Button
+            size="small"
+            startIcon={<ContentCopyIcon />}
+            onClick={() => {
+              void copyInviteLink(lastInviteAcceptPath).then(() => {
+                setSuccess('Link do convite copiado.')
+              })
+            }}
+          >
+            Copiar link do convite
+          </Button>
+        </Stack>
+      ) : null}
 
       <SectionCard title="Tenants cadastrados">
         <DataTable

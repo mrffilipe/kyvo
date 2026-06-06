@@ -236,7 +236,7 @@ In the admin console go to **Tenants** → **Create tenant**. Provide a name and
 
 ### Invite members
 
-Inside a tenant, navigate to **Tenants** → select the tenant → **Invite member**. A link is emailed (configure AWS SES under `Email.*` for real delivery; in dev the invite is generated but not sent).
+Inside a tenant, navigate to **Tenants** → **Invite member** (or open **Memberships** to manage pending invites). AWS SES must be configured under `Email.*` for delivery — if email sending fails, **no invite is persisted**. On success, the API returns `acceptPath` (e.g. `/accept-invite?token=…`); copy the full URL from the admin console or from **Memberships** → pending invites.
 
 ### Register an OAuth application
 

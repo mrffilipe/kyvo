@@ -28,6 +28,13 @@ public sealed class TenantInviteConfiguration : TenantEntityConfiguration<Tenant
             .HasMaxLength(500)
             .IsRequired();
 
+        builder.Property(x => x.EncryptedToken)
+            .HasColumnName("encrypted_token")
+            .HasMaxLength(2048);
+
+        builder.Property(x => x.RevokedAt)
+            .HasColumnName("revoked_at");
+
         builder.Property(x => x.ExpiresAt)
             .HasColumnName("expires_at")
             .IsRequired();

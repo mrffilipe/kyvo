@@ -21,10 +21,14 @@ public sealed class AwsSesEmailService : IEmailService
         string toEmail,
         string tenantName,
         string inviteToken,
+        string acceptPath,
         CancellationToken cancellationToken = default)
     {
         var subject = $"Invite to {tenantName}";
-        var body = $"You were invited to join {tenantName}. Use this token to accept the invite: {inviteToken}";
+        var body =
+            $"You were invited to join {tenantName}.\n\n" +
+            $"Use this link path on your Kyvo console: {acceptPath}\n\n" +
+            $"Or use this token to accept the invite: {inviteToken}";
 
         var request = new SendEmailRequest
         {

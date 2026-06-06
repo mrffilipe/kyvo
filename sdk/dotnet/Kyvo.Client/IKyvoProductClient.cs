@@ -77,10 +77,22 @@ public interface IKyvoTenantsApi
         UpdateTenantBody body,
         CancellationToken cancellationToken = default);
 
-    Task<CreatedIdResponse> InviteMemberAsync(
+    Task<InviteMemberResult> InviteMemberAsync(
         string userAccessToken,
         Guid tenantId,
         InviteMemberBody body,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<TenantInviteDto>> ListInvitesAsync(
+        string userAccessToken,
+        Guid tenantId,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken cancellationToken = default);
+
+    Task RevokeInviteAsync(
+        string userAccessToken,
+        Guid inviteId,
         CancellationToken cancellationToken = default);
 
     Task<CreatedMembershipIdResponse> AcceptInviteAsync(

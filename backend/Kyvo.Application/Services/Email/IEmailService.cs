@@ -6,5 +6,6 @@ public interface IEmailService
         string toEmail,
         string tenantName,
         string inviteToken,
+        string acceptPath,
         CancellationToken cancellationToken = default);
 }

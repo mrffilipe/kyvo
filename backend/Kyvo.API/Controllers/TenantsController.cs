@@ -47,14 +47,14 @@ public sealed class TenantsController : V1ApiControllerBase
     /// Sends an invitation to join the tenant.
     /// </summary>
     [HttpPost("{id:guid}/invites")]
-    [ProducesResponseType(typeof(CreatedIdResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(InviteMemberResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CreatedIdResponse>> InviteMember(
+    public async Task<ActionResult<InviteMemberResponse>> InviteMember(
         Guid id,
         [FromBody] InviteMemberRequest request,
         CancellationToken cancellationToken)
     {
-        var inviteId = await _tenantService.InviteMemberAsync(
+        var result = await _tenantService.InviteMemberAsync(
             request with
             {
                 TenantId = id,
@@ -64,7 +64,30 @@ public sealed class TenantsController : V1ApiControllerBase
             },
             cancellationToken);
 
-        return Ok(new CreatedIdResponse(inviteId));
+        return Ok(new InviteMemberResponse(result.Id, result.AcceptPath));
+    }
+
+    /// <summary>
+    /// Lists invites for a tenant.
+    /// </summary>
+    [HttpGet("{id:guid}/invites")]
+    [ProducesResponseType(typeof(PagedResult<TenantInviteDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PagedResult<TenantInviteDto>>> ListInvitesByTenant(
+        Guid id,
+        [FromQuery] ListInvitesByTenantRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _tenantService.ListInvitesByTenantAsync(
+            request with
+            {
+                TenantId = id,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
+            cancellationToken);
+
+        return Ok(result);
     }
 
     /// <summary>

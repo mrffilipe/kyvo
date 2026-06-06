@@ -12,6 +12,13 @@ const clientTypeLabels: Record<ClientTypeValue, string> = {
   [ClientType.Confidential]: 'Confidencial',
 }
 
+const tenantInviteStatusLabels: Record<string, string> = {
+  Pending: 'Pendente',
+  Accepted: 'Aceito',
+  Expired: 'Expirado',
+  Revoked: 'Revogado',
+}
+
 const sessionStatusLabels: Record<SessionStatusValue, string> = {
   [SessionStatus.Active]: 'Ativa',
   [SessionStatus.Revoked]: 'Revogada',
@@ -89,4 +96,11 @@ export function tenantRoleDisplayName(role: { key: string; name: string; isSyste
     return tenantRoleLabel(role.key)
   }
   return role.name?.trim() ? role.name : tenantRoleLabel(role.key)
+}
+
+export function tenantInviteStatusLabel(status: string | undefined): string {
+  if (!status) {
+    return '—'
+  }
+  return tenantInviteStatusLabels[status] ?? status
 }

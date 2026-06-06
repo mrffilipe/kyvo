@@ -18,7 +18,7 @@ Overview and endpoint matrix: [../README.md](../README.md).
 ├── session/            SessionManager
 ├── claims/             JWT helpers (tid, trole, prole)
 ├── api/                HTTP client + paths
-└── resources/          auth (+ deleteAccount), users, tenants (+ key availability), memberships, tenantRoles (+ delete), auditLogs (+ filter-options)
+└── resources/          auth (+ deleteAccount), users, tenants (+ key availability, list/revoke invites), memberships, tenantRoles (+ delete), auditLogs (+ filter-options)
 ```
 
 `auth/subscribe` is omitted by design (server / `Kyvo.Client` only).

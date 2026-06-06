@@ -3,12 +3,14 @@ using Kyvo.Application.Exceptions;
 using Kyvo.Application.Interfaces;
 using Kyvo.Application.Services.Email;
 using Kyvo.Application.Services.RefreshTokenHasher;
+using Kyvo.Application.Services.Security;
 using Kyvo.Application.Services.Tenant;
 using Kyvo.Application.Services.TenantResolutionCache;
 using Kyvo.Application.Services.TenantRoles;
 using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Domain.Constants;
 using Kyvo.Domain.Entities;
+using Kyvo.Domain.Enums;
 using Kyvo.Domain.Exceptions;
 using Kyvo.Domain.Repositories;
 using Kyvo.Domain.ValueObjects;
@@ -28,6 +30,7 @@ public sealed class TenantService : ITenantService
     private readonly IInvitePolicy _policy;
     private readonly ITenantRoleResolver _roleResolver;
     private readonly IEmailService _emailService;
+    private readonly IInviteTokenProtector _inviteTokenProtector;
     private readonly ITenantResolutionCache _tenantResolutionCache;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ApplicationDbContext _context;
@@ -42,6 +45,7 @@ public sealed class TenantService : ITenantService
         IInvitePolicy policy,
         ITenantRoleResolver roleResolver,
         IEmailService emailService,
+        IInviteTokenProtector inviteTokenProtector,
         ITenantResolutionCache tenantResolutionCache,
         IUnitOfWork unitOfWork,
         ApplicationDbContext context)
@@ -55,6 +59,7 @@ public sealed class TenantService : ITenantService
         _policy = policy;
         _roleResolver = roleResolver;
         _emailService = emailService;
+        _inviteTokenProtector = inviteTokenProtector;
         _tenantResolutionCache = tenantResolutionCache;
         _unitOfWork = unitOfWork;
         _context = context;
@@ -268,7 +273,7 @@ public sealed class TenantService : ITenantService
         };
     }
 
-    public async Task<Guid> InviteMemberAsync(InviteMemberRequest request, CancellationToken cancellationToken = default)
+    public async Task<InviteMemberResult> InviteMemberAsync(InviteMemberRequest request, CancellationToken cancellationToken = default)
     {
         var isPlatformAdministrator = request.ActorPlatformRoles
             .Any(role => PlatformRoleDefaults.AdministrativeKeys.Contains(role));
@@ -299,19 +304,73 @@ public sealed class TenantService : ITenantService
             cancellationToken);
 
         var rawToken = GenerateToken();
+        var acceptPath = InviteAcceptPath.Build(rawToken);
+
+        await _emailService.SendInviteAsync(
+            request.Email.Trim(),
+            tenant.Name,
+            rawToken,
+            acceptPath,
+            cancellationToken);
+
         var invite = new TenantInvite(
             request.TenantId,
             request.Email,
             roles,
             _hasher.Hash(rawToken),
+            _inviteTokenProtector.Protect(rawToken),
             DateTime.UtcNow.AddHours(_policy.ExpirationHours),
             request.InvitedByUserId);
 
         await _invites.AddAsync(invite, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        await _emailService.SendInviteAsync(invite.Email.Value, tenant.Name, rawToken, cancellationToken);
 
-        return invite.Id;
+        return new InviteMemberResult(invite.Id, acceptPath);
+    }
+
+    public async Task<PagedResult<TenantInviteDto>> ListInvitesByTenantAsync(
+        ListInvitesByTenantRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureTenantAdministrativeAccessAsync(
+            request.TenantId,
+            request.ActorUserId,
+            request.ActorPlatformRoles,
+            cancellationToken);
+
+        var page = request.Page <= 0 ? 1 : request.Page;
+        var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
+
+        var (items, total) = await _invites.ListByTenantIdAsync(
+            request.TenantId,
+            page,
+            pageSize,
+            cancellationToken);
+
+        var dtos = items.Select(MapInviteToDto).ToList();
+
+        return new PagedResult<TenantInviteDto>
+        {
+            Items = dtos,
+            Total = total,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task RevokeInviteAsync(RevokeInviteRequest request, CancellationToken cancellationToken = default)
+    {
+        var invite = await _invites.GetForUpdateAsync(request.InviteId, cancellationToken)
+            ?? throw new DomainNotFoundException(DomainErrorMessages.TenantInvite.InviteNotFound);
+
+        await EnsureTenantAdministrativeAccessAsync(
+            invite.TenantId,
+            request.ActorUserId,
+            request.ActorPlatformRoles,
+            cancellationToken);
+
+        invite.Revoke();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<Guid> AcceptInviteAsync(AcceptInviteRequest request, CancellationToken cancellationToken = default)
@@ -328,6 +387,11 @@ public sealed class TenantService : ITenantService
         if (invite.IsExpired())
         {
             throw new DomainBusinessRuleException(DomainErrorMessages.TenantInvite.Expired);
+        }
+
+        if (invite.IsRevoked())
+        {
+            throw new DomainBusinessRuleException(DomainErrorMessages.TenantInvite.Revoked);
         }
 
         var user = await _users.GetForUpdateAsync(request.ActorUserId, cancellationToken)
@@ -366,5 +430,64 @@ public sealed class TenantService : ITenantService
         var bytes = new byte[64];
         System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
         return Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+    }
+
+    private async Task EnsureTenantAdministrativeAccessAsync(
+        Guid tenantId,
+        Guid actorUserId,
+        IReadOnlyList<string> actorPlatformRoles,
+        CancellationToken cancellationToken)
+    {
+        var isPlatformAdministrator = actorPlatformRoles
+            .Any(role => PlatformRoleDefaults.AdministrativeKeys.Contains(role));
+
+        if (isPlatformAdministrator)
+        {
+            return;
+        }
+
+        var membership = await _memberships.GetByUserIdAndTenantIdWithRolesAsync(
+            actorUserId,
+            tenantId,
+            cancellationToken);
+
+        var hasAdministrativeRole = membership is not null
+            && membership.IsActive
+            && membership.Roles.Any(role => TenantRoleDefaults.AdministrativeKeys.Contains(role.Role.Key.Value));
+
+        if (!hasAdministrativeRole)
+        {
+            throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.UserHasNoTenantAccess);
+        }
+    }
+
+    private TenantInviteDto MapInviteToDto(TenantInvite invite)
+    {
+        var status = invite.GetStatus();
+        string? acceptPath = null;
+
+        if (status == TenantInviteStatus.Pending
+            && !string.IsNullOrWhiteSpace(invite.EncryptedToken))
+        {
+            try
+            {
+                var rawToken = _inviteTokenProtector.Unprotect(invite.EncryptedToken);
+                acceptPath = InviteAcceptPath.Build(rawToken);
+            }
+            catch (InvalidOperationException)
+            {
+                acceptPath = null;
+            }
+        }
+
+        return new TenantInviteDto(
+            invite.Id,
+            invite.Email.Value,
+            invite.Roles.Select(x => x.Role.Key.Value).ToList(),
+            invite.ExpiresAt,
+            invite.ConsumedAt,
+            invite.RevokedAt,
+            status,
+            acceptPath);
     }
 }
