@@ -34,4 +34,4 @@ npm run generate:types   # requires ../swagger-v1.json (see parent README)
 
 ## Local consumers
 
-[Pulse CRM](../../samples/pulse-crm/frontend/) consumes `@kyvo-client/client` from npm (`^1.0.1`). For monorepo SDK development, temporarily use `file:` in the sample or link with `npm pack`.
+[Pulse CRM](../../samples/pulse-crm/frontend/) consumes `@kyvo-client/client` from npm (`^1.0.2`). For monorepo SDK development, temporarily use `file:` in the sample or link with `npm pack`.

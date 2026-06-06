@@ -70,8 +70,8 @@ Open http://localhost:5173
 
 | App | Packages | Install |
 |-----|----------|---------|
-| SPA | `@kyvo-client/client@^1.0.1` | `npm install` in `frontend/` (from [npm](https://www.npmjs.com/package/@kyvo-client/client)) |
-| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `1.0.1` | `dotnet restore` in `backend/PulseCrm.Api` (from [NuGet](https://www.nuget.org/packages?q=Kyvo)) |
+| SPA | `@kyvo-client/client@^1.0.2` | `npm install` in `frontend/` (from [npm](https://www.npmjs.com/package/@kyvo-client/client)) |
+| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `1.0.2` | `dotnet restore` in `backend/PulseCrm.Api` (from [NuGet](https://www.nuget.org/packages?q=Kyvo)) |
 
 To develop against SDK sources in the monorepo instead, swap back to `file:` / `ProjectReference` — see [sdk/README.md](../../sdk/README.md).
 

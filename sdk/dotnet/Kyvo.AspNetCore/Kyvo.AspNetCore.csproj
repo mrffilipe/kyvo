@@ -6,16 +6,24 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Kyvo.AspNetCore</RootNamespace>
     <AssemblyName>Kyvo.AspNetCore</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.0.2</Version>
     <PackageId>Kyvo.AspNetCore</PackageId>
     <IsPackable>true</IsPackable>
-    <Description>JWT authentication and user context for Kyvo product APIs.</Description>
-    <Authors>Kyvo</Authors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Description>JWT authentication and user context for Kyvo product APIs. Validates access tokens, exposes IKyvoUserContext, and provides authorization policies.</Description>
+    <PackageTags>kyvo;oidc;jwt;authentication;aspnetcore;identity;multi-tenant</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

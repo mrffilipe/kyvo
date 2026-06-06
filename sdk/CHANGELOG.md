@@ -4,6 +4,8 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-06-06
+
 ### Added
 
 - Tenants: `GET /Tenants/{id}/invites`, `DELETE /Invites/{id}`; `POST` invite returns `InviteMemberResult` / `InviteMemberResponse` with `acceptPath`.
@@ -11,6 +13,8 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 - Tenants: `GET /Tenants/keys/{key}/availability`.
 - Tenant roles: `DELETE /TenantRoles/{id}` for unused custom roles.
 - Audit logs: `GET /AuditLogs/filter-options`.
+- NuGet package readme and icon; XML API documentation on .NET packages.
+- npm package readme with install guide and API surface overview.
 
 ### Fixed
 
@@ -21,6 +25,8 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - npm package renamed from `@kyvo/client` to **`@kyvo-client/client`** (org [kyvo-client](https://www.npmjs.com/org/kyvo-client) on npm).
+- Repository URL updated to `https://github.com/mrffilipe/kyvo`.
+- NuGet metadata: `RepositoryUrl`, `PackageProjectUrl`, `PackageLicenseExpression`, package icon.
 
 ## [1.0.0] - 2026-05-30
 

@@ -17,9 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Kyvo.AspNetCore" Version="1.0.1" />
-    <PackageReference Include="Kyvo.AspNetCore.TenancyKit" Version="1.0.1" />
-    <PackageReference Include="Kyvo.Client" Version="1.0.1" />
+    <PackageReference Include="Kyvo.AspNetCore" Version="1.0.2" />
+    <PackageReference Include="Kyvo.AspNetCore.TenancyKit" Version="1.0.2" />
+    <PackageReference Include="Kyvo.Client" Version="1.0.2" />
   </ItemGroup>
 
 </Project>

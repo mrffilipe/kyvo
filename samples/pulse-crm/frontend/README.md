@@ -16,7 +16,7 @@ Consumer SPA for the Pulse CRM sample. It drives the standard OIDC **authorizati
 | React | 19 | UI |
 | React Router | 7 | Routing (loaders + `RequireAuth`) |
 | Material UI | 9 | Design system |
-| `@kyvo-client/client` | npm `^1.0.1` | OIDC (PKCE), session, JWT claims, `users.getMe()`, token refresh |
+| `@kyvo-client/client` | npm `^1.0.2` | OIDC (PKCE), session, JWT claims, `users.getMe()`, token refresh |
 | Axios | 1.x | Pulse CRM API only (not Kyvo REST) |
 | TypeScript | 6 | Static typing |
 | Vite | 8 | Dev server and build |
@@ -59,7 +59,7 @@ npm run lint
 npm run preview
 ```
 
-The app consumes `@kyvo-client/client` from npm (`npm install` resolves `^1.0.1`).
+The app consumes `@kyvo-client/client` from npm (`npm install` resolves `^1.0.2`).
 
 ---
 

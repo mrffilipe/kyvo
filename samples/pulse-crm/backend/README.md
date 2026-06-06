@@ -55,7 +55,7 @@ Useful access-token claims:
 
 No `tid` after login: the user has not subscribed yet, or has not refreshed the token.
 
-## 4. Kyvo SDK packages (NuGet `1.0.1`)
+## 4. Kyvo SDK packages (NuGet `1.0.2`)
 
 | Package | Role in this API |
 |---------|------------------|

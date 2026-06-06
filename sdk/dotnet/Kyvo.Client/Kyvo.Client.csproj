@@ -5,12 +5,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Kyvo.Client</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.0.2</Version>
     <PackageId>Kyvo.Client</PackageId>
     <AssemblyName>Kyvo.Client</AssemblyName>
     <IsPackable>true</IsPackable>
-    <Description>Typed HTTP client for Kyvo product REST API v1.</Description>
-    <Authors>Kyvo</Authors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Description>Typed HTTP client for Kyvo product REST API v1. Use from a BFF to call SubscribeAsync and other server-side endpoints with the user's access token.</Description>
+    <PackageTags>kyvo;oidc;rest;httpclient;identity;multi-tenant;bff</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +25,11 @@
     <ProjectReference Include="..\Kyvo.AspNetCore\Kyvo.AspNetCore.csproj">
       <PrivateAssets>none</PrivateAssets>
     </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

@@ -55,7 +55,7 @@ Claims úteis no access token:
 
 Sem `tid` após login: o usuário ainda não fez subscribe ou não renovou o token.
 
-## 4. Pacotes SDK Kyvo (NuGet `1.0.1`)
+## 4. Pacotes SDK Kyvo (NuGet `1.0.2`)
 
 | Pacote | Papel nesta API |
 |--------|-----------------|

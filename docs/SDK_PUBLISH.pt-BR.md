@@ -118,7 +118,7 @@ cd sdk/typescript && npm ci && npm test
 ### 2. NuGet
 
 ```bash
-VERSION=1.0.0
+VERSION=1.0.2
 OUT=./artifacts/nupkgs
 mkdir -p "$OUT"
 
@@ -138,7 +138,7 @@ Empacote **Kyvo.AspNetCore** primeiro; `Kyvo.Client` e `Kyvo.AspNetCore.TenancyK
 
 ```bash
 cd sdk/typescript/@kyvo/client
-npm version 1.0.0 --no-git-tag-version --allow-same-version
+npm version 1.0.2 --no-git-tag-version --allow-same-version
 npm run build
 npm publish --access public
 ```
@@ -152,15 +152,15 @@ Login local: `npm login` (ou `NODE_AUTH_TOKEN`).
 ### TypeScript / Node
 
 ```bash
-npm install @kyvo-client/client@1.0.0
+npm install @kyvo-client/client@1.0.2
 ```
 
 ### .NET
 
 ```bash
-dotnet add package Kyvo.Client --version 1.0.0
-dotnet add package Kyvo.AspNetCore --version 1.0.0
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 1.0.0
+dotnet add package Kyvo.Client --version 1.0.2
+dotnet add package Kyvo.AspNetCore --version 1.0.2
+dotnet add package Kyvo.AspNetCore.TenancyKit --version 1.0.2
 ```
 
 ---

@@ -70,8 +70,8 @@ Abra http://localhost:5173
 
 | App | Pacotes | Instalação |
 |-----|---------|------------|
-| SPA | `@kyvo-client/client@^1.0.1` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
-| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `1.0.1` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
+| SPA | `@kyvo-client/client@^1.0.2` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
+| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `1.0.2` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
 
 Para desenvolver contra os fontes do SDK no monorepo, volte a `file:` / `ProjectReference` — ver [sdk/README.md](../../sdk/README.md).
 

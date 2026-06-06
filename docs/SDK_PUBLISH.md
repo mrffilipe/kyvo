@@ -120,7 +120,7 @@ cd sdk/typescript && npm ci && npm test
 ### 2. NuGet
 
 ```bash
-VERSION=1.0.0
+VERSION=1.0.2
 OUT=./artifacts/nupkgs
 mkdir -p "$OUT"
 
@@ -140,7 +140,7 @@ Pack **Kyvo.AspNetCore** first; `Kyvo.Client` and `Kyvo.AspNetCore.TenancyKit` d
 
 ```bash
 cd sdk/typescript/@kyvo/client
-npm version 1.0.0 --no-git-tag-version --allow-same-version
+npm version 1.0.2 --no-git-tag-version --allow-same-version
 npm run build
 npm publish --access public
 ```
@@ -154,7 +154,7 @@ Login locally if needed: `npm login` (or set `NODE_AUTH_TOKEN`).
 ### TypeScript / Node
 
 ```bash
-npm install @kyvo-client/client@1.0.0
+npm install @kyvo-client/client@1.0.2
 ```
 
 ```ts
@@ -164,10 +164,10 @@ import { createKyvoClient } from '@kyvo-client/client'
 ### .NET
 
 ```bash
-dotnet add package Kyvo.Client --version 1.0.0
-dotnet add package Kyvo.AspNetCore --version 1.0.0
+dotnet add package Kyvo.Client --version 1.0.2
+dotnet add package Kyvo.AspNetCore --version 1.0.2
 # optional EF multi-tenant:
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 1.0.0
+dotnet add package Kyvo.AspNetCore.TenancyKit --version 1.0.2
 ```
 
 ---
@@ -206,4 +206,4 @@ PAT needs `write:packages`. npm can target `https://npm.pkg.github.com` with a m
 - [sdk/README.md](../sdk/README.md) — SDK overview and API surface
 - [DOCKER_PUBLISH.md](./DOCKER_PUBLISH.md) — Kyvo platform Docker image
 - [GETTING_STARTED.md](../GETTING_STARTED.md) — local development and production deploy
-- [samples/pulse-crm/README.md](../samples/pulse-crm/README.md) — reference consumer (npm + NuGet `1.0.1`)
+- [samples/pulse-crm/README.md](../samples/pulse-crm/README.md) — reference consumer (npm + NuGet `1.0.2`)
