@@ -10,6 +10,8 @@ public sealed record CreatedIdResponse(Guid Id);
 
 public sealed record CreatedMembershipIdResponse(Guid MembershipId);
 
+public sealed record AvailabilityDto(bool Available);
+
 public enum SessionStatus
 {
     Active,

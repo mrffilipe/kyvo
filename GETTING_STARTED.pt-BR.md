@@ -221,6 +221,7 @@ Para usuários que ainda NÃO têm conta na plataforma (cenário comum SaaS):
 4. Após o sucesso a plataforma cria `User` + `UserCredential` e autentica o usuário via cookie — NÃO cria tenant nem membership ainda.
 5. O usuário é redirecionado de volta para `/connect/authorize`; o app cliente recebe o `code` OIDC.
 6. O app detecta ausência de `tid` no access token e dispara seu fluxo de onboarding, chamando `POST /v1.0/auth/subscribe` com tenant + plano para vincular o usuário a um tenant. Após o refresh do token, o novo access token traz `tid` / `mid`.
+7. Para atualizar metadados do tenant depois, use `PATCH /v1.0/Tenants/{id}` (somente nome; `tenantKey` é imutável). Para sair de uma aplicação, chame `DELETE /v1.0/auth/account` no contexto da sessão OAuth — owners fazem hard delete do tenant quando não há pendências; o usuário global só é removido quando não restam memberships ativas.
 
 Esse modelo central significa que apps cliente NUNCA implementam tela própria de cadastro; a coleta de senha acontece apenas no domínio do IdP.
 

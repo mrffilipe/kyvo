@@ -7,6 +7,10 @@ namespace Kyvo.Application.Common;
 
 public static class ApplicationClientListFields
 {
+    public static IReadOnlyList<string> ParseRedirectUris(string? json) => ParseJsonArray(json);
+
+    public static IReadOnlyList<string> ParseAllowedScopes(string? json) => ParseJsonArray(json);
+
     public static string ToRedirectUrisJson(string raw)
     {
         var values = Parse(raw);
@@ -99,5 +103,22 @@ public static class ApplicationClientListFields
             .Select(value => value.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    private static IReadOnlyList<string> ParseJsonArray(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<string[]>(json) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 }

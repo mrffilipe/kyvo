@@ -4,6 +4,13 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Auth: `DELETE /auth/account` (application-scoped account deletion).
+- Tenants: `GET /Tenants/keys/{key}/availability`.
+- Tenant roles: `DELETE /TenantRoles/{id}` for unused custom roles.
+- Audit logs: `GET /AuditLogs/filter-options`.
+
 ### Fixed
 
 - Align REST DTOs and request bodies with Kyvo OpenAPI (`PagedResult.total`, `roles` on invites/memberships, `AuthSessionDto`, `AuditLogItemDto`, `UserDto.memberships`, etc.).

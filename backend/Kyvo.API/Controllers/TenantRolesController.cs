@@ -2,6 +2,7 @@ using Kyvo.API.Common;
 using Kyvo.API.Models;
 using Kyvo.Application.Common;
 using Kyvo.Application.Services.TenantRoles;
+using Kyvo.Application.Services.UserScope;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kyvo.API.Controllers;
@@ -12,8 +13,13 @@ namespace Kyvo.API.Controllers;
 public sealed class TenantRolesController : V1ApiControllerBase
 {
     private readonly ITenantRoleService _tenantRoleService;
+    private readonly IUserScope _userScope;
 
-    public TenantRolesController(ITenantRoleService tenantRoleService) => _tenantRoleService = tenantRoleService;
+    public TenantRolesController(ITenantRoleService tenantRoleService, IUserScope userScope)
+    {
+        _tenantRoleService = tenantRoleService;
+        _userScope = userScope;
+    }
 
     /// <summary>
     /// Creates a custom role for the tenant.
@@ -26,7 +32,12 @@ public sealed class TenantRolesController : V1ApiControllerBase
         CancellationToken cancellationToken)
     {
         var id = await _tenantRoleService.CreateAsync(
-            request with { TenantId = tenantId },
+            request with
+            {
+                TenantId = tenantId,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
             cancellationToken);
 
         return Ok(new CreatedIdResponse(id));
@@ -61,7 +72,32 @@ public sealed class TenantRolesController : V1ApiControllerBase
         CancellationToken cancellationToken)
     {
         await _tenantRoleService.UpdateAsync(
-            request with { RoleId = id },
+            request with
+            {
+                RoleId = id,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Permanently deletes a custom tenant role that has no active assignments.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteTenantRole(Guid id, CancellationToken cancellationToken)
+    {
+        await _tenantRoleService.DeleteAsync(
+            new DeleteTenantRoleRequest
+            {
+                RoleId = id,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
             cancellationToken);
 
         return NoContent();

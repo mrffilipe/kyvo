@@ -9,4 +9,8 @@ public sealed record CreateTenantRoleRequest
     public required string Name { get; init; }
 
     public string? Description { get; init; }
+
+    public Guid ActorUserId { get; init; }
+
+    public IReadOnlyCollection<string> ActorPlatformRoles { get; init; } = [];
 }

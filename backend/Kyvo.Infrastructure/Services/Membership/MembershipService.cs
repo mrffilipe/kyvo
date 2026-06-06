@@ -1,7 +1,9 @@
 using Kyvo.Application.Common;
+using Kyvo.Application.Exceptions;
 using Kyvo.Application.Services.Membership;
 using Kyvo.Application.Services.TenantRoles;
 using Kyvo.Application.Services.UnitOfWork;
+using Kyvo.Domain.Constants;
 using Kyvo.Domain.Entities;
 using Kyvo.Domain.Exceptions;
 using Kyvo.Domain.Repositories;
@@ -31,6 +33,12 @@ public sealed class MembershipService : IMembershipService
 
     public async Task<Guid> CreateAsync(CreateMembershipRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsureActorCanManageMembershipsAsync(
+            request.TenantId,
+            request.ActorUserId,
+            request.ActorPlatformRoles,
+            cancellationToken);
+
         var existing = await _memberships.GetByUserIdAndTenantIdWithRolesAsync(
             request.UserId,
             request.TenantId,
@@ -57,6 +65,17 @@ public sealed class MembershipService : IMembershipService
         var membership = await _memberships.GetForUpdateWithRolesAsync(request.MembershipId, cancellationToken)
             ?? throw new DomainNotFoundException(DomainErrorMessages.TenantMembership.MembershipNotFound);
 
+        await EnsureActorCanManageMembershipsAsync(
+            membership.TenantId,
+            request.ActorUserId,
+            request.ActorPlatformRoles,
+            cancellationToken);
+
+        if (MembershipHasOwnerRole(membership))
+        {
+            throw new DomainBusinessRuleException(DomainErrorMessages.TenantMembership.OwnerRoleCannotBeChanged);
+        }
+
         var roles = await _roleResolver.ResolveActiveRolesAsync(
             membership.TenantId,
             request.Roles,
@@ -71,6 +90,17 @@ public sealed class MembershipService : IMembershipService
         var membership = await _memberships.GetForUpdateWithRolesAsync(request.MembershipId, cancellationToken)
             ?? throw new DomainNotFoundException(DomainErrorMessages.TenantMembership.MembershipNotFound);
 
+        await EnsureActorCanManageMembershipsAsync(
+            membership.TenantId,
+            request.ActorUserId,
+            request.ActorPlatformRoles,
+            cancellationToken);
+
+        if (MembershipHasOwnerRole(membership))
+        {
+            throw new DomainBusinessRuleException(DomainErrorMessages.TenantMembership.OwnerMembershipCannotBeRevoked);
+        }
+
         membership.Revoke();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
@@ -79,6 +109,12 @@ public sealed class MembershipService : IMembershipService
         ListMembershipsByTenantRequest request,
         CancellationToken cancellationToken = default)
     {
+        await EnsureActorCanManageMembershipsAsync(
+            request.TenantId,
+            request.ActorUserId,
+            request.ActorPlatformRoles,
+            cancellationToken);
+
         var page = request.Page <= 0 ? 1 : request.Page;
         var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
         var query = _context.TenantMemberships
@@ -125,4 +161,34 @@ public sealed class MembershipService : IMembershipService
             PageSize = pageSize
         };
     }
+
+    private async Task EnsureActorCanManageMembershipsAsync(
+        Guid tenantId,
+        Guid actorUserId,
+        IReadOnlyCollection<string> actorPlatformRoles,
+        CancellationToken cancellationToken)
+    {
+        if (actorPlatformRoles.Any(role => PlatformRoleDefaults.AdministrativeKeys.Contains(role)))
+        {
+            return;
+        }
+
+        var membership = await _memberships.GetByUserIdAndTenantIdWithRolesAsync(
+            actorUserId,
+            tenantId,
+            cancellationToken);
+
+        var hasAdministrativeRole = membership is not null
+            && membership.IsActive
+            && membership.Roles.Any(role => TenantRoleDefaults.AdministrativeKeys.Contains(role.Role.Key.Value));
+
+        if (!hasAdministrativeRole)
+        {
+            throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.UserHasNoTenantAccess);
+        }
+    }
+
+    private static bool MembershipHasOwnerRole(TenantMembership membership) =>
+        membership.Roles.Any(role =>
+            role.Role.Key.Value.Equals(TenantRoleDefaults.Owner, StringComparison.OrdinalIgnoreCase));
 }

@@ -1,14 +1,8 @@
 namespace Kyvo.Application.Services.TenantRoles;
 
-public sealed record UpdateTenantRoleRequest
+public sealed record DeleteTenantRoleRequest
 {
     public Guid RoleId { get; init; }
-
-    public required string Name { get; init; }
-
-    public string? Description { get; init; }
-
-    public required bool IsActive { get; init; }
 
     public Guid ActorUserId { get; init; }
 

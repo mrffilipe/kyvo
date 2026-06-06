@@ -20,3 +20,11 @@ public sealed record ListAuditLogsQuery(
     string? ResourceType = null,
     DateTime? From = null,
     DateTime? To = null);
+
+public sealed record AuditLogFilterOptionDto(string Value);
+
+public sealed record ListAuditLogFilterOptionsQuery(
+    string Field,
+    string? Search = null,
+    int Page = 1,
+    int PageSize = 20);

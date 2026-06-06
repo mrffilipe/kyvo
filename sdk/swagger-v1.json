@@ -1646,6 +1646,39 @@
         }
       }
     },
+    "/v{version}/Auth/account": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Deletes the authenticated user's account for the current application tenant context.",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v{version}/Auth/sessions/{sessionId}": {
       "delete": {
         "tags": [

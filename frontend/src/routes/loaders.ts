@@ -4,6 +4,7 @@ import { clearClientAuthState } from '../utils/authCleanup'
 import {
   getAuthSession,
   isPlatformAdministrator,
+  PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE,
 } from '../utils/authStorage'
 import { getSelectedTenantId } from '../utils/tenantStorage'
 import type { LoaderFunctionArgs } from 'react-router'
@@ -14,7 +15,8 @@ export interface LoginLoaderData {
 
 function redirectToLoginWithAccessDenied(): never {
   clearClientAuthState()
-  throw redirect('/login?error=access_denied')
+  const description = encodeURIComponent(PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE)
+  throw redirect(`/login?error=access_denied&error_description=${description}`)
 }
 
 export async function requireAuthLoader({ request }: LoaderFunctionArgs): Promise<null> {

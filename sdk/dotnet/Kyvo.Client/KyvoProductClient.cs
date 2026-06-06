@@ -122,6 +122,18 @@ public sealed class KyvoProductClient : IKyvoProductClient
 
             await KyvoHttpResponse.EnsureSuccessAsync(response, cancellationToken);
         }
+
+        public async Task DeleteAccountAsync(string userAccessToken, CancellationToken cancellationToken = default)
+        {
+            var response = await client.SendAsync(
+                userAccessToken,
+                HttpMethod.Delete,
+                $"{client.V}/auth/account",
+                null,
+                cancellationToken);
+
+            await KyvoHttpResponse.EnsureSuccessAsync(response, cancellationToken);
+        }
     }
 
     private sealed class UsersApi(KyvoProductClient client) : IKyvoUsersApi
@@ -250,6 +262,22 @@ public sealed class KyvoProductClient : IKyvoProductClient
             return await KyvoHttpResponse.ReadJsonAsync<CreatedMembershipIdResponse>(response, cancellationToken)
                 ?? throw new InvalidOperationException("Kyvo accept invite returned empty body.");
         }
+
+        public async Task<AvailabilityDto> IsKeyAvailableAsync(
+            string userAccessToken,
+            string key,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await client.SendAsync(
+                userAccessToken,
+                HttpMethod.Get,
+                $"{client.V}/Tenants/keys/{Uri.EscapeDataString(key)}/availability",
+                null,
+                cancellationToken);
+
+            return await KyvoHttpResponse.ReadJsonAsync<AvailabilityDto>(response, cancellationToken)
+                ?? throw new InvalidOperationException("Kyvo tenant key availability returned empty body.");
+        }
     }
 
     private sealed class MembershipsApi(KyvoProductClient client) : IKyvoMembershipsApi
@@ -374,6 +402,21 @@ public sealed class KyvoProductClient : IKyvoProductClient
 
             await KyvoHttpResponse.EnsureSuccessAsync(response, cancellationToken);
         }
+
+        public async Task DeleteAsync(
+            string userAccessToken,
+            Guid roleId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await client.SendAsync(
+                userAccessToken,
+                HttpMethod.Delete,
+                $"{client.V}/TenantRoles/{roleId}",
+                null,
+                cancellationToken);
+
+            await KyvoHttpResponse.EnsureSuccessAsync(response, cancellationToken);
+        }
     }
 
     private sealed class AuditLogsApi(KyvoProductClient client) : IKyvoAuditLogsApi
@@ -404,6 +447,34 @@ public sealed class KyvoProductClient : IKyvoProductClient
 
             return await KyvoHttpResponse.ReadJsonAsync<PagedResult<AuditLogItemDto>>(response, cancellationToken)
                 ?? new PagedResult<AuditLogItemDto>([], 0, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedResult<AuditLogFilterOptionDto>> ListFilterOptionsAsync(
+            string userAccessToken,
+            ListAuditLogFilterOptionsQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            var qs = new List<string>
+            {
+                $"field={Uri.EscapeDataString(query.Field)}",
+                $"page={query.Page}",
+                $"pageSize={query.PageSize}"
+            };
+
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                qs.Add($"search={Uri.EscapeDataString(query.Search)}");
+            }
+
+            var response = await client.SendAsync(
+                userAccessToken,
+                HttpMethod.Get,
+                $"{client.V}/AuditLogs/filter-options?{string.Join("&", qs)}",
+                null,
+                cancellationToken);
+
+            return await KyvoHttpResponse.ReadJsonAsync<PagedResult<AuditLogFilterOptionDto>>(response, cancellationToken)
+                ?? new PagedResult<AuditLogFilterOptionDto>([], 0, query.Page, query.PageSize);
         }
     }
 }

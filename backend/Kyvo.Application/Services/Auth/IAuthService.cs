@@ -15,4 +15,10 @@ public interface IAuthService
         Guid userId,
         Guid sessionId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes the authenticated user's account for the current application tenant context.
+    /// Owners hard-delete the tenant; non-owners revoke their membership only.
+    /// </summary>
+    Task DeleteAccountAsync(CancellationToken cancellationToken = default);
 }

@@ -8,6 +8,8 @@ using Kyvo.Domain.Entities;
 using Kyvo.Domain.Exceptions;
 using Kyvo.Domain.Repositories;
 using Kyvo.Domain.ValueObjects;
+using Kyvo.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kyvo.Infrastructure.Services.Auth;
 
@@ -22,8 +24,11 @@ public sealed class AuthService : IAuthService
     private readonly ITenantRoleRepository _roles;
     private readonly IApplicationTenantRepository _applicationTenants;
     private readonly IUserPlatformRoleRepository _userPlatformRoles;
+    private readonly ITenantAccountEligibilityService _accountEligibility;
+    private readonly ITenantDeletionService _tenantDeletion;
     private readonly IUserScope _userScope;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ApplicationDbContext _context;
 
     public AuthService(
         IUserRepository users,
@@ -35,8 +40,11 @@ public sealed class AuthService : IAuthService
         ITenantRoleRepository roles,
         IApplicationTenantRepository applicationTenants,
         IUserPlatformRoleRepository userPlatformRoles,
+        ITenantAccountEligibilityService accountEligibility,
+        ITenantDeletionService tenantDeletion,
         IUserScope userScope,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ApplicationDbContext context)
     {
         _users = users;
         _memberships = memberships;
@@ -47,8 +55,11 @@ public sealed class AuthService : IAuthService
         _roles = roles;
         _applicationTenants = applicationTenants;
         _userPlatformRoles = userPlatformRoles;
+        _accountEligibility = accountEligibility;
+        _tenantDeletion = tenantDeletion;
         _userScope = userScope;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task<TenantContextResult> SwitchTenantAsync(
@@ -209,6 +220,101 @@ public sealed class AuthService : IAuthService
         }
 
         session.Revoke();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteAccountAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_userScope.IsAuthenticated || _userScope.UserId == Guid.Empty || !_userScope.SessionId.HasValue)
+        {
+            throw new UnauthorizedApplicationException(ApplicationErrorMessages.Auth.AuthenticatedSessionRequired);
+        }
+
+        if (!_userScope.TenantId.HasValue)
+        {
+            throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.ActiveTenantContextRequired);
+        }
+
+        var session = await _sessions.GetForUpdateAsync(_userScope.SessionId.Value, cancellationToken)
+            ?? throw new UnauthorizedApplicationException(ApplicationErrorMessages.Auth.SessionNotFound);
+
+        if (!session.ClientId.HasValue)
+        {
+            throw new InvalidClientException(ApplicationErrorMessages.Auth.SessionHasNoOAuthClient);
+        }
+
+        var client = await _clients.GetByIdAsync(session.ClientId.Value, cancellationToken)
+            ?? throw new InvalidClientException(ApplicationErrorMessages.OAuthClient.ClientIdInvalid);
+
+        var tenantId = _userScope.TenantId.Value;
+        await _accountEligibility.EnsureCanDeleteAccountAsync(client.ApplicationId, tenantId, cancellationToken);
+
+        var membership = await _memberships.GetByUserIdAndTenantIdWithRolesAsync(
+            _userScope.UserId,
+            tenantId,
+            cancellationToken);
+
+        if (membership is null || !membership.IsActive)
+        {
+            throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.UserHasNoTenantAccess);
+        }
+
+        var isOwner = membership.Roles.Any(role =>
+            role.Role.Key.Value.Equals(TenantRoleDefaults.Owner, StringComparison.OrdinalIgnoreCase));
+
+        if (isOwner)
+        {
+            await _tenantDeletion.DeleteTenantAsync(tenantId, cancellationToken);
+        }
+        else
+        {
+            membership.Revoke();
+            await RevokeUserSessionsForTenantAsync(_userScope.UserId, tenantId, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        await DeactivateUserIfNoActiveMembershipsAsync(_userScope.UserId, cancellationToken);
+    }
+
+    private async Task RevokeUserSessionsForTenantAsync(
+        Guid userId,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var sessions = await _context.AuthSessions
+            .Where(x => x.UserId == userId && x.TenantId == tenantId && x.Status == Domain.Enums.SessionStatus.Active)
+            .ToListAsync(cancellationToken);
+
+        foreach (var activeSession in sessions)
+        {
+            activeSession.Revoke();
+        }
+    }
+
+    private async Task DeactivateUserIfNoActiveMembershipsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var hasActiveMembership = await _context.TenantMemberships
+            .AnyAsync(x => x.UserId == userId && x.IsActive, cancellationToken);
+
+        if (hasActiveMembership)
+        {
+            return;
+        }
+
+        var user = await _users.GetForUpdateAsync(userId, cancellationToken)
+            ?? throw new DomainNotFoundException(DomainErrorMessages.User.UserNotFound);
+
+        user.Deactivate();
+
+        var sessions = await _sessions.ListActiveByUserIdAsync(userId, cancellationToken);
+        foreach (var activeSession in sessions)
+        {
+            var tracked = await _sessions.GetForUpdateAsync(activeSession.Id, cancellationToken);
+            tracked?.Revoke();
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

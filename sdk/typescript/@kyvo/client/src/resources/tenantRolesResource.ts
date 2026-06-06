@@ -28,5 +28,9 @@ export function createTenantRolesResource(http: HttpClient, paths: ApiPaths) {
     update(roleId: string, body: UpdateTenantRoleBody): Promise<void> {
       return http.request('PATCH', `${paths.tenantRoles}/${roleId}`, { body })
     },
+
+    delete(roleId: string): Promise<void> {
+      return http.request('DELETE', `${paths.tenantRoles}/${roleId}`)
+    },
   }
 }

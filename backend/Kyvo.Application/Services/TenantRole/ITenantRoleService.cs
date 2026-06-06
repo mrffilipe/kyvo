@@ -8,6 +8,8 @@ public interface ITenantRoleService
 
     Task UpdateAsync(UpdateTenantRoleRequest request, CancellationToken cancellationToken = default);
 
+    Task DeleteAsync(DeleteTenantRoleRequest request, CancellationToken cancellationToken = default);
+
     Task<PagedResult<TenantRoleDto>> ListAsync(
         ListTenantRolesRequest request,
         CancellationToken cancellationToken = default);

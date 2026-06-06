@@ -11,4 +11,8 @@ public interface IApplicationClientRepository
     Task<ApplicationClient?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ApplicationClient>> ListAllAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ApplicationClient>> ListByApplicationIdAsync(
+        Guid applicationId,
+        CancellationToken cancellationToken = default);
 }

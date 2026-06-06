@@ -187,7 +187,7 @@ src/
 The admin console is restricted to users with the `plat_admin` platform role (`prole` JWT claim). Enforcement happens at three layers:
 
 1. **OIDC** — the `platform-admin-web` client rejects authorization and token issuance for non-admins (`error=access_denied`).
-2. **Route loaders** — `requireAuthLoader` clears the session and redirects to `/login?error=access_denied` when `plat_admin` is missing.
+2. **Route loaders** — `requireAuthLoader` clears the session and redirects to `/login?error=access_denied&error_description=…` when `plat_admin` is missing. `LoginPage` shows a dedicated message (no automatic OIDC redirect) with a **Try another account** button.
 3. **Callback / Axios** — `AuthCallbackPage` validates claims after login; the API interceptor redirects on 403 when the session lacks `plat_admin`.
 
 Use `isPlatformAdministrator()` from `authStorage.ts` (or `platformRoles.includes('plat_admin')` via `AuthContext`) for UI-level checks:

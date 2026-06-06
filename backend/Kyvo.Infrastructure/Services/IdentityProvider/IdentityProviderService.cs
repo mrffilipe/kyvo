@@ -137,11 +137,10 @@ public sealed class IdentityProviderService : IIdentityProviderService
         var provider = await _identityProviders.GetForUpdateAsync(id, cancellationToken)
             ?? throw new DomainNotFoundException(ApplicationErrorMessages.IdentityProvider.NotFound);
 
-        if (provider.ProviderType == IdentityProviderType.Local
-            && !await _identityProviders.AnyEnabledLocalProviderAsync(cancellationToken))
+        if (provider.ProviderType == IdentityProviderType.Local)
         {
             throw new DomainBusinessRuleException(
-                ApplicationErrorMessages.IdentityProvider.CannotDisableLastLocalProvider);
+                ApplicationErrorMessages.IdentityProvider.LocalProviderDisableNotAllowed);
         }
 
         provider.Disable();

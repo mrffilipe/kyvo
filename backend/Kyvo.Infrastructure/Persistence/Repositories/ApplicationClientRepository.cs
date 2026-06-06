@@ -39,4 +39,15 @@ public sealed class ApplicationClientRepository : IApplicationClientRepository
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ApplicationClient>> ListByApplicationIdAsync(
+        Guid applicationId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.ApplicationClients
+            .AsNoTracking()
+            .Where(x => x.ApplicationId == applicationId)
+            .OrderBy(x => x.ClientId)
+            .ToListAsync(cancellationToken);
+    }
 }

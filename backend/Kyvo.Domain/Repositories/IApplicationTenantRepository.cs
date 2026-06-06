@@ -10,4 +10,9 @@ public interface IApplicationTenantRepository
         Guid applicationId,
         Guid tenantId,
         CancellationToken cancellationToken = default);
+
+    Task<ApplicationTenant?> GetAsync(
+        Guid applicationId,
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
 }

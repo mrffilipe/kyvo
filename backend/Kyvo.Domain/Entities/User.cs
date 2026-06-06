@@ -46,4 +46,6 @@ public class User : BaseEntity
         DisplayName = displayName.Trim();
         PhotoUrl = photoUrl;
     }
+
+    public void Deactivate() => IsActive = false;
 }

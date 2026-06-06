@@ -48,6 +48,9 @@ public static class ApplicationErrorMessages
         public const string UserNotFound = "User not found.";
         public const string CannotRevokeAnotherUserSession = "You do not have permission to revoke this session.";
         public const string LocalAuthInvalidCredentials = "Invalid email or password.";
+        public const string AccountDeletionBlocked = "Account cannot be deleted while there are pending issues for this application tenant.";
+        public const string ApplicationTenantNotFound = "Application tenant link not found for the current session.";
+        public const string ActiveTenantContextRequired = "An active tenant context is required to delete the account for this application.";
     }
 
     public static class Search
@@ -79,6 +82,8 @@ public static class ApplicationErrorMessages
             "The local email/password identity provider is created during platform bootstrap and cannot be added again.";
         public const string LocalProviderModificationNotAllowed =
             "The local email/password identity provider cannot be modified.";
+        public const string LocalProviderDisableNotAllowed =
+            "The local email/password identity provider cannot be disabled.";
     }
 
     public static class Signing

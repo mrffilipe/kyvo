@@ -100,4 +100,16 @@ public sealed class AuthController : V1ApiControllerBase
         await _authService.RevokeSessionAsync(_userScope.UserId, sessionId, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Deletes the authenticated user's account for the current application tenant.
+    /// </summary>
+    [HttpDelete("account")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteAccount(CancellationToken cancellationToken)
+    {
+        await _authService.DeleteAccountAsync(cancellationToken);
+        return NoContent();
+    }
 }

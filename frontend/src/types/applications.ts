@@ -17,6 +17,16 @@ export const ClientType = {
 
 export type ClientType = (typeof ClientType)[keyof typeof ClientType]
 
+export interface ApplicationClientSummary {
+  id: string
+  clientId: string
+  clientType: ClientType
+  redirectUris: string[]
+  allowedScopes: string[]
+  accessTokenTtlSeconds: number
+  isSystem: boolean
+}
+
 export interface Application {
   id: string
   name: string
@@ -29,6 +39,7 @@ export interface Application {
   brandingLogoUrl: string | null
   brandingHeroTitle: string | null
   brandingHeroSubtitle: string | null
+  clients?: ApplicationClientSummary[]
 }
 
 export interface ApplicationBranding {

@@ -11,6 +11,8 @@ import {
   MenuItem,
   Stack,
   TextField,
+  TableCell,
+  TableRow,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -28,6 +30,7 @@ import {
   FormGrid,
   FormGridItem,
   FormSection,
+  DataTable,
   PageHeader,
   SectionCard,
   SteppedFormDialog,
@@ -217,6 +220,7 @@ export function ApplicationDetailPage() {
       })
       setSuccess(`Client criado: ${created.id}`)
       setClientOpen(false)
+      await loadApplication(applicationId)
     } catch (createError) {
       setError(getApiErrorMessage(createError))
     } finally {
@@ -389,6 +393,43 @@ export function ApplicationDetailPage() {
           ) : null}
         </Stack>
       </SectionCard>
+
+      {!isSystemApp ? (
+        <SectionCard
+          title="Clients OAuth"
+          subtitle="Clientes registrados nesta aplicação."
+        >
+          <DataTable
+            columns={[
+              { id: 'clientId', label: 'Client ID' },
+              { id: 'type', label: 'Tipo' },
+              { id: 'redirectUris', label: 'Redirect URIs' },
+              { id: 'scopes', label: 'Scopes' },
+              { id: 'ttl', label: 'TTL (s)' },
+            ]}
+            rows={(application?.clients ?? []).map((client) => (
+              <TableRow key={client.id} hover>
+                <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{client.clientId}</TableCell>
+                <TableCell>{client.clientType}</TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }}>
+                    {client.redirectUris.join(', ') || '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {client.allowedScopes.map((scope) => (
+                      <Chip key={scope} label={scope} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                </TableCell>
+                <TableCell>{client.accessTokenTtlSeconds}</TableCell>
+              </TableRow>
+            ))}
+            emptyDescription="Nenhum client OAuth cadastrado para esta aplicação."
+          />
+        </SectionCard>
+      ) : null}
 
       {!isSystemApp && isPlatformAdministrator ? (
         <SectionCard

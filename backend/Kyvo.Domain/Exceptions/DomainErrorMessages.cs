@@ -34,6 +34,9 @@ public static class DomainErrorMessages
         public const string RoleNotFound = "Tenant role not found.";
         public const string RoleAlreadyExists = "Tenant role key already exists.";
         public const string CannotChangeRevokedMembershipRoles = "Cannot change roles for a revoked membership.";
+        public const string SystemRoleCannotBeDeactivated = "System tenant roles cannot be deactivated.";
+        public const string SystemRoleCannotBeDeleted = "System tenant roles cannot be deleted.";
+        public const string RoleHasActiveAssignments = "Tenant role is assigned to active memberships and cannot be deleted.";
     }
 
     public static class User
@@ -69,6 +72,8 @@ public static class DomainErrorMessages
         public const string UserIdRequired = "UserId is required.";
         public const string MembershipAlreadyExists = "Membership already exists.";
         public const string MembershipNotFound = "Membership not found.";
+        public const string OwnerRoleCannotBeChanged = "The tenant owner role cannot be changed.";
+        public const string OwnerMembershipCannotBeRevoked = "The tenant owner membership cannot be revoked.";
     }
 
     public static class TenantInvite

@@ -5,4 +5,8 @@ namespace Kyvo.Application.Services.Membership;
 public sealed record ListMembershipsByTenantRequest : PagedRequest
 {
     public Guid TenantId { get; init; }
+
+    public Guid ActorUserId { get; init; }
+
+    public IReadOnlyCollection<string> ActorPlatformRoles { get; init; } = [];
 }

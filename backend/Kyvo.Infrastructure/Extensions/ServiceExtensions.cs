@@ -31,6 +31,8 @@ public static class ServiceExtensions
         services.AddScoped<ITenantResolutionCache, DistributedTenantResolutionCache>();
         services.AddScoped<IEmailService, AwsSesEmailService>();
         services.AddScoped<IInvitePolicy, InvitePolicy>();
+        services.AddScoped<ITenantAccountEligibilityService, TenantAccountEligibilityService>();
+        services.AddScoped<ITenantDeletionService, TenantDeletionService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddSingleton<IPasswordPolicy, PasswordPolicy>();
         services.AddScoped<IRegistrationService, RegistrationService>();

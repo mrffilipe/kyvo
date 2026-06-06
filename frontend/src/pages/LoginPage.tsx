@@ -17,18 +17,19 @@ export function LoginPage() {
   const revalidator = useRevalidator()
   const { logoutLocal } = useAuth()
   const [searchParams] = useSearchParams()
+  const isAccessDenied = searchParams.get('error') === 'access_denied'
   const accessDeniedMessage = useMemo(() => {
-    if (searchParams.get('error') !== 'access_denied') {
+    if (!isAccessDenied) {
       return null
     }
     return searchParams.get('error_description') ?? PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE
-  }, [searchParams])
-  const [loading, setLoading] = useState(!requiresBootstrap)
+  }, [isAccessDenied, searchParams])
+  const [loading, setLoading] = useState(!requiresBootstrap && !isAccessDenied)
   const [error, setError] = useState<string | null>(accessDeniedMessage)
   const [pendingCookieLogout, setPendingCookieLogout] = useState(false)
 
   useEffect(() => {
-    if (requiresBootstrap || searchParams.get('error') !== 'access_denied') {
+    if (requiresBootstrap || !isAccessDenied) {
       return
     }
 
@@ -37,10 +38,13 @@ export function LoginPage() {
       logoutLocal()
       setPendingCookieLogout(true)
     }
-  }, [logoutLocal, requiresBootstrap, searchParams])
+  }, [isAccessDenied, logoutLocal, requiresBootstrap, searchParams])
 
   useEffect(() => {
-    if (requiresBootstrap || pendingCookieLogout) {
+    if (requiresBootstrap || pendingCookieLogout || isAccessDenied) {
+      if (isAccessDenied && !pendingCookieLogout) {
+        setLoading(false)
+      }
       return
     }
 
@@ -60,30 +64,18 @@ export function LoginPage() {
     return () => {
       cancelled = true
     }
-  }, [requiresBootstrap, pendingCookieLogout])
+  }, [isAccessDenied, pendingCookieLogout, requiresBootstrap])
 
-  useEffect(() => {
-    if (!pendingCookieLogout) {
-      return
+  async function handleRetryLogin(): Promise<void> {
+    setLoading(true)
+    setError(null)
+    try {
+      await redirectToOidcLogin()
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Falha ao iniciar login.')
+      setLoading(false)
     }
-
-    let cancelled = false
-    void (async () => {
-      try {
-        await redirectToOidcLogin()
-      } catch (loginError) {
-        if (!cancelled) {
-          setError(loginError instanceof Error ? loginError.message : 'Falha ao iniciar login.')
-          setLoading(false)
-          setPendingCookieLogout(false)
-        }
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [pendingCookieLogout])
+  }
 
   async function handleBootstrap(): Promise<void> {
     setLoading(true)
@@ -120,6 +112,32 @@ export function LoginPage() {
             sx={{ py: 1.25 }}
           >
             {loading ? 'Inicializando...' : 'Inicializar plataforma'}
+          </Button>
+        </Stack>
+      </AuthLayout>
+    )
+  }
+
+  if (isAccessDenied && !pendingCookieLogout) {
+    return (
+      <AuthLayout
+        title="Sem permissão para este console"
+        subtitle="Este painel é exclusivo para administradores da plataforma Kyvo."
+      >
+        <Stack spacing={2.5}>
+          <FeedbackAlerts error={error ?? accessDeniedMessage} />
+          <Typography variant="body2" color="text.secondary">
+            Se você acredita que deveria ter acesso, entre com a conta de administrador da plataforma
+            ou solicite permissão ao responsável pelo ambiente.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            disabled={loading}
+            onClick={() => void handleRetryLogin()}
+            sx={{ py: 1.25 }}
+          >
+            {loading ? 'Redirecionando...' : 'Tentar com outra conta'}
           </Button>
         </Stack>
       </AuthLayout>

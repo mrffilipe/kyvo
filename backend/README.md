@@ -248,6 +248,9 @@ curl http://localhost:5000/v1.0/platform/status
 | POST | `/v1.0/auth/switch-tenant` | JWT | Switch the active tenant in the session |
 | GET | `/v1.0/auth/sessions` | JWT | List active sessions |
 | DELETE | `/v1.0/auth/sessions/{id}` | JWT | Revoke a session |
+| DELETE | `/v1.0/auth/account` | JWT + tenant context | Delete account for the current application tenant (owners hard-delete the tenant; non-owners revoke membership only) |
+
+**Tenant metadata:** use `PATCH /v1.0/Tenants/{id}` to update the tenant name after `POST /v1.0/auth/subscribe` (`tenantKey` is immutable).
 
 ### Users
 

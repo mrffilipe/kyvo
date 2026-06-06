@@ -67,6 +67,10 @@ export interface UpdateUserProfileBody {
   photoUrl?: string
 }
 
+export interface AvailabilityDto {
+  available: boolean
+}
+
 export interface TenantDto {
   id: string
   name: string
@@ -148,4 +152,15 @@ export interface ListAuditLogsFilters {
   resourceType?: string
   from?: string
   to?: string
+}
+
+export interface AuditLogFilterOptionDto {
+  value: string
+}
+
+export interface ListAuditLogFilterOptionsFilters {
+  field: string
+  search?: string
+  page?: number
+  pageSize?: number
 }

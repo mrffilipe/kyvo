@@ -244,6 +244,9 @@ curl http://localhost:5000/v1.0/platform/status
 | POST | `/v1.0/auth/switch-tenant` | JWT | Mudar tenant ativo na sessão |
 | GET | `/v1.0/auth/sessions` | JWT | Listar sessões ativas |
 | DELETE | `/v1.0/auth/sessions/{id}` | JWT | Revogar sessão |
+| DELETE | `/v1.0/auth/account` | JWT + contexto de tenant | Excluir conta no tenant da aplicação atual (owner faz hard delete do tenant; demais usuários apenas revogam membership) |
+
+**Metadados do tenant:** use `PATCH /v1.0/Tenants/{id}` para atualizar o nome após `POST /v1.0/auth/subscribe` (`tenantKey` é imutável).
 
 ### Users
 | Método | Path | Auth | Descrição |

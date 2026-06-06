@@ -2,6 +2,7 @@ using Kyvo.API.Common;
 using Kyvo.API.Models;
 using Kyvo.Application.Common;
 using Kyvo.Application.Services.Membership;
+using Kyvo.Application.Services.UserScope;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kyvo.API.Controllers;
@@ -12,8 +13,13 @@ namespace Kyvo.API.Controllers;
 public sealed class MembershipsController : V1ApiControllerBase
 {
     private readonly IMembershipService _membershipService;
+    private readonly IUserScope _userScope;
 
-    public MembershipsController(IMembershipService membershipService) => _membershipService = membershipService;
+    public MembershipsController(IMembershipService membershipService, IUserScope userScope)
+    {
+        _membershipService = membershipService;
+        _userScope = userScope;
+    }
 
     /// <summary>
     /// Adds a user to a tenant with the given roles.
@@ -27,7 +33,12 @@ public sealed class MembershipsController : V1ApiControllerBase
         CancellationToken cancellationToken)
     {
         var id = await _membershipService.CreateAsync(
-            request with { TenantId = tenantId },
+            request with
+            {
+                TenantId = tenantId,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
             cancellationToken);
 
         return Ok(new CreatedIdResponse(id));
@@ -44,7 +55,12 @@ public sealed class MembershipsController : V1ApiControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _membershipService.ListByTenantAsync(
-            request with { TenantId = tenantId },
+            request with
+            {
+                TenantId = tenantId,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
             cancellationToken);
 
         return Ok(result);
@@ -62,7 +78,12 @@ public sealed class MembershipsController : V1ApiControllerBase
         CancellationToken cancellationToken)
     {
         await _membershipService.UpdateRolesAsync(
-            request with { MembershipId = id },
+            request with
+            {
+                MembershipId = id,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
             cancellationToken);
 
         return NoContent();
@@ -77,7 +98,12 @@ public sealed class MembershipsController : V1ApiControllerBase
     public async Task<IActionResult> RevokeMembership(Guid id, CancellationToken cancellationToken)
     {
         await _membershipService.RevokeAsync(
-            new RevokeMembershipRequest { MembershipId = id },
+            new RevokeMembershipRequest
+            {
+                MembershipId = id,
+                ActorUserId = _userScope.UserId,
+                ActorPlatformRoles = _userScope.PlatformRoles
+            },
             cancellationToken);
 
         return NoContent();

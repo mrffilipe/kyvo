@@ -25,4 +25,6 @@ public sealed record ApplicationDto
     public string? BrandingHeroTitle { get; init; }
 
     public string? BrandingHeroSubtitle { get; init; }
+
+    public IReadOnlyList<ApplicationClientSummaryDto> Clients { get; init; } = [];
 }

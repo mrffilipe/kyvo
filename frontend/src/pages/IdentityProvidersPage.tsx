@@ -435,7 +435,7 @@ export function IdentityProvidersPage() {
       {hasBootstrapLocal ? (
         <Alert severity="info">
           O provedor <strong>Local (e-mail/senha)</strong> é criado automaticamente no bootstrap da plataforma e não
-          pode ser cadastrado ou editado por aqui.
+          pode ser cadastrado, editado ou desativado por aqui.
         </Alert>
       ) : null}
 
@@ -506,13 +506,23 @@ export function IdentityProvidersPage() {
                         Editar
                       </Button>
                     )}
-                    <Button
-                      size="small"
-                      color={item.enabled ? 'warning' : 'success'}
-                      onClick={() => handleToggleClick(item)}
-                    >
-                      {item.enabled ? 'Desativar' : 'Ativar'}
-                    </Button>
+                    {isLocalBootstrap ? (
+                      <Tooltip title="O provedor local do bootstrap não pode ser desativado">
+                        <span>
+                          <Button size="small" disabled>
+                            Desativar
+                          </Button>
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <Button
+                        size="small"
+                        color={item.enabled ? 'warning' : 'success'}
+                        onClick={() => handleToggleClick(item)}
+                      >
+                        {item.enabled ? 'Desativar' : 'Ativar'}
+                      </Button>
+                    )}
                   </Stack>
                 </TableCell>
               </TableRow>

@@ -203,11 +203,22 @@ public sealed class ApplicationService : IApplicationService
         GetApplicationByIdRequest request,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Applications
+        var application = await _context.Applications
             .AsNoTracking()
             .Where(x => x.Id == request.ApplicationId)
             .Select(MapToDtoExpression)
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (application is null)
+        {
+            return null;
+        }
+
+        var clients = await _clients.ListByApplicationIdAsync(request.ApplicationId, cancellationToken);
+        return application with
+        {
+            Clients = clients.Select(MapClientSummary).ToList()
+        };
     }
 
     public async Task<PagedResult<ApplicationDto>> ListAsync(
@@ -340,6 +351,18 @@ public sealed class ApplicationService : IApplicationService
             BrandingLogoUrl = application.BrandingLogoPath,
             BrandingHeroTitle = application.BrandingHeroTitle,
             BrandingHeroSubtitle = application.BrandingHeroSubtitle
+        };
+
+    private static ApplicationClientSummaryDto MapClientSummary(ApplicationClient client) =>
+        new()
+        {
+            Id = client.Id,
+            ClientId = client.ClientId,
+            ClientType = client.ClientType,
+            RedirectUris = ApplicationClientListFields.ParseRedirectUris(client.RedirectUris),
+            AllowedScopes = ApplicationClientListFields.ParseAllowedScopes(client.AllowedScopes),
+            AccessTokenTtlSeconds = client.AccessTokenTtlSeconds,
+            IsSystem = client.IsSystem
         };
 
     private static readonly System.Linq.Expressions.Expression<Func<Domain.Entities.Application, ApplicationDto>> MapToDtoExpression =

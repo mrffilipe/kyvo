@@ -222,6 +222,7 @@ For end users who do NOT yet have an account in the platform (typical SaaS onboa
 4. After successful registration the platform creates a `User` + `UserCredential` and signs the user in via the cookie scheme — NO tenant or membership is created at this point.
 5. The user is redirected back to `/connect/authorize`; the consumer app receives the OIDC `code`.
 6. The consumer app detects the missing `tid` claim in the access token and triggers its onboarding flow, calling `POST /v1.0/auth/subscribe` with tenant + plan to attach the user to a tenant. After a refresh token, the new access token includes `tid` / `mid`.
+7. To update tenant metadata later, use `PATCH /v1.0/Tenants/{id}` (name only; `tenantKey` is immutable). To leave an application, call `DELETE /v1.0/auth/account` in the OAuth session context — owners hard-delete the tenant when there are no blocking issues; the global user record is removed only when no active memberships remain.
 
 This central signup model means client apps NEVER implement their own "create account" pages; password collection only happens on the IdP domain.
 

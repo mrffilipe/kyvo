@@ -28,4 +28,15 @@ public sealed class ApplicationTenantRepository : IApplicationTenantRepository
         return _context.ApplicationTenants
             .AnyAsync(x => x.ApplicationId == applicationId && x.TenantId == tenantId, cancellationToken);
     }
+
+    public Task<ApplicationTenant?> GetAsync(
+        Guid applicationId,
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        return _context.ApplicationTenants
+            .FirstOrDefaultAsync(
+                x => x.ApplicationId == applicationId && x.TenantId == tenantId,
+                cancellationToken);
+    }
 }

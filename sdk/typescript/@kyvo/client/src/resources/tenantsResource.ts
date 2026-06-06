@@ -2,6 +2,7 @@ import type { HttpClient } from '../api/httpClient.js'
 import type { ApiPaths } from '../api/paths.js'
 import type {
   AcceptInviteBody,
+  AvailabilityDto,
   CreatedIdResponse,
   CreatedMembershipIdResponse,
   InviteMemberBody,
@@ -30,6 +31,10 @@ export function createTenantsResource(http: HttpClient, paths: ApiPaths) {
 
     acceptInvite(body: AcceptInviteBody): Promise<CreatedMembershipIdResponse> {
       return http.request('POST', `${paths.invites}/accept`, { body })
+    },
+
+    checkKeyAvailability(key: string): Promise<AvailabilityDto> {
+      return http.request('GET', `${paths.tenants}/keys/${encodeURIComponent(key)}/availability`)
     },
   }
 }

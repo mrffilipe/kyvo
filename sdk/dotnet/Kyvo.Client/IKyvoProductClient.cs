@@ -37,6 +37,8 @@ public interface IKyvoAuthApi
         string userAccessToken,
         Guid sessionId,
         CancellationToken cancellationToken = default);
+
+    Task DeleteAccountAsync(string userAccessToken, CancellationToken cancellationToken = default);
 }
 
 public interface IKyvoUsersApi
@@ -84,6 +86,11 @@ public interface IKyvoTenantsApi
     Task<CreatedMembershipIdResponse> AcceptInviteAsync(
         string userAccessToken,
         AcceptInviteBody body,
+        CancellationToken cancellationToken = default);
+
+    Task<AvailabilityDto> IsKeyAvailableAsync(
+        string userAccessToken,
+        string key,
         CancellationToken cancellationToken = default);
 }
 
@@ -135,6 +142,8 @@ public interface IKyvoTenantRolesApi
         Guid roleId,
         UpdateTenantRoleBody body,
         CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(string userAccessToken, Guid roleId, CancellationToken cancellationToken = default);
 }
 
 public interface IKyvoAuditLogsApi
@@ -142,5 +151,10 @@ public interface IKyvoAuditLogsApi
     Task<PagedResult<AuditLogItemDto>> ListAsync(
         string userAccessToken,
         ListAuditLogsQuery? query = null,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<AuditLogFilterOptionDto>> ListFilterOptionsAsync(
+        string userAccessToken,
+        ListAuditLogFilterOptionsQuery query,
         CancellationToken cancellationToken = default);
 }

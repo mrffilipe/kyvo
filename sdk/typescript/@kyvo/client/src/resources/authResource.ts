@@ -15,6 +15,10 @@ export function createAuthResource(http: HttpClient, paths: ApiPaths) {
     revokeSession(sessionId: string): Promise<void> {
       return http.request('DELETE', `${paths.auth}/sessions/${sessionId}`)
     },
+
+    deleteAccount(): Promise<void> {
+      return http.request('DELETE', `${paths.auth}/account`)
+    },
   }
 }
 
