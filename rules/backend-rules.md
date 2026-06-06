@@ -48,7 +48,7 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
   - `GetByXAsync` / `GetEnabledByXAsync` — single-entity lookups.
   - `ListXAsync` / `ListAllAsync` — multi-entity reads (`IReadOnlyList<T>`).
   - `XAlreadyExistsAsync` / `AnyXAsync` — boolean existence checks.
-- Service methods describe the use case (`SubscribeTenantAsync`, `BootstrapAsync`), not the storage operation.
+- Service methods describe the use case (`SubscribeTenantAsync`, `EnsureInitializedAsync`), not the storage operation.
 
 ## 5. Repository contract
 

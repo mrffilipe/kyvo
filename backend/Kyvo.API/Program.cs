@@ -10,6 +10,7 @@ using Kyvo.Domain.Constants;
 using Kyvo.Infrastructure.Configurations;
 using Kyvo.Application.Services.AccountBranding;
 using Kyvo.Application.Services.IdentityProvider;
+using Kyvo.Application.Services.Platform;
 using Kyvo.Infrastructure.Extensions;
 using Kyvo.Infrastructure.Persistence;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -62,16 +63,6 @@ builder.Services.AddRateLimiter(options =>
 {
     var rateLimitOptions = builder.Configuration.GetSection(RateLimitOptions.Section).Get<RateLimitOptions>()
         ?? new RateLimitOptions();
-
-    options.AddPolicy("platform_bootstrap", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = rateLimitOptions.BootstrapPermitLimit,
-                Window = TimeSpan.FromMinutes(rateLimitOptions.BootstrapWindowMinutes),
-                QueueLimit = 0
-            }));
 
     // Blazor register uses GET to render the form and POST to submit; limit only submissions.
     options.AddPolicy("account_register", context =>
@@ -128,6 +119,11 @@ builder.Services.AddAntiforgery(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    await scope.ServiceProvider.GetRequiredService<IPlatformService>().EnsureInitializedAsync();
+}
 
 // --- Middleware pipeline ---
 app.UseForwardedHeaders();

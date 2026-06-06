@@ -25,8 +25,7 @@ Painel administrativo (SPA) do Kyvo. Consome a API via OIDC (authorization code 
 
 - Node.js (versão compatível com `package.json`)
 - Backend rodando em `VITE_API_BASE_URL` (ver configuração)
-- Credenciais de bootstrap configuradas no backend (`Bootstrap` no appsettings ou `Bootstrap__*` no ambiente)
-- Se a plataforma ainda não foi inicializada, o próprio frontend executa o bootstrap na tela `/login` (botão **Inicializar plataforma**)
+- Credenciais de bootstrap configuradas no backend (`Bootstrap` no appsettings ou `Bootstrap__*` no ambiente); a API inicializa a plataforma automaticamente na subida
 
 ---
 
@@ -76,16 +75,14 @@ npm run preview
 
 ---
 
-## Fluxo de bootstrap e autenticação
+## Fluxo de autenticação
 
 ```
 1. Usuário acessa a aplicação (ex.: / ou /login)
 2. loginLoader / requireAuthLoader consultam GET /v1.0/platform/status
-3. Se requiresBootstrap → /login exibe botão "Inicializar plataforma" → POST /v1.0/platform/bootstrap
-4. Após bootstrap → mesma rota exibe login OIDC
-```
-
-### OIDC (após bootstrap)
+3. Se requiresBootstrap → /login exibe mensagem para configurar Bootstrap no backend e reiniciar a API
+4. Caso contrário → LoginPage inicia fluxo OIDC
+### OIDC
 
 ```
 1. Usuário acessa rota protegida
@@ -111,7 +108,7 @@ O logout limpa o `localStorage` e redireciona para `GET /connect/logout`.
 
 | Rota | Componente | Auth | Descrição |
 |------|-----------|------|-----------|
-| `/login` | `LoginPage` | Público | Bootstrap (se `requiresBootstrap`) ou inicia fluxo OIDC |
+| `/login` | `LoginPage` | Público | Mensagem se `requiresBootstrap`, senão inicia fluxo OIDC |
 | `/auth/callback` | `AuthCallbackPage` | Público | Troca código por token |
 | `/` | `HomePage` | JWT + plat_admin | Dashboard com links para módulos |
 | `/profile` | `ProfilePage` | JWT + plat_admin | Perfil e memberships do usuário |

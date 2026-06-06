@@ -137,8 +137,10 @@ Confirm it is healthy:
 
 ```bash
 curl http://localhost:5000/v1.0/platform/status
-# Expected response: { "isConfigured": false, "requiresBootstrap": true, "oauthClientId": null }
+# Expected response after startup: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
+
+On first startup, the API automatically initializes the platform (admin, local IdP, OAuth client) using the `Bootstrap` credentials. If `Bootstrap__*` is not configured, status stays `requiresBootstrap: true` until you configure and restart the API.
 
 ---
 
@@ -175,34 +177,27 @@ The frontend runs at `http://localhost:3000`.
 
 ---
 
-## 5. Bootstrap and sign in
+## 5. Sign in
 
 Open `http://localhost:3000` (with both the API and the frontend running).
 
-### Bootstrap (first run)
-
-If the platform has not been bootstrapped yet, the `/login` screen shows **Initialize platform** instead of the OIDC login button. Click it to run the bootstrap (credentials are read from the backend — `Bootstrap` section or `Bootstrap__*` env vars).
-
-The bootstrap creates, exactly once:
+The platform is initialized automatically when the API starts (with `Bootstrap` section or `Bootstrap__*` env vars configured). On the first successful run, the API creates:
 
 - Admin user with the password configured in appsettings / env vars
 - Platform role `plat_admin` assigned to the admin
 - `local` Identity Provider enabled
 - Application `platform-admin` + OAuth Client `platform-admin-web` (fixed, not editable via API)
 
-Once it succeeds, the same route starts showing the OIDC login.
-
-**Ops alternative:** with the API running, `curl -X POST http://localhost:5000/v1.0/platform/bootstrap`.
+If `Bootstrap__*` is not configured, `/login` shows a message asking you to configure the backend and restart the API.
 
 Check the status:
 
 ```bash
 curl http://localhost:5000/v1.0/platform/status
-# Before: { "requiresBootstrap": true, ... }
-# After:  { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
+# { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
-> After a successful production bootstrap, remove `Bootstrap__*` from the environment. They no longer have any effect.
+> After a successful production initialization, remove `Bootstrap__*` from the environment. They no longer have any effect.
 
 ### Sign in
 
@@ -549,7 +544,7 @@ cd kyvo-deploy
 docker compose --env-file .env up -d
 ```
 
-7. Open `https://your-public-host`, complete bootstrap, then remove `Bootstrap__*` from `.env` and restart:
+7. Open `https://your-public-host` (the API initializes automatically on startup). After confirming login works, remove `Bootstrap__*` from `.env` and restart:
 
 ```bash
 docker compose --env-file .env restart api
@@ -618,9 +613,8 @@ cd frontend && npm run build
 # OIDC key (GenerateOidcKey)
 dotnet run --project backend/tools/GenerateOidcKey/GenerateOidcKey.csproj
 
-# Bootstrap (with API running) — or use the button in the frontend at /login
+# Platform status (after starting the API)
 curl http://localhost:5000/v1.0/platform/status
-curl -X POST http://localhost:5000/v1.0/platform/bootstrap
 ```
 
 ---
@@ -630,8 +624,7 @@ curl -X POST http://localhost:5000/v1.0/platform/bootstrap
 | Issue | Likely cause | Solution |
 |-------|--------------|----------|
 | API fails to start: RSA key error | `keys/oidc-signing.pem` is missing | Generate it with `openssl genpkey` (step 3.2) |
-| Bootstrap returns 400 | Credentials not configured in appsettings/env | Verify the `Bootstrap` section or `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` |
-| Bootstrap returns "already bootstrapped" | Bootstrap was already executed | Ignore and sign in normally |
+| Platform not initialized (`requiresBootstrap: true`) | Credentials not configured in appsettings/env | Verify the `Bootstrap` section or `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` and restart the API |
 | Frontend does not load after login | `VITE_OAUTH_REDIRECT_URI` is wrong | Confirm that the `redirect_uri` matches the `platform-admin-web` client |
 | Expired JWT / 401 | Token expired and refresh failed | Sign out and sign in again |
 | Invites do not arrive by email | AWS SES is not configured | Configure `Email:*` with valid SES credentials |

@@ -2991,96 +2991,6 @@
         }
       }
     },
-    "/v{version}/Platform/bootstrap": {
-      "post": {
-        "tags": [
-          "Platform"
-        ],
-        "summary": "Performs one-time platform bootstrap (root user and default OAuth client). Allowed only while unconfigured.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BootstrapResult"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation or malformed request.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authentication.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but not allowed to perform this action.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource was not found.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v{version}/tenants/{tenantId}/roles": {
       "post": {
         "tags": [
@@ -5161,28 +5071,6 @@
         "properties": {
           "available": {
             "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "BootstrapResult": {
-        "required": [
-          "isConfigured",
-          "oauthClientId",
-          "rootUserId"
-        ],
-        "type": "object",
-        "properties": {
-          "isConfigured": {
-            "type": "boolean"
-          },
-          "rootUserId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "oauthClientId": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false

@@ -2606,98 +2606,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Platform/bootstrap": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Performs one-time platform bootstrap (root user and default OAuth client). Allowed only while unconfigured. */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    version: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["BootstrapResult"];
-                    };
-                };
-                /** @description Validation or malformed request. */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Missing or invalid authentication. */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Authenticated but not allowed to perform this action. */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Resource was not found. */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Unexpected server error. */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v{version}/tenants/{tenantId}/roles": {
         parameters: {
             query?: never;
@@ -4189,12 +4097,6 @@ export interface components {
         };
         AvailabilityDto: {
             available: boolean;
-        };
-        BootstrapResult: {
-            isConfigured: boolean;
-            /** Format: uuid */
-            rootUserId: string;
-            oauthClientId: string | null;
         };
         /** @enum {string} */
         ClientType: "Public" | "Confidential";

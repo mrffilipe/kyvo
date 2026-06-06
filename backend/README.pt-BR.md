@@ -25,7 +25,7 @@ Kyvo.API             → Controllers ASP.NET Core, Program.cs, middlewares, view
 
 | Interface | Responsabilidade |
 |-----------|-----------------|
-| `IPlatformService` | Bootstrap e status da plataforma |
+| `IPlatformService` | Inicialização automática na subida e status da plataforma |
 | `IUserService` | Criar/atualizar usuário, listar memberships, linkar identidade externa |
 | `IRegistrationService` | Self-registration (User + UserCredential, sem tenant) |
 | `ITenantService` | CRUD de tenants, convites, aceitar convite |
@@ -76,7 +76,7 @@ Todas as configurações ficam em `Kyvo.API/appsettings.json` (template) e `apps
 | `Database` | `ConnectionString` | String de conexão PostgreSQL |
 | `Jwt` | `Issuer`, `Audience`, `SigningKeyPath`, `SigningKeyPem`, `SigningKeyPemBase64`, `KeyId`, `RefreshTokenDays` | Configuração de tokens RS256 |
 | `Bootstrap` | `AdminEmail`, `AdminPassword`, `AdminDisplayName` | Credenciais do admin raiz (ver abaixo) |
-| `RateLimit` | `BootstrapPermitLimit`, `BootstrapWindowMinutes` | Rate limit do endpoint de bootstrap |
+| `RateLimit` | `AccountRegisterPermitLimit`, `AccountRegisterWindowMinutes` | Rate limit do registro de conta |
 | `Invite` | `ExpirationHours` | Validade dos convites |
 | `Email` | `FromAddress`, `Region`, `AccessKeyId`, `SecretAccessKey` | AWS SES para envio de convites |
 | `Redis` | `ConnectionString`, `InstanceName`, `TenantIdentifierCacheMinutes` | Cache distribuído (opcional) |
@@ -186,30 +186,23 @@ A API sobe em `http://localhost:5000`. Swagger disponível em `/swagger` nos amb
 
 ## Bootstrap
 
-O bootstrap inicializa a plataforma pela primeira vez (executado uma única vez).
+A plataforma é inicializada automaticamente na subida da API, uma única vez, enquanto `PlatformConfiguration.IsBootstrapped` for `false` e as credenciais `Bootstrap:AdminEmail` / `Bootstrap:AdminPassword` estiverem configuradas.
 
-**Fluxo recomendado:** com a API e o frontend rodando, acesse `http://localhost:3000`. Se `GET /v1.0/platform/status` indicar `requiresBootstrap: true`, a tela de login exibe o botão **Inicializar plataforma**, que chama `POST /v1.0/platform/bootstrap` (sem body; credenciais vêm só da configuração do backend).
-
-**Alternativa (ops / CI):**
-
-```bash
-curl -X POST http://localhost:5000/v1.0/platform/bootstrap
-# { "isConfigured": true, "rootUserId": "...", "oauthClientId": "platform-admin-web" }
-```
-
-O bootstrap cria automaticamente:
+Configure as credenciais antes de iniciar a API (seção `Bootstrap` no appsettings ou env `Bootstrap__*`). Na subida, a API cria:
 - Usuário admin raiz com credencial local (BCrypt)
 - Role de plataforma `plat_admin` atribuída ao admin
 - Identity Provider `local` habilitado
 - Application `platform-admin` + Client `platform-admin-web` (fixos, não editáveis via API)
 - Registro de `PlatformConfiguration` marcando o sistema como bootstrapped
 
-Verifique o status antes:
+Verifique o status:
 
 ```bash
 curl http://localhost:5000/v1.0/platform/status
-# { "isConfigured": false, "requiresBootstrap": true, "oauthClientId": null }
+# { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
+
+> Após a inicialização bem-sucedida em produção, remova `Bootstrap__*` do ambiente. Elas não têm mais efeito.
 
 ---
 
@@ -219,7 +212,6 @@ curl http://localhost:5000/v1.0/platform/status
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/v1.0/platform/status` | Público | Status e se requer bootstrap |
-| POST | `/v1.0/platform/bootstrap` | Público (rate limited) | Inicialização única da plataforma |
 
 ### Account / OIDC
 | Método | Path | Auth | Descrição |

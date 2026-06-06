@@ -25,8 +25,7 @@ Admin SPA for the Kyvo. Consumes the API via OIDC (authorization code + PKCE) an
 
 - Node.js (compatible with the version declared in `package.json`)
 - Backend running at `VITE_API_BASE_URL` (see configuration)
-- Bootstrap credentials configured in the backend (`Bootstrap` in appsettings or `Bootstrap__*` env vars)
-- If the platform has not been bootstrapped yet, the frontend itself runs the bootstrap from the `/login` screen (**Initialize platform** button)
+- Bootstrap credentials configured in the backend (`Bootstrap` in appsettings or `Bootstrap__*` env vars); the API initializes the platform automatically on startup
 
 ---
 
@@ -78,16 +77,16 @@ npm run preview
 
 ---
 
-## Bootstrap and authentication flow
+## Authentication flow
 
 ```
 1. The user opens the app (e.g., / or /login)
 2. loginLoader / requireAuthLoader call GET /v1.0/platform/status
-3. If requiresBootstrap → /login shows "Initialize platform" → POST /v1.0/platform/bootstrap
-4. After bootstrap → the same route shows the OIDC login
+3. If requiresBootstrap → /login shows a message to configure Bootstrap on the backend and restart the API
+4. Otherwise → LoginPage starts the OIDC flow
 ```
 
-### OIDC (after bootstrap)
+### OIDC
 
 ```
 1. The user navigates to a protected route
@@ -113,7 +112,7 @@ Logout clears `localStorage` and redirects to `GET /connect/logout`.
 
 | Route | Component | Auth | Description |
 |-------|-----------|------|-------------|
-| `/login` | `LoginPage` | Public | Bootstrap (when `requiresBootstrap`) or kicks off the OIDC flow |
+| `/login` | `LoginPage` | Public | Message when `requiresBootstrap`, otherwise starts OIDC flow |
 | `/auth/callback` | `AuthCallbackPage` | Public | Exchanges code for tokens |
 | `/` | `HomePage` | JWT + plat_admin | Dashboard with module links |
 | `/profile` | `ProfilePage` | JWT + plat_admin | User profile and memberships |
@@ -168,7 +167,7 @@ src/
 
 | File | Functions |
 |------|-----------|
-| `platformService.ts` | `getPlatformStatus`, `bootstrapPlatform` |
+| `platformService.ts` | `getPlatformStatus` |
 | `authService.ts` | `subscribeTenant`, `switchTenant`, `listActiveSessions`, `revokeSession` |
 | `usersService.ts` | `getMe`, `updateMe`, `searchUsers`, `listMyMemberships` |
 | `tenantsService.ts` | `createTenant`, `listTenants`, `getTenantById`, `updateTenant`, `inviteMember`, `listInvitesByTenant`, `revokeInvite`, `acceptInvite` |

@@ -137,8 +137,10 @@ Confirme que está saudável:
 
 ```bash
 curl http://localhost:5000/v1.0/platform/status
-# Resposta esperada: { "isConfigured": false, "requiresBootstrap": true, "oauthClientId": null }
+# Resposta esperada após a subida: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
+
+Na primeira subida, a API inicializa automaticamente a plataforma (admin, IdP local, client OAuth) usando as credenciais da seção `Bootstrap`. Se `Bootstrap__*` não estiver configurado, o status permanece `requiresBootstrap: true` até você configurar e reiniciar a API.
 
 ---
 
@@ -175,33 +177,26 @@ O frontend estará em `http://localhost:3000`.
 
 ---
 
-## 5. Executar o bootstrap e fazer login
+## 5. Fazer login
 
 Acesse `http://localhost:3000` (API e frontend rodando).
 
-### Bootstrap (primeira vez)
-
-Se a plataforma ainda não foi inicializada, a tela em `/login` mostra **Inicializar plataforma** em vez do botão de login OIDC. Clique para executar o bootstrap (credenciais lidas do backend — seção `Bootstrap` ou env `Bootstrap__*`).
-
-O bootstrap cria, uma única vez:
+A plataforma é inicializada automaticamente na subida da API (seção `Bootstrap` ou env `Bootstrap__*` configurados). Na primeira execução bem-sucedida, a API cria:
 - Usuário admin com a senha configurada no appsettings/env vars
 - Role de plataforma `plat_admin` atribuída ao admin
 - Identity Provider `local` habilitado
 - Application `platform-admin` + Client OAuth `platform-admin-web` (fixos, não editáveis via API)
 
-Após sucesso, a mesma rota passa a exibir o login OIDC.
-
-**Alternativa (ops):** com a API rodando, `curl -X POST http://localhost:5000/v1.0/platform/bootstrap`.
+Se `Bootstrap__*` não estiver configurado, `/login` exibe uma mensagem pedindo para configurar o backend e reiniciar a API.
 
 Verifique o status:
 
 ```bash
 curl http://localhost:5000/v1.0/platform/status
-# Antes: { "requiresBootstrap": true, ... }
-# Depois: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
+# { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
-> Após o bootstrap bem-sucedido em produção, remova `Bootstrap__*` do ambiente. Elas não têm mais efeito.
+> Após a inicialização bem-sucedida em produção, remova `Bootstrap__*` do ambiente. Elas não têm mais efeito.
 
 ### Login
 
@@ -529,7 +524,7 @@ cd kyvo-deploy
 docker compose --env-file .env up -d
 ```
 
-7. Abrir `https://seu-host-publico`, fazer bootstrap, remover `Bootstrap__*` e reiniciar:
+7. Abrir `https://seu-host-publico` (a API inicializa automaticamente na subida). Após confirmar login, remover `Bootstrap__*` e reiniciar:
 
 ```bash
 docker compose --env-file .env restart api
@@ -598,9 +593,8 @@ cd frontend && npm run build
 # Chave OIDC (GenerateOidcKey)
 dotnet run --project backend/tools/GenerateOidcKey/GenerateOidcKey.csproj
 
-# Bootstrap (com API rodando) — ou use o botão no frontend em /login
+# Status da plataforma (após subir a API)
 curl http://localhost:5000/v1.0/platform/status
-curl -X POST http://localhost:5000/v1.0/platform/bootstrap
 ```
 
 ---
@@ -610,8 +604,7 @@ curl -X POST http://localhost:5000/v1.0/platform/bootstrap
 | Problema | Causa provável | Solução |
 |----------|---------------|---------|
 | API não inicia: erro de chave RSA | `keys/oidc-signing.pem` não existe | Gerar com `openssl genpkey` (passo 3.2) |
-| Bootstrap retorna 400 | Credenciais não configuradas no appsettings/env | Verificar seção `Bootstrap` ou `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` |
-| Bootstrap retorna "já bootstrapped" | Bootstrap já foi executado | Ignorar; fazer login normalmente |
+| Plataforma não inicializada (`requiresBootstrap: true`) | Credenciais não configuradas no appsettings/env | Verificar seção `Bootstrap` ou `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` e reiniciar a API |
 | Frontend não carrega após login | `VITE_OAUTH_REDIRECT_URI` incorreta | Confirmar que o `redirect_uri` bate com o `platform-admin-web` client |
 | JWT expirado / 401 | Token expirado e refresh falhou | Fazer logout e login novamente |
 | Convites não chegam por email | AWS SES não configurado | Configurar `Email:*` com credenciais SES válidas |

@@ -1,20 +1,16 @@
 import { Button, CircularProgress, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
-import { useLoaderData, useRevalidator, useSearchParams } from 'react-router'
+import { useLoaderData, useSearchParams } from 'react-router'
 import { AuthLayout } from '../components/AuthLayout'
 import { FeedbackAlerts } from '../components/ui'
-import { env } from '../config'
-import { bootstrapPlatform } from '../services/platformService'
 import { redirectToOidcLogin } from '../services/oidcService'
 import type { LoginLoaderData } from '../routes/loaders'
 import { ensureAccessDeniedCookieLogout } from '../utils/authCleanup'
 import { PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE } from '../utils/authStorage'
-import { getApiErrorMessage } from '../utils/apiError'
 import { useAuth } from '../contexts/AuthContext'
 
 export function LoginPage() {
   const { requiresBootstrap } = useLoaderData() as LoginLoaderData
-  const revalidator = useRevalidator()
   const { logoutLocal } = useAuth()
   const [searchParams] = useSearchParams()
   const isAccessDenied = searchParams.get('error') === 'access_denied'
@@ -77,42 +73,19 @@ export function LoginPage() {
     }
   }
 
-  async function handleBootstrap(): Promise<void> {
-    setLoading(true)
-    setError(null)
-    try {
-      await bootstrapPlatform()
-      await revalidator.revalidate()
-    } catch (bootstrapError) {
-      setError(getApiErrorMessage(bootstrapError))
-    } finally {
-      setLoading(false)
-    }
-  }
-
   if (requiresBootstrap) {
     return (
       <AuthLayout
-        title="Primeira configuração"
-        subtitle="A plataforma ainda não foi inicializada"
+        title="Plataforma não inicializada"
+        subtitle="Aguardando configuração no backend"
       >
         <Stack spacing={2.5}>
           <Typography variant="body2" color="text.secondary">
-            As credenciais do administrador raiz são definidas no backend (variáveis{' '}
-            <code>Bootstrap__AdminEmail</code> / <code>Bootstrap__AdminPassword</code> ou seção{' '}
-            <code>Bootstrap</code> no appsettings). Clique abaixo para criar o usuário admin, o
-            client OAuth <strong>{env.oauthClientId}</strong> e o provedor local.
+            A plataforma ainda não foi inicializada. Configure{' '}
+            <code>Bootstrap__AdminEmail</code> e <code>Bootstrap__AdminPassword</code> no backend
+            (ou a seção <code>Bootstrap</code> no appsettings) e reinicie a API.
           </Typography>
           <FeedbackAlerts error={error} />
-          <Button
-            variant="contained"
-            size="large"
-            disabled={loading || revalidator.state === 'loading'}
-            onClick={() => void handleBootstrap()}
-            sx={{ py: 1.25 }}
-          >
-            {loading ? 'Inicializando...' : 'Inicializar plataforma'}
-          </Button>
         </Stack>
       </AuthLayout>
     )

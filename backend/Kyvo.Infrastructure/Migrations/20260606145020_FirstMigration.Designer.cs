@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kyvo.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260606143357_FirstMigration")]
+    [Migration("20260606145020_FirstMigration")]
     partial class FirstMigration
     {
         /// <inheritdoc />

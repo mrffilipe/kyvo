@@ -11,6 +11,7 @@ using Kyvo.Application.Services.Oidc;
 using Kyvo.Infrastructure.Configurations;
 using Kyvo.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -34,6 +35,7 @@ public sealed class PlatformService : IPlatformService
     private readonly ApplicationDbContext _context;
     private readonly BootstrapOptions _bootstrapOptions;
     private readonly JwtOptions _jwtOptions;
+    private readonly ILogger<PlatformService> _logger;
 
     public PlatformService(
         IPlatformConfigurationRepository platformConfigurations,
@@ -47,7 +49,8 @@ public sealed class PlatformService : IPlatformService
         IUnitOfWork unitOfWork,
         ApplicationDbContext context,
         IOptions<BootstrapOptions> bootstrapOptions,
-        IOptions<JwtOptions> jwtOptions)
+        IOptions<JwtOptions> jwtOptions,
+        ILogger<PlatformService> logger)
     {
         _platformConfigurations = platformConfigurations;
         _users = users;
@@ -61,11 +64,38 @@ public sealed class PlatformService : IPlatformService
         _context = context;
         _bootstrapOptions = bootstrapOptions.Value;
         _jwtOptions = jwtOptions.Value;
+        _logger = logger;
     }
 
-    public async Task<BootstrapResult> BootstrapAsync(
-        BootstrapRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
+    {
+        var status = await GetStatusAsync(cancellationToken);
+        if (!status.RequiresBootstrap)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_bootstrapOptions.AdminEmail) ||
+            string.IsNullOrWhiteSpace(_bootstrapOptions.AdminPassword))
+        {
+            _logger.LogWarning(
+                "Platform not initialized. Configure Bootstrap:AdminEmail and Bootstrap:AdminPassword, then restart.");
+            return;
+        }
+
+        try
+        {
+            await InitializePlatformAsync(cancellationToken);
+            _logger.LogInformation("Platform initialized (root user and OAuth client created).");
+        }
+        catch (DomainBusinessRuleException ex) when (
+            ex.Message == ApplicationErrorMessages.Auth.PlatformBootstrapAlreadyCompleted)
+        {
+            // Another replica completed initialization concurrently.
+        }
+    }
+
+    private async Task InitializePlatformAsync(CancellationToken cancellationToken = default)
     {
         var adminEmail = _bootstrapOptions.AdminEmail;
         var adminPassword = _bootstrapOptions.AdminPassword;
@@ -75,8 +105,6 @@ public sealed class PlatformService : IPlatformService
             throw new DomainBusinessRuleException(
                 ApplicationErrorMessages.Auth.PlatformBootstrapAdminCredentialsNotConfigured);
         }
-
-        BootstrapResult? result = null;
 
         await _unitOfWork.ExecuteInSerializableTransactionAsync(async transactionCt =>
         {
@@ -181,16 +209,7 @@ public sealed class PlatformService : IPlatformService
             configuration.MarkBootstrapped(user.Id, client.ClientId);
 
             await _unitOfWork.SaveChangesAsync(transactionCt);
-
-            result = new BootstrapResult
-            {
-                IsConfigured = true,
-                RootUserId = user.Id,
-                OauthClientId = client.ClientId
-            };
         }, cancellationToken);
-
-        return result!;
     }
 
     public async Task<PlatformStatusResult> GetStatusAsync(CancellationToken cancellationToken = default)
