@@ -5,8 +5,8 @@ namespace Kyvo.Domain.Entities;
 
 public sealed class PlatformRole : BaseEntity
 {
-    public string Key { get; private set; } = string.Empty;
-    public string Name { get; private set; } = string.Empty;
+    public string Key { get; private set; } = default!;
+    public string Name { get; private set; } = default!;
     public bool IsSystem { get; private set; }
 
     public ICollection<UserPlatformRole> UserAssignments { get; private set; } = new List<UserPlatformRole>();

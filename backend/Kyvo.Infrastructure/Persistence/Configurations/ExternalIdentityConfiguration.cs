@@ -37,6 +37,11 @@ public sealed class ExternalIdentityConfiguration : BaseEntityConfiguration<Exte
         builder.Navigation(x => x.Email)
             .IsRequired();
 
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.ExternalIdentities)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(x => new { x.Provider, x.ProviderUserId })
             .IsUnique();
     }

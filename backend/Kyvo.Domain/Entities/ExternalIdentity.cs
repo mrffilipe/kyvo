@@ -4,11 +4,13 @@ using Kyvo.Domain.ValueObjects;
 
 namespace Kyvo.Domain.Entities;
 
-public class ExternalIdentity : BaseEntity
+public sealed class ExternalIdentity : BaseEntity
 {
     public Guid UserId { get; private set; }
-    public string Provider { get; private set; } = string.Empty;
-    public string ProviderUserId { get; private set; } = string.Empty;
+    public User User { get; private set; } = null!;
+
+    public string Provider { get; private set; } = default!;
+    public string ProviderUserId { get; private set; } = default!;
     public EmailAddress Email { get; private set; } = null!;
 
     private ExternalIdentity()

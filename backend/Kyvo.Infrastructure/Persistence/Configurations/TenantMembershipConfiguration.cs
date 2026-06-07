@@ -25,6 +25,11 @@ public sealed class TenantMembershipConfiguration : TenantEntityConfiguration<Te
             .HasColumnName("joined_at")
             .IsRequired();
 
+        builder.HasOne(x => x.User)
+            .WithMany(x => x.Memberships)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(x => new { x.UserId, x.TenantId });
     }
 }

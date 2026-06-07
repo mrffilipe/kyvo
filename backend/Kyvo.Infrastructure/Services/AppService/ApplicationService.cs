@@ -166,7 +166,7 @@ public sealed class ApplicationService : IApplicationService
             request.ExternalCustomerId,
             request.PlanCode);
 
-        if (await _applicationTenants.ExistsAsync(application.Id, tenant.Id, cancellationToken))
+        if (await _applicationTenants.MappingAlreadyExistsAsync(application.Id, tenant.Id, cancellationToken))
         {
             throw new DomainBusinessRuleException(DomainErrorMessages.ApplicationTenant.MappingAlreadyExists);
         }

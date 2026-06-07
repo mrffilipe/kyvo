@@ -45,5 +45,25 @@ public sealed class AuthSessionConfiguration : BaseEntityConfiguration<AuthSessi
         builder.Property(x => x.LastActivityAt)
             .HasColumnName("last_activity_at")
             .IsRequired();
+
+        builder.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.ApplicationClient)
+            .WithMany()
+            .HasForeignKey(x => x.ClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.Tenant)
+            .WithMany()
+            .HasForeignKey(x => x.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.Membership)
+            .WithMany()
+            .HasForeignKey(x => x.MembershipId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

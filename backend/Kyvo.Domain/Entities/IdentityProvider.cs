@@ -6,12 +6,9 @@ namespace Kyvo.Domain.Entities;
 
 public sealed class IdentityProvider : BaseEntity
 {
-    public string Alias { get; private set; } = string.Empty;
-
-    public string DisplayName { get; private set; } = string.Empty;
-
+    public string Alias { get; private set; } = default!;
+    public string DisplayName { get; private set; } = default!;
     public IdentityProviderType ProviderType { get; private set; }
-
     public bool Enabled { get; private set; }
 
     /// <summary>

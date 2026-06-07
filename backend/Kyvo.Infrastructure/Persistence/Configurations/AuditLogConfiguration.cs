@@ -39,5 +39,15 @@ public sealed class AuditLogConfiguration : TenantEntityConfiguration<AuditLog>
         builder.Property(x => x.UserAgent)
             .HasColumnName("user_agent")
             .HasMaxLength(500);
+
+        builder.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.Membership)
+            .WithMany()
+            .HasForeignKey(x => x.MembershipId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

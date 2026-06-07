@@ -11,6 +11,8 @@ public sealed class ApplicationTenant : BaseEntity
     public Guid TenantId { get; private set; }
     public Tenant Tenant { get; private set; } = null!;
 
+    public bool IsActive { get; private set; }
+
     /// <summary>
     /// Identifier of the tenant or customer in the consumer application's external system
     /// (e.g., CRM ID, Stripe customer id, account on the SaaS product).
@@ -25,8 +27,6 @@ public sealed class ApplicationTenant : BaseEntity
     /// or billing integration. Does not affect IdP authorization.
     /// </summary>
     public string? PlanCode { get; private set; }
-
-    public bool IsActive { get; private set; }
 
     private ApplicationTenant()
     {

@@ -17,16 +17,4 @@ public static class TenantRoleDefaults
 
     public static readonly IReadOnlySet<string> AdministrativeKeys =
         new HashSet<string>([Owner, Admin], StringComparer.OrdinalIgnoreCase);
-
-    public static string FromLegacyRole(int role)
-    {
-        return role switch
-        {
-            0 => Owner,
-            1 => Admin,
-            2 => Member,
-            3 => Viewer,
-            _ => Viewer
-        };
-    }
 }

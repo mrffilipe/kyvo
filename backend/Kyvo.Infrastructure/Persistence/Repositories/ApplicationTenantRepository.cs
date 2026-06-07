@@ -20,16 +20,7 @@ public sealed class ApplicationTenantRepository : IApplicationTenantRepository
             .AsTask();
     }
 
-    public Task<bool> ExistsAsync(
-        Guid applicationId,
-        Guid tenantId,
-        CancellationToken cancellationToken = default)
-    {
-        return _context.ApplicationTenants
-            .AnyAsync(x => x.ApplicationId == applicationId && x.TenantId == tenantId, cancellationToken);
-    }
-
-    public Task<ApplicationTenant?> GetAsync(
+    public Task<ApplicationTenant?> GetByApplicationAndTenantAsync(
         Guid applicationId,
         Guid tenantId,
         CancellationToken cancellationToken = default)
@@ -38,5 +29,14 @@ public sealed class ApplicationTenantRepository : IApplicationTenantRepository
             .FirstOrDefaultAsync(
                 x => x.ApplicationId == applicationId && x.TenantId == tenantId,
                 cancellationToken);
+    }
+
+    public Task<bool> MappingAlreadyExistsAsync(
+        Guid applicationId,
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        return _context.ApplicationTenants
+            .AnyAsync(x => x.ApplicationId == applicationId && x.TenantId == tenantId, cancellationToken);
     }
 }

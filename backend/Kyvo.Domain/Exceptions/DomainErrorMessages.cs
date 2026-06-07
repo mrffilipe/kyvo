@@ -94,6 +94,10 @@ public static class DomainErrorMessages
     {
         public const string NameAndSlugRequired = "Application name and slug are required.";
         public const string BrandingSystemApplicationReadOnly = "System applications cannot customize login branding.";
+        public const string BrandingPrimaryColorField = "Primary color";
+
+        public const string BrandingSecondaryColorField = "Secondary color";
+
         public const string BrandingColorsRequiredWhenEnabled =
             "Primary and secondary colors are required when branding is enabled.";
         public const string BrandingColorRequired = "{0} is required.";
@@ -161,7 +165,6 @@ public static class DomainErrorMessages
         public const string NotFound = "Identity provider not found.";
         public const string CannotDisableLastLocalProvider = "Cannot disable the only active local identity provider.";
         public const string LocalPasswordReservedForLocal = "The LocalPassword capability is only allowed for the Local provider type.";
-        public const string LocalProviderMustAdvertiseLocalPassword = "The Local provider must advertise the LocalPassword capability.";
         public const string CapabilitiesRequired = "At least one capability is required for non-Local providers.";
     }
 }

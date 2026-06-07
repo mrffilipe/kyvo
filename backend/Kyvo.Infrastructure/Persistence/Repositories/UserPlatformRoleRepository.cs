@@ -30,7 +30,7 @@ public sealed class UserPlatformRoleRepository : IUserPlatformRoleRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(
+    public Task<bool> AssignmentAlreadyExistsAsync(
         Guid userId,
         Guid roleId,
         CancellationToken cancellationToken = default)

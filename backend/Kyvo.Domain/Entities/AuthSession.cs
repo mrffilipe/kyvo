@@ -4,12 +4,20 @@ using Kyvo.Domain.Exceptions;
 
 namespace Kyvo.Domain.Entities;
 
-public class AuthSession : BaseEntity
+public sealed class AuthSession : BaseEntity
 {
     public Guid UserId { get; private set; }
+    public User User { get; private set; } = null!;
+
     public Guid? ClientId { get; private set; }
+    public ApplicationClient? ApplicationClient { get; private set; }
+
     public Guid? TenantId { get; private set; }
+    public Tenant? Tenant { get; private set; }
+
     public Guid? MembershipId { get; private set; }
+    public TenantMembership? Membership { get; private set; }
+
     public SessionStatus Status { get; private set; }
     public string? UserAgent { get; private set; }
     public string? IpAddress { get; private set; }

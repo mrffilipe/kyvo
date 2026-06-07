@@ -160,7 +160,7 @@ public sealed class PlatformService : IPlatformService
                 await _platformRoles.AddAsync(platAdminRole, transactionCt);
             }
 
-            if (!await _userPlatformRoles.ExistsAsync(user.Id, platAdminRole.Id, transactionCt))
+            if (!await _userPlatformRoles.AssignmentAlreadyExistsAsync(user.Id, platAdminRole.Id, transactionCt))
             {
                 await _userPlatformRoles.AddAsync(
                     new UserPlatformRole(user.Id, platAdminRole.Id),

@@ -20,7 +20,7 @@ public sealed class TenantMembershipRepository : ITenantMembershipRepository
             .AsTask();
     }
 
-    public Task<TenantMembership?> GetForUpdateWithRolesAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<TenantMembership?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _context.TenantMemberships
             .Include(x => x.Roles)

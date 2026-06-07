@@ -4,12 +4,12 @@ using Kyvo.Domain.Exceptions;
 
 namespace Kyvo.Domain.Entities;
 
-public class ApplicationClient : BaseEntity
+public sealed class ApplicationClient : BaseEntity
 {
     public Guid ApplicationId { get; private set; }
     public Application Application { get; private set; } = null!;
 
-    public string ClientId { get; private set; } = string.Empty;
+    public string ClientId { get; private set; } = default!;
     public string? ClientSecretHash { get; private set; }
     public ClientType ClientType { get; private set; }
     public string RedirectUris { get; private set; } = "[]";

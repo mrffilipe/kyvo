@@ -7,7 +7,7 @@ namespace Kyvo.Domain.Entities;
 public sealed class TenantRole : TenantEntity
 {
     public TenantRoleKey Key { get; private set; } = null!;
-    public string Name { get; private set; } = string.Empty;
+    public string Name { get; private set; } = default!;
     public string? Description { get; private set; }
     public bool IsSystem { get; private set; }
     public bool IsActive { get; private set; }

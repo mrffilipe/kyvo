@@ -9,12 +9,14 @@ namespace Kyvo.Domain.Entities;
 public sealed class TenantInvite : TenantEntity
 {
     public EmailAddress Email { get; private set; } = null!;
-    public string TokenHash { get; private set; } = string.Empty;
+    public string TokenHash { get; private set; } = default!;
     public string? EncryptedToken { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public DateTime? ConsumedAt { get; private set; }
     public DateTime? RevokedAt { get; private set; }
+
     public Guid InvitedByUserId { get; private set; }
+    public User InvitedByUser { get; private set; } = null!;
 
     public ICollection<TenantInviteRole> Roles { get; private set; } = new List<TenantInviteRole>();
 
@@ -59,8 +61,6 @@ public sealed class TenantInvite : TenantEntity
     public bool IsConsumed() => ConsumedAt.HasValue;
 
     public bool IsRevoked() => RevokedAt.HasValue;
-
-    public bool IsPending() => !IsConsumed() && !IsRevoked() && !IsExpired();
 
     public TenantInviteStatus GetStatus()
     {

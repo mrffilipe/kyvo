@@ -4,14 +4,15 @@ using Kyvo.Domain.Rules;
 
 namespace Kyvo.Domain.Entities;
 
-public class TenantMembership : TenantEntity
+public sealed class TenantMembership : TenantEntity
 {
     public Guid UserId { get; private set; }
-
-    public Tenant Tenant { get; private set; } = null!;
+    public User User { get; private set; } = null!;
 
     public bool IsActive { get; private set; }
     public DateTime JoinedAt { get; private set; }
+
+    public Tenant Tenant { get; private set; } = null!;
 
     public ICollection<TenantMembershipRole> Roles { get; private set; } = new List<TenantMembershipRole>();
 

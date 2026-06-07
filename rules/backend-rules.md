@@ -19,7 +19,7 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
 
 - **One top-level type per file.** Nested types are allowed when they exist only to describe the parent (controller-scoped `*Body` records, private cache DTOs). When the type is general-purpose, move it to its own file alongside its peers.
 - **Folder = namespace.** Mirror folders in namespaces: `Kyvo.Application/Services/Auth/IAuthService.cs` lives in `Kyvo.Application.Services.Auth`.
-- **`sealed` by default** for classes that are not part of a designed inheritance hierarchy.
+- **`sealed` by default** for classes that are not part of a designed inheritance hierarchy. All concrete entities (`User`, `Tenant`, `Application`, …) are `sealed`; only abstract bases such as `BaseEntity` and `TenantEntity` stay open.
 
 ## 3. Formatting
 
@@ -34,7 +34,13 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
   - Properties first, then methods, separated by a single blank line.
   - One blank line between method declarations.
 - **Classes (entities)**
-  - Group every foreign key with its navigation property: `TenantId` immediately followed by `Tenant`. Add a blank line before and after each FK+nav pair so the relationship is visually obvious.
+  - Group every foreign key with its navigation property: `UserId` immediately followed by `User`, `TenantId` immediately followed by `Tenant`, and so on. Add a blank line before and after each FK+nav pair so the relationship is visually obvious.
+  - Optional FKs (`Guid?`) use nullable navigations (`User?`, `TenantMembership?`).
+  - `TenantId` is declared on `TenantEntity`; subclasses that load the tenant (e.g. `TenantMembership`) expose an explicit `Tenant` navigation on the entity.
+  - Required non-nullable reference properties validated in the constructor use `= default!` (not `string.Empty`). Navigations use `= null!`; collections use `= new List<T>()`.
+  - Every FK+nav pair MUST have a matching `HasOne`/`WithMany` (or inverse) mapping in the entity's EF `*Configuration`, with `OnDelete(DeleteBehavior.Restrict)` unless a cascade is explicitly required.
+- **Repository interfaces**
+  - Omit blank lines between method declarations when each method fits on a single line. Break parameters onto separate lines only when the signature exceeds two parameters (see above).
 - **Options classes**
   - One blank line between properties for readability.
 
@@ -44,16 +50,17 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
 - Async methods end with `Async`.
 - Repository methods follow this lexicon:
   - `AddAsync(entity, ct)` — insert a new aggregate.
-  - `GetForUpdateAsync(id, ct)` — fetch a tracked aggregate for mutation.
-  - `GetByXAsync` / `GetEnabledByXAsync` — single-entity lookups.
+  - `GetForUpdateAsync(id, ct)` — fetch a tracked aggregate for mutation (include child collections the domain methods need, e.g. membership roles).
+  - `GetByXAsync` / `GetEnabledByXAsync` — single-entity lookups (use descriptive composite names such as `GetByApplicationAndTenantAsync`, never generic `GetAsync`).
   - `ListXAsync` / `ListAllAsync` — multi-entity reads (`IReadOnlyList<T>`).
-  - `XAlreadyExistsAsync` / `AnyXAsync` — boolean existence checks.
+  - `XAlreadyExistsAsync` / `AnyXAsync` — boolean existence checks (use domain-specific names such as `MappingAlreadyExistsAsync`, `AssignmentAlreadyExistsAsync`, `EmailAlreadyExistsAsync`; never generic `ExistsAsync`).
 - Service methods describe the use case (`SubscribeTenantAsync`, `EnsureInitializedAsync`), not the storage operation.
 
 ## 5. Repository contract
 
 - **Order of declarations:** `Add` → `Get*`/`List*` → `*AlreadyExists`/`Any*` → (rarely) `Remove`. Concrete implementations MUST mirror that order.
-- **No `Update*` methods.** Aggregates returned from `Get*ForUpdate` are tracked by EF Core; mutations go through domain methods (`entity.Rename(...)`, `entity.Disable()`) and are committed by `IUnitOfWork.SaveChangesAsync`.
+- **Surface only consumed methods.** Repository interfaces and their implementations must not declare lookup or existence methods with zero call sites. Remove them in the same PR (see §12).
+- **No `Update*` methods.** Aggregates returned from `GetForUpdateAsync` are tracked by EF Core; mutations go through domain methods (`entity.Rename(...)`, `entity.Disable()`) and are committed by `IUnitOfWork.SaveChangesAsync`.
 - Reads of entities that are not subject to mutation use `AsNoTracking()` in the implementation.
 
 ## 6. Exception messages
@@ -63,6 +70,7 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
   - `Kyvo.Application.Exceptions.ApplicationErrorMessages` for use-case errors.
   - `Kyvo.API.Common.ApiErrorMessages` for HTTP-layer messages (ProblemDetails titles and inline UI strings).
 - Messages are written in **English** only. Use clear, single-sentence, period-terminated strings.
+- Field labels interpolated into messages (e.g. `{0} is required.` for branding colors) live in the catalog too (`DomainErrorMessages.Application.BrandingPrimaryColorField`), never as literals at the call site.
 
 ## 7. Configuration
 
@@ -92,7 +100,7 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
 
 - Every `IdentityProvider` declares one or more `IdpCapability` values (`LocalPassword`, `GoogleSocial`, `MicrosoftSocial`, `AppleSocial`, `GenericOidc`).
 - Hard invariant: `LocalPassword` is allowed ONLY for `IdentityProviderType.Local`. The domain (`IdentityProvider`) and the application service (`IdentityProviderService`) BOTH enforce this — never bypass.
-- Hard invariant: only **one** enabled provider may advertise `LocalPassword` at a time. `IdentityProviderService.AddAsync` and `EnableAsync` query `ListEnabledByCapabilityAsync(IdpCapability.LocalPassword)` before persisting.
+- Hard invariant: only **one** enabled provider may advertise `LocalPassword` at a time. `IdentityProviderService.AddAsync` and `EnableAsync` query `ListEnabledByCapabilityAsync(IdpCapability.LocalPassword)` before persisting — do not add parallel existence helpers such as `AnyEnabledLocalProviderAsync`.
 - Soft conflict: when adding a provider that advertises a social capability already advertised by another enabled provider, return a `warnings` payload (do NOT block). Surface the warning to the admin via the API response and the admin console.
 - New providers MUST be backfilled with their capabilities via migration when introduced.
 
@@ -128,6 +136,11 @@ Dependency direction: `API → Application → Domain`, `Infrastructure → Appl
 ## 12. Dead code policy
 
 - A symbol with zero references (or one reference solely from its concrete implementation of an interface) must be removed in the same PR that exposes it. Configuration keys without a consumer must be removed from both Options classes and appsettings files.
+- Applies equally to domain helpers (`TenantRoleDefaults.FromLegacyRole`), redundant entity methods (`UserCredential.UpdatePasswordHash` when credentials are create-only), unused enum members (`SessionStatus.Expired` — expiry is computed from `AuthSession.ExpiresAt`), and repository methods with no call sites.
+
+## 12.1 Session lifecycle
+
+- `SessionStatus` tracks explicit transitions only (`Active`, `Revoked`). Expiry is derived at read time from `ExpiresAt`; do not persist or enum-map a separate `Expired` status.
 
 ## 13. Tests and validation
 

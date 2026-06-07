@@ -46,6 +46,11 @@ public sealed class TenantInviteConfiguration : TenantEntityConfiguration<Tenant
             .HasColumnName("invited_by_user_id")
             .IsRequired();
 
+        builder.HasOne(x => x.InvitedByUser)
+            .WithMany()
+            .HasForeignKey(x => x.InvitedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(x => x.TokenHash)
             .IsUnique();
     }

@@ -4,10 +4,10 @@ using Kyvo.Domain.ValueObjects;
 
 namespace Kyvo.Domain.Entities;
 
-public class User : BaseEntity
+public sealed class User : BaseEntity
 {
     public EmailAddress Email { get; private set; } = null!;
-    public string DisplayName { get; private set; } = string.Empty;
+    public string DisplayName { get; private set; } = default!;
     public PhotoUrl? PhotoUrl { get; private set; }
     public bool IsActive { get; private set; }
 

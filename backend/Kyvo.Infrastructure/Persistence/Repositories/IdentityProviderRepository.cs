@@ -35,12 +35,6 @@ public sealed class IdentityProviderRepository : IIdentityProviderRepository
             .FirstOrDefaultAsync(x => x.Alias == normalized && x.Enabled, cancellationToken);
     }
 
-    public Task<IdentityProvider?> GetEnabledByTypeAsync(IdentityProviderType type, CancellationToken cancellationToken = default)
-    {
-        return _context.IdentityProviders
-            .FirstOrDefaultAsync(x => x.ProviderType == type && x.Enabled, cancellationToken);
-    }
-
     public Task<IdentityProvider?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _context.IdentityProviders
@@ -82,11 +76,5 @@ public sealed class IdentityProviderRepository : IIdentityProviderRepository
         var normalized = alias.Trim().ToLowerInvariant();
         return _context.IdentityProviders
             .AnyAsync(x => x.Alias == normalized, cancellationToken);
-    }
-
-    public Task<bool> AnyEnabledLocalProviderAsync(CancellationToken cancellationToken = default)
-    {
-        return _context.IdentityProviders
-            .AnyAsync(x => x.ProviderType == IdentityProviderType.Local && x.Enabled, cancellationToken);
     }
 }

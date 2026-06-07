@@ -2,9 +2,9 @@ using Kyvo.Domain.Common;
 
 namespace Kyvo.Domain.Entities;
 
-public class OidcAuthorizationCode : BaseEntity
+public sealed class OidcAuthorizationCode : BaseEntity
 {
-    public string CodeHash { get; private set; } = string.Empty;
+    public string CodeHash { get; private set; } = default!;
 
     public Guid ApplicationClientId { get; private set; }
     public ApplicationClient ApplicationClient { get; private set; } = null!;
@@ -12,9 +12,9 @@ public class OidcAuthorizationCode : BaseEntity
     public Guid AuthSessionId { get; private set; }
     public AuthSession AuthSession { get; private set; } = null!;
 
-    public string RedirectUri { get; private set; } = string.Empty;
+    public string RedirectUri { get; private set; } = default!;
     public string Scopes { get; private set; } = "[]";
-    public string CodeChallenge { get; private set; } = string.Empty;
+    public string CodeChallenge { get; private set; } = default!;
     public string CodeChallengeMethod { get; private set; } = "S256";
     public string? Nonce { get; private set; }
     public DateTime ExpiresAt { get; private set; }

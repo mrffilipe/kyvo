@@ -2,9 +2,9 @@ using Kyvo.Domain.Common;
 
 namespace Kyvo.Domain.Entities;
 
-public class OidcRefreshToken : BaseEntity
+public sealed class OidcRefreshToken : BaseEntity
 {
-    public string TokenHash { get; private set; } = string.Empty;
+    public string TokenHash { get; private set; } = default!;
 
     public Guid ApplicationClientId { get; private set; }
     public ApplicationClient ApplicationClient { get; private set; } = null!;

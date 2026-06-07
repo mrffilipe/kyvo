@@ -2,12 +2,16 @@ using Kyvo.Domain.Common;
 
 namespace Kyvo.Domain.Entities;
 
-public class AuditLog : TenantEntity
+public sealed class AuditLog : TenantEntity
 {
     public Guid? UserId { get; private set; }
+    public User? User { get; private set; }
+
     public Guid? MembershipId { get; private set; }
-    public string Action { get; private set; } = string.Empty;
-    public string ResourceType { get; private set; } = string.Empty;
+    public TenantMembership? Membership { get; private set; }
+
+    public string Action { get; private set; } = default!;
+    public string ResourceType { get; private set; } = default!;
     public Guid? ResourceId { get; private set; }
     public string? IpAddress { get; private set; }
     public string? UserAgent { get; private set; }

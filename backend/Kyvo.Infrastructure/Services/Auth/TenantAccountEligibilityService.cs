@@ -18,7 +18,7 @@ public sealed class TenantAccountEligibilityService : ITenantAccountEligibilityS
         Guid tenantId,
         CancellationToken cancellationToken = default)
     {
-        var applicationTenant = await _applicationTenants.GetAsync(applicationId, tenantId, cancellationToken)
+        var applicationTenant = await _applicationTenants.GetByApplicationAndTenantAsync(applicationId, tenantId, cancellationToken)
             ?? throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.ApplicationTenantNotFound);
 
         if (!applicationTenant.IsActive)

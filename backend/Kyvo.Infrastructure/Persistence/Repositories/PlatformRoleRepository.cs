@@ -26,18 +26,4 @@ public sealed class PlatformRoleRepository : IPlatformRoleRepository
         return _context.PlatformRoles
             .FirstOrDefaultAsync(x => x.Key == normalized, cancellationToken);
     }
-
-    public async Task<IReadOnlyList<PlatformRole>> ListAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.PlatformRoles
-            .OrderBy(x => x.Key)
-            .ToListAsync(cancellationToken);
-    }
-
-    public Task<bool> KeyAlreadyExistsAsync(string key, CancellationToken cancellationToken = default)
-    {
-        var normalized = key.Trim().ToLowerInvariant();
-        return _context.PlatformRoles
-            .AnyAsync(x => x.Key == normalized, cancellationToken);
-    }
 }

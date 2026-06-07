@@ -62,7 +62,7 @@ public sealed class MembershipService : IMembershipService
 
     public async Task UpdateRolesAsync(UpdateMembershipRolesRequest request, CancellationToken cancellationToken = default)
     {
-        var membership = await _memberships.GetForUpdateWithRolesAsync(request.MembershipId, cancellationToken)
+        var membership = await _memberships.GetForUpdateAsync(request.MembershipId, cancellationToken)
             ?? throw new DomainNotFoundException(DomainErrorMessages.TenantMembership.MembershipNotFound);
 
         await EnsureActorCanManageMembershipsAsync(
@@ -87,7 +87,7 @@ public sealed class MembershipService : IMembershipService
 
     public async Task RevokeAsync(RevokeMembershipRequest request, CancellationToken cancellationToken = default)
     {
-        var membership = await _memberships.GetForUpdateWithRolesAsync(request.MembershipId, cancellationToken)
+        var membership = await _memberships.GetForUpdateAsync(request.MembershipId, cancellationToken)
             ?? throw new DomainNotFoundException(DomainErrorMessages.TenantMembership.MembershipNotFound);
 
         await EnsureActorCanManageMembershipsAsync(

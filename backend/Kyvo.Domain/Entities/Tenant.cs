@@ -4,9 +4,9 @@ using Kyvo.Domain.ValueObjects;
 
 namespace Kyvo.Domain.Entities;
 
-public class Tenant : BaseEntity
+public sealed class Tenant : BaseEntity
 {
-    public string Name { get; private set; } = string.Empty;
+    public string Name { get; private set; } = default!;
     public TenantKey Key { get; private set; } = null!;
     public bool IsActive { get; private set; }
 

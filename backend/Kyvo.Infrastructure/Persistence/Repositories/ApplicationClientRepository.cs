@@ -33,13 +33,6 @@ public sealed class ApplicationClientRepository : IApplicationClientRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<ApplicationClient>> ListAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.ApplicationClients
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<IReadOnlyList<ApplicationClient>> ListByApplicationIdAsync(
         Guid applicationId,
         CancellationToken cancellationToken = default)
