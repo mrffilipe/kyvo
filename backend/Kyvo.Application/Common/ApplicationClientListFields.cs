@@ -8,7 +8,6 @@ namespace Kyvo.Application.Common;
 public static class ApplicationClientListFields
 {
     public static IReadOnlyList<string> ParseRedirectUris(string? json) => ParseJsonArray(json);
-
     public static IReadOnlyList<string> ParseAllowedScopes(string? json) => ParseJsonArray(json);
 
     public static string ToRedirectUrisJson(string raw)

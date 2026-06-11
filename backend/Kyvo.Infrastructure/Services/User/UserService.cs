@@ -30,7 +30,7 @@ public sealed class UserService : IUserService
         _context = context;
     }
 
-    public async Task<Guid> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         var email = new EmailAddress(request.Email);
         if (await _users.EmailAlreadyExistsAsync(email, cancellationToken))
@@ -53,7 +53,7 @@ public sealed class UserService : IUserService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<UserDto?> GetByIdAsync(GetUserByIdRequest request, CancellationToken cancellationToken = default)
+    public async Task<UserDto?> GetUserByIdAsync(GetUserByIdRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
             .AsNoTracking()

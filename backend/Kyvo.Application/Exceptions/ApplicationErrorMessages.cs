@@ -22,7 +22,7 @@ public static class ApplicationErrorMessages
         public const string ConfigurationInvalid = "Client configuration is invalid.";
         public const string RequestedScopesNotAllowed = "Requested scopes are not allowed: {0}.";
         public const string PlatformAdminConsoleAccessDenied =
-            "Acesso negado. Apenas administradores da plataforma podem usar o console Platform Admin.";
+            "Access denied. Only platform administrators may use the Platform Admin console.";
     }
 
     public static class Pkce

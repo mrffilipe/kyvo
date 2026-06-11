@@ -33,7 +33,7 @@ public sealed class TenantRoleService : ITenantRoleService
         _context = context;
     }
 
-    public async Task<Guid> CreateAsync(CreateTenantRoleRequest request, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateTenantRoleAsync(CreateTenantRoleRequest request, CancellationToken cancellationToken = default)
     {
         await EnsureActorCanManageTenantRolesAsync(
             request.TenantId,
@@ -56,7 +56,7 @@ public sealed class TenantRoleService : ITenantRoleService
         return role.Id;
     }
 
-    public async Task UpdateAsync(UpdateTenantRoleRequest request, CancellationToken cancellationToken = default)
+    public async Task UpdateTenantRoleAsync(UpdateTenantRoleRequest request, CancellationToken cancellationToken = default)
     {
         var role = await _roles.GetForUpdateAsync(request.RoleId, cancellationToken)
             ?? throw new DomainNotFoundException(DomainErrorMessages.TenantRole.RoleNotFound);
@@ -85,7 +85,7 @@ public sealed class TenantRoleService : ITenantRoleService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(DeleteTenantRoleRequest request, CancellationToken cancellationToken = default)
+    public async Task DeleteTenantRoleAsync(DeleteTenantRoleRequest request, CancellationToken cancellationToken = default)
     {
         var role = await _roles.GetForUpdateAsync(request.RoleId, cancellationToken)
             ?? throw new DomainNotFoundException(DomainErrorMessages.TenantRole.RoleNotFound);
@@ -117,7 +117,7 @@ public sealed class TenantRoleService : ITenantRoleService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<PagedResult<TenantRoleDto>> ListAsync(
+    public async Task<PagedResult<TenantRoleDto>> ListTenantRolesAsync(
         ListTenantRolesRequest request,
         CancellationToken cancellationToken = default)
     {

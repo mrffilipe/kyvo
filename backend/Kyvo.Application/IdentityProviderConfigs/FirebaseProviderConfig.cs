@@ -5,7 +5,6 @@ namespace Kyvo.Application.IdentityProviderConfigs;
 public sealed class FirebaseProviderConfig
 {
     public string ProjectId { get; init; } = string.Empty;
-
     public string WebApiKey { get; init; } = string.Empty;
 
     /// <summary>

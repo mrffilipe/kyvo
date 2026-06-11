@@ -53,8 +53,6 @@ public static class OidcClaimsBuilder
         return claims;
     }
 
-    public static IReadOnlyList<Claim> ForAccessToken(IReadOnlyList<Claim> allClaims) => allClaims;
-
     public static IReadOnlyList<Claim> ForIdToken(IReadOnlyList<Claim> allClaims)
     {
         var idTokenTypes = new HashSet<string>(StringComparer.Ordinal)

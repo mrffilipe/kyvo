@@ -57,7 +57,7 @@ public sealed class ApplicationService : IApplicationService
         _tenantService = tenantService;
     }
 
-    public async Task<Guid> CreateAsync(CreateApplicationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateApplicationAsync(CreateApplicationRequest request, CancellationToken cancellationToken = default)
     {
         var slug = request.Slug.Trim().ToLowerInvariant();
         if (await _applications.SlugAlreadyExistsAsync(slug, cancellationToken))
@@ -199,7 +199,7 @@ public sealed class ApplicationService : IApplicationService
         };
     }
 
-    public async Task<ApplicationDto?> GetByIdAsync(
+    public async Task<ApplicationDto?> GetApplicationByIdAsync(
         GetApplicationByIdRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -221,7 +221,7 @@ public sealed class ApplicationService : IApplicationService
         };
     }
 
-    public async Task<PagedResult<ApplicationDto>> ListAsync(
+    public async Task<PagedResult<ApplicationDto>> ListApplicationsAsync(
         ListApplicationsRequest request,
         CancellationToken cancellationToken = default)
     {

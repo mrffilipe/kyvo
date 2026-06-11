@@ -1,5 +1,3 @@
-using Kyvo.Domain.Enums;
-
 namespace Kyvo.Application.Services.IdentityProvider;
 
 /// <summary>
@@ -12,15 +10,4 @@ public sealed class AccountLoginPageState
     public required bool HasFederatedProviders { get; init; }
 
     public required IReadOnlyList<AccountFederatedProviderState> FederatedProviders { get; init; }
-}
-
-public sealed class AccountFederatedProviderState
-{
-    public required string Alias { get; init; }
-
-    public required string DisplayName { get; init; }
-
-    public required IdentityProviderType ProviderType { get; init; }
-
-    public IReadOnlyDictionary<string, string>? ClientConfig { get; init; }
 }

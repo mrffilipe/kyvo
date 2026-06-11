@@ -8,6 +8,5 @@ public interface IApplicationBrandingStorage
         string contentType,
         string fileName,
         CancellationToken cancellationToken = default);
-
     Task DeleteLogoAsync(Guid applicationId, CancellationToken cancellationToken = default);
 }

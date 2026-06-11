@@ -65,7 +65,7 @@ public sealed class TenantService : ITenantService
         _context = context;
     }
 
-    public async Task<Guid> CreateAsync(CreateTenantRequest request, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateTenantAsync(CreateTenantRequest request, CancellationToken cancellationToken = default)
     {
         var key = new TenantKey(request.Key);
         if (await _tenants.KeyAlreadyExistsAsync(key, cancellationToken))
@@ -151,7 +151,7 @@ public sealed class TenantService : ITenantService
         }
     }
 
-    public async Task UpdateAsync(UpdateTenantRequest request, CancellationToken cancellationToken = default)
+    public async Task UpdateTenantAsync(UpdateTenantRequest request, CancellationToken cancellationToken = default)
     {
         var isPlatformAdministrator = request.ActorPlatformRoles
             .Any(role => PlatformRoleDefaults.AdministrativeKeys.Contains(role));
@@ -181,7 +181,7 @@ public sealed class TenantService : ITenantService
         await _tenantResolutionCache.InvalidateByIdentifierAsync(tenant.Key.Value, cancellationToken);
     }
 
-    public async Task<TenantDto?> GetByIdAsync(GetTenantByIdRequest request, CancellationToken cancellationToken = default)
+    public async Task<TenantDto?> GetTenantByIdAsync(GetTenantByIdRequest request, CancellationToken cancellationToken = default)
     {
         var isPlatformAdministrator = request.ActorPlatformRoles
             .Any(role => PlatformRoleDefaults.AdministrativeKeys.Contains(role));
@@ -325,7 +325,11 @@ public sealed class TenantService : ITenantService
         await _invites.AddAsync(invite, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new InviteMemberResult(invite.Id, acceptPath);
+        return new InviteMemberResult
+        {
+            Id = invite.Id,
+            AcceptPath = acceptPath
+        };
     }
 
     public async Task<PagedResult<TenantInviteDto>> ListInvitesByTenantAsync(
@@ -480,14 +484,16 @@ public sealed class TenantService : ITenantService
             }
         }
 
-        return new TenantInviteDto(
-            invite.Id,
-            invite.Email.Value,
-            invite.Roles.Select(x => x.Role.Key.Value).ToList(),
-            invite.ExpiresAt,
-            invite.ConsumedAt,
-            invite.RevokedAt,
-            status,
-            acceptPath);
+        return new TenantInviteDto
+        {
+            Id = invite.Id,
+            Email = invite.Email.Value,
+            Roles = invite.Roles.Select(x => x.Role.Key.Value).ToList(),
+            ExpiresAt = invite.ExpiresAt,
+            ConsumedAt = invite.ConsumedAt,
+            RevokedAt = invite.RevokedAt,
+            Status = status,
+            AcceptPath = acceptPath
+        };
     }
 }

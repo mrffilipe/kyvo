@@ -31,7 +31,7 @@ public sealed class TenantRolesController : V1ApiControllerBase
         [FromBody] CreateTenantRoleRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _tenantRoleService.CreateAsync(
+        var id = await _tenantRoleService.CreateTenantRoleAsync(
             request with
             {
                 TenantId = tenantId,
@@ -53,7 +53,7 @@ public sealed class TenantRolesController : V1ApiControllerBase
         [FromQuery] ListTenantRolesRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _tenantRoleService.ListAsync(
+        var result = await _tenantRoleService.ListTenantRolesAsync(
             request with { TenantId = tenantId },
             cancellationToken);
 
@@ -71,7 +71,7 @@ public sealed class TenantRolesController : V1ApiControllerBase
         [FromBody] UpdateTenantRoleRequest request,
         CancellationToken cancellationToken)
     {
-        await _tenantRoleService.UpdateAsync(
+        await _tenantRoleService.UpdateTenantRoleAsync(
             request with
             {
                 RoleId = id,
@@ -91,7 +91,7 @@ public sealed class TenantRolesController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTenantRole(Guid id, CancellationToken cancellationToken)
     {
-        await _tenantRoleService.DeleteAsync(
+        await _tenantRoleService.DeleteTenantRoleAsync(
             new DeleteTenantRoleRequest
             {
                 RoleId = id,

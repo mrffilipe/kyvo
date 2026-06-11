@@ -51,7 +51,7 @@ public sealed class UsersController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDto>> GetMe(CancellationToken cancellationToken)
     {
-        var user = await _userService.GetByIdAsync(
+        var user = await _userService.GetUserByIdAsync(
             new GetUserByIdRequest { UserId = _userScope.UserId },
             cancellationToken);
 

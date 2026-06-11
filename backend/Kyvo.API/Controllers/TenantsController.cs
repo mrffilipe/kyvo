@@ -32,7 +32,7 @@ public sealed class TenantsController : V1ApiControllerBase
         [FromBody] CreateTenantRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _tenantService.CreateAsync(
+        var id = await _tenantService.CreateTenantAsync(
             request with
             {
                 ActorUserId = _userScope.UserId,
@@ -148,7 +148,7 @@ public sealed class TenantsController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TenantDto>> GetTenantById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _tenantService.GetByIdAsync(
+        var result = await _tenantService.GetTenantByIdAsync(
             new GetTenantByIdRequest
             {
                 TenantId = id,
@@ -171,7 +171,7 @@ public sealed class TenantsController : V1ApiControllerBase
         [FromBody] UpdateTenantRequest request,
         CancellationToken cancellationToken)
     {
-        await _tenantService.UpdateAsync(
+        await _tenantService.UpdateTenantAsync(
             request with
             {
                 TenantId = id,

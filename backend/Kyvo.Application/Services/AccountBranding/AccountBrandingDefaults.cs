@@ -12,8 +12,8 @@ public static class AccountBrandingDefaults
     public const string DarkPrimary = "#818cf8";
     public const string DarkSecondary = "#7c3aed";
 
-    public const string HeroTitle = "Identidade para um ecossistema de apps.";
+    public const string HeroTitle = "Identity for an ecosystem of apps.";
 
     public const string HeroSubtitle =
-        "Um lugar central para usuários, tenants e aplicações OAuth. Entre uma vez, acesse todos os produtos.";
+        "One central place for users, tenants, and OAuth applications. Sign in once, access every product.";
 }

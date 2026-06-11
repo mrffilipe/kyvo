@@ -85,7 +85,7 @@ public sealed class IdentityProviderService : IIdentityProviderService
         return new AddIdentityProviderResult { Id = provider.Id, Warnings = warnings };
     }
 
-    public async Task UpdateAsync(UpdateIdentityProviderRequest request, CancellationToken cancellationToken = default)
+    public async Task UpdateIdentityProviderAsync(UpdateIdentityProviderRequest request, CancellationToken cancellationToken = default)
     {
         var provider = await _identityProviders.GetForUpdateAsync(request.Id, cancellationToken)
             ?? throw new DomainNotFoundException(ApplicationErrorMessages.IdentityProvider.NotFound);
@@ -113,7 +113,7 @@ public sealed class IdentityProviderService : IIdentityProviderService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task EnableAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task EnableIdentityProviderAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var provider = await _identityProviders.GetForUpdateAsync(id, cancellationToken)
             ?? throw new DomainNotFoundException(ApplicationErrorMessages.IdentityProvider.NotFound);
@@ -132,7 +132,7 @@ public sealed class IdentityProviderService : IIdentityProviderService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DisableAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DisableIdentityProviderAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var provider = await _identityProviders.GetForUpdateAsync(id, cancellationToken)
             ?? throw new DomainNotFoundException(ApplicationErrorMessages.IdentityProvider.NotFound);
@@ -147,13 +147,13 @@ public sealed class IdentityProviderService : IIdentityProviderService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IdentityProviderDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IdentityProviderDto?> GetIdentityProviderByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var provider = await _identityProviders.GetForUpdateAsync(id, cancellationToken);
         return provider is null ? null : MapToDto(provider);
     }
 
-    public async Task<IReadOnlyList<IdentityProviderDto>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<IdentityProviderDto>> ListIdentityProvidersAsync(CancellationToken cancellationToken = default)
     {
         var providers = await _identityProviders.ListAllAsync(cancellationToken);
         return providers.Select(MapToDto).ToList();

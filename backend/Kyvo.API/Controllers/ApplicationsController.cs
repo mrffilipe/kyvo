@@ -32,7 +32,7 @@ public sealed class ApplicationsController : V1ApiControllerBase
         [FromBody] CreateApplicationRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _applicationService.CreateAsync(request, cancellationToken);
+        var id = await _applicationService.CreateApplicationAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetApplicationById), new { id, version = "1.0" }, new CreatedIdResponse(id));
     }
 
@@ -91,7 +91,7 @@ public sealed class ApplicationsController : V1ApiControllerBase
         [FromQuery] ListApplicationsRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _applicationService.ListAsync(request, cancellationToken);
+        var result = await _applicationService.ListApplicationsAsync(request, cancellationToken);
         return Ok(result);
     }
 
@@ -117,7 +117,7 @@ public sealed class ApplicationsController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApplicationDto>> GetApplicationById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _applicationService.GetByIdAsync(
+        var result = await _applicationService.GetApplicationByIdAsync(
             new GetApplicationByIdRequest { ApplicationId = id },
             cancellationToken);
 

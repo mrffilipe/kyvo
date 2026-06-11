@@ -243,7 +243,7 @@ public sealed class OidcTokenService : IOidcTokenService
         }
 
         var accessLifetime = TimeSpan.FromSeconds(client.AccessTokenTtlSeconds);
-        var accessClaims = OidcClaimsBuilder.ForAccessToken(claims);
+        var accessClaims = claims;
         var accessToken = _jwtSigning.SignAccessToken(accessClaims, accessLifetime);
 
         string? idToken = null;

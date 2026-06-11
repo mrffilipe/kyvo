@@ -19,7 +19,7 @@ public sealed class AuditLogService : IAuditLogService
         _userScope = userScope;
     }
 
-    public async Task<PagedResult<AuditLogItemDto>> ListAsync(
+    public async Task<PagedResult<AuditLogItemDto>> ListAuditLogsAsync(
         ListAuditLogsRequest request,
         CancellationToken cancellationToken = default)
     {

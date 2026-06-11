@@ -2,6 +2,7 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SimpleEmailV2;
 using Kyvo.Application.Services.IdentityProvider;
+using Kyvo.Infrastructure.Services.IdentityProvider;
 using Kyvo.Application.Services.Security;
 using Kyvo.Infrastructure.Configurations;
 using Kyvo.Infrastructure.Persistence;

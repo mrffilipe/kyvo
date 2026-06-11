@@ -5,8 +5,5 @@ namespace Kyvo.Application.Services.AccountBranding;
 /// </summary>
 public interface IAccountBrandingStateProvider
 {
-    Task<AccountBrandingViewModel> GetBrandingAsync(
-        string? returnUrl,
-        string? clientIdQuery,
-        CancellationToken cancellationToken = default);
+    Task<AccountBrandingViewModel> GetBrandingAsync(string? returnUrl, string? clientIdQuery, CancellationToken cancellationToken = default);
 }

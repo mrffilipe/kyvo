@@ -5,16 +5,10 @@ namespace Kyvo.Application.Services.IdentityProvider;
 public interface IIdentityProviderService
 {
     Task<AvailabilityDto> IsAliasAvailableAsync(string alias, CancellationToken cancellationToken = default);
-
     Task<AddIdentityProviderResult> AddAsync(AddIdentityProviderRequest request, CancellationToken cancellationToken = default);
-
-    Task UpdateAsync(UpdateIdentityProviderRequest request, CancellationToken cancellationToken = default);
-
-    Task EnableAsync(Guid id, CancellationToken cancellationToken = default);
-
-    Task DisableAsync(Guid id, CancellationToken cancellationToken = default);
-
-    Task<IdentityProviderDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<IdentityProviderDto>> ListAsync(CancellationToken cancellationToken = default);
+    Task UpdateIdentityProviderAsync(UpdateIdentityProviderRequest request, CancellationToken cancellationToken = default);
+    Task EnableIdentityProviderAsync(Guid id, CancellationToken cancellationToken = default);
+    Task DisableIdentityProviderAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IdentityProviderDto?> GetIdentityProviderByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<IdentityProviderDto>> ListIdentityProvidersAsync(CancellationToken cancellationToken = default);
 }

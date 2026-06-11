@@ -37,7 +37,7 @@ public sealed class IdentityProvidersController : V1ApiControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<IdentityProviderDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<IdentityProviderDto>>> List(CancellationToken cancellationToken)
     {
-        var result = await _identityProviderService.ListAsync(cancellationToken);
+        var result = await _identityProviderService.ListIdentityProvidersAsync(cancellationToken);
         return Ok(result);
     }
 
@@ -62,7 +62,7 @@ public sealed class IdentityProvidersController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IdentityProviderDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _identityProviderService.GetByIdAsync(id, cancellationToken);
+        var result = await _identityProviderService.GetIdentityProviderByIdAsync(id, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 
@@ -77,7 +77,7 @@ public sealed class IdentityProvidersController : V1ApiControllerBase
         [FromBody] UpdateIdentityProviderRequest request,
         CancellationToken cancellationToken)
     {
-        await _identityProviderService.UpdateAsync(
+        await _identityProviderService.UpdateIdentityProviderAsync(
             request with { Id = id },
             cancellationToken);
 
@@ -92,7 +92,7 @@ public sealed class IdentityProvidersController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Enable(Guid id, CancellationToken cancellationToken)
     {
-        await _identityProviderService.EnableAsync(id, cancellationToken);
+        await _identityProviderService.EnableIdentityProviderAsync(id, cancellationToken);
         return NoContent();
     }
 
@@ -104,7 +104,7 @@ public sealed class IdentityProvidersController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Disable(Guid id, CancellationToken cancellationToken)
     {
-        await _identityProviderService.DisableAsync(id, cancellationToken);
+        await _identityProviderService.DisableIdentityProviderAsync(id, cancellationToken);
         return NoContent();
     }
 }

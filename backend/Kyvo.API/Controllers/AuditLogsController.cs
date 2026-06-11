@@ -36,7 +36,7 @@ public sealed class AuditLogsController : V1ApiControllerBase
             return Forbid();
         }
 
-        var result = await _auditLogService.ListAsync(request, cancellationToken);
+        var result = await _auditLogService.ListAuditLogsAsync(request, cancellationToken);
         return Ok(result);
     }
 

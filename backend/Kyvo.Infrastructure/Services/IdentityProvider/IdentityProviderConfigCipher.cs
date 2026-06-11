@@ -1,8 +1,9 @@
 using System.Text.Json.Nodes;
+using Kyvo.Application.Services.IdentityProvider;
 using Kyvo.Application.Services.Security;
 using Kyvo.Domain.Enums;
 
-namespace Kyvo.Application.Services.IdentityProvider;
+namespace Kyvo.Infrastructure.Services.IdentityProvider;
 
 public sealed class IdentityProviderConfigCipher : IIdentityProviderConfigCipher
 {

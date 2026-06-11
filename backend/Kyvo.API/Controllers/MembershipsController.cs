@@ -32,7 +32,7 @@ public sealed class MembershipsController : V1ApiControllerBase
         [FromBody] CreateMembershipRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _membershipService.CreateAsync(
+        var id = await _membershipService.CreateMembershipAsync(
             request with
             {
                 TenantId = tenantId,
@@ -97,7 +97,7 @@ public sealed class MembershipsController : V1ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RevokeMembership(Guid id, CancellationToken cancellationToken)
     {
-        await _membershipService.RevokeAsync(
+        await _membershipService.RevokeMembershipAsync(
             new RevokeMembershipRequest
             {
                 MembershipId = id,

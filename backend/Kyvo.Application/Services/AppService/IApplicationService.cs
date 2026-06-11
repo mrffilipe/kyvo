@@ -4,7 +4,7 @@ namespace Kyvo.Application.Services.AppService;
 
 public interface IApplicationService
 {
-    Task<Guid> CreateAsync(CreateApplicationRequest request, CancellationToken cancellationToken = default);
+    Task<Guid> CreateApplicationAsync(CreateApplicationRequest request, CancellationToken cancellationToken = default);
 
     Task<AvailabilityDto> IsSlugAvailableAsync(string slug, CancellationToken cancellationToken = default);
 
@@ -16,11 +16,11 @@ public interface IApplicationService
         ProvisionApplicationTenantRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationDto?> GetByIdAsync(
+    Task<ApplicationDto?> GetApplicationByIdAsync(
         GetApplicationByIdRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<PagedResult<ApplicationDto>> ListAsync(
+    Task<PagedResult<ApplicationDto>> ListApplicationsAsync(
         ListApplicationsRequest request,
         CancellationToken cancellationToken = default);
 
