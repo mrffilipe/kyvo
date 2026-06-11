@@ -17,6 +17,9 @@ public static class PlatformDefaults
 
         public static readonly IReadOnlyList<string> DefaultRedirectUris =
             ["http://localhost:3000/auth/callback"];
+
+        public static readonly IReadOnlyList<string> DefaultPostLogoutRedirectUris =
+            ["http://localhost:3000/login"];
     }
 
     public static class LocalIdentityProvider

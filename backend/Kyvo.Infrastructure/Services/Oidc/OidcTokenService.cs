@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Kyvo.Application.Exceptions;
 using Kyvo.Application.Services.Oidc;
 using Kyvo.Application.Services.RefreshTokenHasher;
 using Kyvo.Application.Services.UnitOfWork;
@@ -51,11 +52,23 @@ public sealed class OidcTokenService : IOidcTokenService
         _platformAdminConsoleAccessGuard = platformAdminConsoleAccessGuard;
     }
 
-    public async Task<(OidcTokenResponse? Response, OidcError? Error)> IssueForSessionAsync(
-        Guid sessionId,
-        CancellationToken cancellationToken = default)
+    public async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeAsync(OidcTokenRequest request, CancellationToken ct = default)
     {
-        var session = await _sessions.GetForUpdateAsync(sessionId, cancellationToken);
+        return request.GrantType switch
+        {
+            "authorization_code" => await ExchangeAuthorizationCodeAsync(request, ct),
+            "refresh_token" => await ExchangeRefreshTokenAsync(request, ct),
+            _ => (null, new OidcError
+            {
+                Error = OidcConstants.Errors.UnsupportedGrantType,
+                ErrorDescription = ApplicationErrorMessages.OAuthAuthorization.UnsupportedGrantType
+            })
+        };
+    }
+
+    public async Task<(OidcTokenResponse? Response, OidcError? Error)> IssueForSessionAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var session = await _sessions.GetForUpdateAsync(sessionId, ct);
         if (session is null || session.Status != SessionStatus.Active)
         {
             return (null, InvalidGrant("Session is not active."));
@@ -66,7 +79,7 @@ public sealed class OidcTokenService : IOidcTokenService
             return (null, InvalidGrant("Session has no OAuth client. Sign in again from the application."));
         }
 
-        var client = await _clients.GetByIdAsync(session.ClientId.Value, cancellationToken);
+        var client = await _clients.GetByIdAsync(session.ClientId.Value, ct);
         if (client is null)
         {
             return (null, InvalidGrant("OAuth client not found."));
@@ -85,33 +98,15 @@ public sealed class OidcTokenService : IOidcTokenService
         }
 
         session.Touch();
-        return await IssueTokensAsync(client, sessionId, scopes, nonce: null, cancellationToken);
+        return await IssueTokensAsync(client, sessionId, scopes, nonce: null, ct);
     }
 
-    public async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeAsync(
-        OidcTokenRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        return request.GrantType switch
-        {
-            "authorization_code" => await ExchangeAuthorizationCodeAsync(request, cancellationToken),
-            "refresh_token" => await ExchangeRefreshTokenAsync(request, cancellationToken),
-            _ => (null, new OidcError
-            {
-                Error = OidcConstants.Errors.UnsupportedGrantType,
-                ErrorDescription = "The specified grant type is not supported."
-            })
-        };
-    }
-
-    private async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeAuthorizationCodeAsync(
-        OidcTokenRequest request,
-        CancellationToken cancellationToken)
+    private async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeAuthorizationCodeAsync(OidcTokenRequest request, CancellationToken ct)
     {
         var (client, clientError) = await _clientValidator.ValidateClientAsync(
             request.ClientId,
             request.ClientSecret,
-            cancellationToken);
+            ct);
         if (clientError is not null)
         {
             return (null, clientError);
@@ -128,7 +123,7 @@ public sealed class OidcTokenService : IOidcTokenService
             return (null, redirectError);
         }
 
-        var stored = await _authorizationCodes.GetByCodeHashForUpdateAsync(_hasher.Hash(request.Code), cancellationToken);
+        var stored = await _authorizationCodes.GetByCodeHashForUpdateAsync(_hasher.Hash(request.Code), ct);
         if (stored is null || !stored.IsValid(DateTime.UtcNow))
         {
             return (null, InvalidGrant("Authorization code is invalid or expired."));
@@ -154,17 +149,15 @@ public sealed class OidcTokenService : IOidcTokenService
         }
 
         stored.Consume();
-        return await IssueTokensAsync(client, stored.AuthSessionId, stored.Scopes, stored.Nonce, cancellationToken);
+        return await IssueTokensAsync(client, stored.AuthSessionId, stored.Scopes, stored.Nonce, ct);
     }
 
-    private async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeRefreshTokenAsync(
-        OidcTokenRequest request,
-        CancellationToken cancellationToken)
+    private async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeRefreshTokenAsync(OidcTokenRequest request, CancellationToken ct)
     {
         var (client, clientError) = await _clientValidator.ValidateClientAsync(
             request.ClientId,
             request.ClientSecret,
-            cancellationToken);
+            ct);
         if (clientError is not null)
         {
             return (null, clientError);
@@ -177,7 +170,7 @@ public sealed class OidcTokenService : IOidcTokenService
 
         var stored = await _refreshTokens.GetByTokenHashForUpdateAsync(
             _hasher.Hash(request.RefreshToken),
-            cancellationToken);
+            ct);
         if (stored is null || !stored.IsValid(DateTime.UtcNow))
         {
             return (null, InvalidGrant("Refresh token is invalid or expired."));
@@ -188,7 +181,7 @@ public sealed class OidcTokenService : IOidcTokenService
             return (null, InvalidGrant("client_id does not match."));
         }
 
-        var session = await _sessions.GetForUpdateAsync(stored.AuthSessionId, cancellationToken);
+        var session = await _sessions.GetForUpdateAsync(stored.AuthSessionId, ct);
         if (session is null || session.Status != SessionStatus.Active)
         {
             return (null, InvalidGrant("Session is no longer active."));
@@ -210,7 +203,7 @@ public sealed class OidcTokenService : IOidcTokenService
             scopes = requested;
         }
 
-        return await IssueTokensAsync(client, stored.AuthSessionId, scopes, nonce: null, cancellationToken);
+        return await IssueTokensAsync(client, stored.AuthSessionId, scopes, nonce: null, ct);
     }
 
     private async Task<(OidcTokenResponse? Response, OidcError? Error)> IssueTokensAsync(
@@ -218,9 +211,9 @@ public sealed class OidcTokenService : IOidcTokenService
         Guid sessionId,
         IReadOnlyList<string> scopes,
         string? nonce,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
-        var session = await _sessions.GetForUpdateAsync(sessionId, cancellationToken);
+        var session = await _sessions.GetForUpdateAsync(sessionId, ct);
         if (session is null || session.Status != SessionStatus.Active)
         {
             return (null, InvalidGrant("Session is not active."));
@@ -229,13 +222,13 @@ public sealed class OidcTokenService : IOidcTokenService
         var accessError = await _platformAdminConsoleAccessGuard.TryValidateAccessAsync(
             session.UserId,
             client.ClientId,
-            cancellationToken);
+            ct);
         if (accessError is not null)
         {
             return (null, accessError);
         }
 
-        var claims = await _claimsService.TryBuildClaimsAsync(sessionId, scopes, cancellationToken);
+        var claims = await _claimsService.TryBuildClaimsAsync(sessionId, scopes, ct);
         if (claims is null)
         {
             return (null, InvalidGrant("Unable to build token claims."));
@@ -255,10 +248,10 @@ public sealed class OidcTokenService : IOidcTokenService
         string? refreshTokenValue = null;
         if (scopes.Contains(OidcConstants.Scopes.OfflineAccess, StringComparer.Ordinal))
         {
-            refreshTokenValue = await PersistRefreshTokenAsync(client.Id, sessionId, scopes, cancellationToken);
+            refreshTokenValue = await PersistRefreshTokenAsync(client.Id, sessionId, scopes, ct);
         }
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         return (new OidcTokenResponse
         {
@@ -275,7 +268,7 @@ public sealed class OidcTokenService : IOidcTokenService
         Guid applicationClientId,
         Guid sessionId,
         IReadOnlyList<string> scopes,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
             .TrimEnd('=')
@@ -289,7 +282,7 @@ public sealed class OidcTokenService : IOidcTokenService
             JsonSerializer.Serialize(scopes),
             DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenDays));
 
-        await _refreshTokens.AddAsync(entity, cancellationToken);
+        await _refreshTokens.AddAsync(entity, ct);
         return refreshToken;
     }
 

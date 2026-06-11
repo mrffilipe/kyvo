@@ -195,6 +195,7 @@ public sealed class PlatformService : IPlatformService
                 BuildAdminConsoleRedirectUris().ToList(),
                 PlatformDefaults.AdminConsole.AllowedScopes.ToList(),
                 accessTokenTtlSeconds: 900,
+                BuildAdminConsolePostLogoutRedirectUris().ToList(),
                 isSystem: true);
             await _clients.AddAsync(client, transactionCt);
 
@@ -223,6 +224,7 @@ public sealed class PlatformService : IPlatformService
         {
             await EnsureAdminConsoleOfflineAccessScopeAsync(cancellationToken);
             await EnsureAdminConsoleRedirectUriAsync(cancellationToken);
+            await EnsureAdminConsolePostLogoutRedirectUriAsync(cancellationToken);
         }
 
         return new PlatformStatusResult
@@ -245,6 +247,23 @@ public sealed class PlatformService : IPlatformService
         if (!string.IsNullOrEmpty(issuer))
         {
             uris.Add($"{issuer}/auth/callback");
+        }
+
+        return uris.ToList();
+    }
+
+    private IReadOnlyList<string> BuildAdminConsolePostLogoutRedirectUris()
+    {
+        var uris = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var uri in PlatformDefaults.AdminConsole.DefaultPostLogoutRedirectUris)
+        {
+            uris.Add(uri);
+        }
+
+        var issuer = _jwtOptions.Issuer.Trim().TrimEnd('/');
+        if (!string.IsNullOrEmpty(issuer))
+        {
+            uris.Add($"{issuer}/login");
         }
 
         return uris.ToList();
@@ -278,6 +297,37 @@ public sealed class PlatformService : IPlatformService
             .Where(c => c.Id == client.Id)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(c => c.RedirectUris, merged.ToList()),
+                cancellationToken);
+    }
+
+    /// <summary>
+    /// Ensures the admin SPA post-logout redirect for the configured JWT issuer (same-origin deploy).
+    /// </summary>
+    private async Task EnsureAdminConsolePostLogoutRedirectUriAsync(CancellationToken cancellationToken)
+    {
+        var client = await _clients.GetByClientIdAsync(PlatformDefaults.AdminConsole.ClientId, cancellationToken);
+        if (client is null || !client.IsSystem)
+        {
+            return;
+        }
+
+        var expected = BuildAdminConsolePostLogoutRedirectUris();
+        var current = client.PostLogoutRedirectUris;
+        if (expected.All(uri => current.Contains(uri, StringComparer.Ordinal)))
+        {
+            return;
+        }
+
+        var merged = new HashSet<string>(current, StringComparer.Ordinal);
+        foreach (var uri in expected)
+        {
+            merged.Add(uri);
+        }
+
+        await _context.ApplicationClients
+            .Where(c => c.Id == client.Id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(c => c.PostLogoutRedirectUris, merged.ToList()),
                 cancellationToken);
     }
 

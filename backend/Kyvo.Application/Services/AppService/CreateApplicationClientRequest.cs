@@ -9,6 +9,7 @@ public sealed record CreateApplicationClientRequest
     public string? ClientSecretHash { get; init; }
     public required ClientType ClientType { get; init; }
     public required string RedirectUris { get; init; }
+    public string? PostLogoutRedirectUris { get; init; }
     public string? AllowedScopes { get; init; }
     public IReadOnlyList<string>? AllowedScopesList { get; init; }
     public required int AccessTokenTtlSeconds { get; init; }

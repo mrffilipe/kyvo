@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
 using Kyvo.API.Common;
@@ -8,7 +9,10 @@ using Kyvo.Domain.Enums;
 using Kyvo.Domain.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Kyvo.API.Controllers;
 
@@ -26,6 +30,7 @@ public sealed class AuthorizationController : Controller
     private readonly IOidcTokenService _tokenService;
     private readonly IOidcClaimsService _claimsService;
     private readonly IPlatformAdminConsoleAccessGuard _platformAdminConsoleAccessGuard;
+    private readonly IJwtSigningService _jwtSigning;
 
     public AuthorizationController(
         IAuthSessionRepository sessions,
@@ -34,7 +39,8 @@ public sealed class AuthorizationController : Controller
         IOidcAuthorizationService authorizationService,
         IOidcTokenService tokenService,
         IOidcClaimsService claimsService,
-        IPlatformAdminConsoleAccessGuard platformAdminConsoleAccessGuard)
+        IPlatformAdminConsoleAccessGuard platformAdminConsoleAccessGuard,
+        IJwtSigningService jwtSigning)
     {
         _sessions = sessions;
         _unitOfWork = unitOfWork;
@@ -43,6 +49,7 @@ public sealed class AuthorizationController : Controller
         _tokenService = tokenService;
         _claimsService = claimsService;
         _platformAdminConsoleAccessGuard = platformAdminConsoleAccessGuard;
+        _jwtSigning = jwtSigning;
     }
 
     /// <summary>
@@ -177,9 +184,7 @@ public sealed class AuthorizationController : Controller
     [Produces("application/json")]
     [ProducesResponseType(typeof(OidcTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OidcErrorJsonResponse), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<OidcTokenResponse>> Exchange(
-        [FromForm] OidcTokenFormRequest form,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<OidcTokenResponse>> Exchange([FromForm] OidcTokenFormRequest form, CancellationToken ct)
     {
         var request = new OidcTokenRequest
         {
@@ -193,7 +198,7 @@ public sealed class AuthorizationController : Controller
             Scope = form.Scope
         };
 
-        var (response, error) = await _tokenService.ExchangeAsync(request, cancellationToken);
+        var (response, error) = await _tokenService.ExchangeAsync(request, ct);
         if (error is not null)
         {
             return OAuthJsonError(error);
@@ -205,6 +210,7 @@ public sealed class AuthorizationController : Controller
     /// <summary>
     /// OpenID Connect UserInfo endpoint (requires Bearer access token).
     /// </summary>
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("~/connect/userinfo")]
     [HttpPost("~/connect/userinfo")]
     [Produces("application/json")]
@@ -225,20 +231,44 @@ public sealed class AuthorizationController : Controller
     }
 
     /// <summary>
-    /// Ends the browser session (cookie) and optionally redirects to the client post-logout URI.
+    /// OIDC RP-Initiated Logout (<c>end_session_endpoint</c>). Clears the browser cookie session without
+    /// requiring authentication; redirects to <c>post_logout_redirect_uri</c> only when it is registered for the client.
     /// </summary>
     [HttpGet("~/connect/logout")]
     [HttpPost("~/connect/logout")]
     [ProducesResponseType(StatusCodes.Status302Found)]
-    public async Task<IActionResult> Logout([FromQuery(Name = "post_logout_redirect_uri")] string? postLogoutRedirectUri)
+    public async Task<IActionResult> Logout(
+        [FromQuery(Name = "client_id")] string? clientId,
+        [FromQuery(Name = "post_logout_redirect_uri")] string? postLogoutRedirectUri,
+        [FromQuery(Name = "id_token_hint")] string? idTokenHint,
+        CancellationToken ct)
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        if (!string.IsNullOrWhiteSpace(postLogoutRedirectUri))
+
+        if (string.IsNullOrWhiteSpace(postLogoutRedirectUri))
         {
-            return Redirect(postLogoutRedirectUri);
+            return Redirect("/");
         }
 
-        return Redirect("/");
+        var resolvedClientId = clientId ?? TryGetClientIdFromIdTokenHint(idTokenHint);
+        if (string.IsNullOrWhiteSpace(resolvedClientId))
+        {
+            return Redirect("/");
+        }
+
+        var (client, _) = await _clientValidator.ValidateClientAsync(resolvedClientId, null, ct);
+        if (client is null)
+        {
+            return Redirect("/");
+        }
+
+        var redirectError = _clientValidator.ValidatePostLogoutRedirectUri(client, postLogoutRedirectUri);
+        if (redirectError is not null)
+        {
+            return Redirect("/");
+        }
+
+        return Redirect(postLogoutRedirectUri);
     }
 
     private OidcAuthorizeRequest ReadAuthorizeRequest()
@@ -263,6 +293,34 @@ public sealed class AuthorizationController : Controller
 
     private static string? NullIfEmpty(string value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
+
+    private string? TryGetClientIdFromIdTokenHint(string? idTokenHint)
+    {
+        if (string.IsNullOrWhiteSpace(idTokenHint))
+        {
+            return null;
+        }
+
+        try
+        {
+            var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+            var parameters = new TokenValidationParameters
+            {
+                ValidIssuer = _jwtSigning.Issuer,
+                IssuerSigningKey = _jwtSigning.SigningKey,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ClockSkew = TimeSpan.FromMinutes(5)
+            };
+
+            var principal = handler.ValidateToken(idTokenHint, parameters, out _);
+            return principal.FindFirst("aud")?.Value;
+        }
+        catch (SecurityTokenException)
+        {
+            return null;
+        }
+    }
 
     private string BuildAuthorizeReturnUrl()
     {

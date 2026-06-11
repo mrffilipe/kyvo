@@ -22,6 +22,7 @@ export interface ApplicationClientSummary {
   clientId: string
   clientType: ClientType
   redirectUris: string[]
+  postLogoutRedirectUris: string[]
   allowedScopes: string[]
   accessTokenTtlSeconds: number
   isSystem: boolean
@@ -77,6 +78,7 @@ export interface CreateApplicationClientBody {
   clientSecretHash?: string | null
   clientType: ClientType
   redirectUris: string
+  postLogoutRedirectUris?: string
   allowedScopes?: string
   allowedScopesList?: string[]
   accessTokenTtlSeconds: number

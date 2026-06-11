@@ -99,7 +99,8 @@ public sealed class ApplicationService : IApplicationService
             request.ClientType,
             ApplicationClientListFields.ParseAndValidateRedirectUris(request.RedirectUris),
             ApplicationClientListFields.ParseAndValidateAllowedScopes(request.AllowedScopes, request.AllowedScopesList),
-            request.AccessTokenTtlSeconds);
+            request.AccessTokenTtlSeconds,
+            ApplicationClientListFields.ParseAndValidatePostLogoutRedirectUris(request.PostLogoutRedirectUris));
 
         await _clients.AddAsync(client, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -360,6 +361,7 @@ public sealed class ApplicationService : IApplicationService
             ClientId = client.ClientId,
             ClientType = client.ClientType,
             RedirectUris = client.RedirectUris,
+            PostLogoutRedirectUris = client.PostLogoutRedirectUris,
             AllowedScopes = client.AllowedScopes,
             AccessTokenTtlSeconds = client.AccessTokenTtlSeconds,
             IsSystem = client.IsSystem

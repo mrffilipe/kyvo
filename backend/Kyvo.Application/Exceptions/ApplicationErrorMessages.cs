@@ -24,11 +24,14 @@ public static class ApplicationErrorMessages
         public const string RequestedScopesNotAllowed = "Requested scopes are not allowed: {0}.";
         public const string PlatformAdminConsoleAccessDenied =
             "Access denied. Only platform administrators may use the Platform Admin console.";
+        public const string PostLogoutRedirectUriNotAllowed = "post_logout_redirect_uri is not allowed for this client.";
+        public const string ClientIdRequiredForLogoutRedirect = "client_id is required when post_logout_redirect_uri is specified.";
     }
 
     public static class OAuthAuthorization
     {
         public const string ResponseTypeMustBeCode = "response_type must be code.";
+        public const string UnsupportedGrantType = "The specified grant type is not supported.";
     }
 
     public static class Pkce
@@ -84,12 +87,9 @@ public static class ApplicationErrorMessages
         public const string ConfigInvalid = "Identity provider configuration is invalid.";
         public const string ConfigRequired = "Identity provider configuration (ConfigJson) is required for this provider type.";
         public const string LoginTypeNotSupported = "Login is not yet supported for this identity provider type.";
-        public const string LocalProviderCreationNotAllowed =
-            "The local email/password identity provider is created during platform bootstrap and cannot be added again.";
-        public const string LocalProviderModificationNotAllowed =
-            "The local email/password identity provider cannot be modified.";
-        public const string LocalProviderDisableNotAllowed =
-            "The local email/password identity provider cannot be disabled.";
+        public const string LocalProviderCreationNotAllowed = "The local email/password identity provider is created during platform bootstrap and cannot be added again.";
+        public const string LocalProviderModificationNotAllowed = "The local email/password identity provider cannot be modified.";
+        public const string LocalProviderDisableNotAllowed = "The local email/password identity provider cannot be disabled.";
     }
 
     public static class Signing

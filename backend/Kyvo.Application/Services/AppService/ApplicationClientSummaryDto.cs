@@ -8,6 +8,7 @@ public sealed record ApplicationClientSummaryDto
     public required string ClientId { get; init; }
     public required ClientType ClientType { get; init; }
     public required IReadOnlyList<string> RedirectUris { get; init; }
+    public required IReadOnlyList<string> PostLogoutRedirectUris { get; init; }
     public required IReadOnlyList<string> AllowedScopes { get; init; }
     public required int AccessTokenTtlSeconds { get; init; }
     public required bool IsSystem { get; init; }

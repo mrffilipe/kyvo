@@ -92,6 +92,25 @@ public sealed class OidcClientValidator : IOidcClientValidator
         return null;
     }
 
+    public OidcError? ValidatePostLogoutRedirectUri(ApplicationClient client, string? postLogoutRedirectUri)
+    {
+        if (string.IsNullOrWhiteSpace(postLogoutRedirectUri))
+        {
+            return null;
+        }
+
+        if (client.PostLogoutRedirectUris.Any(uri => IsPostLogoutRedirectUriMatch(uri, postLogoutRedirectUri)))
+        {
+            return null;
+        }
+
+        return new OidcError
+        {
+            Error = OidcConstants.Errors.InvalidRequest,
+            ErrorDescription = ApplicationErrorMessages.OAuthClient.PostLogoutRedirectUriNotAllowed
+        };
+    }
+
     public OidcError? ValidateScopes(ApplicationClient client, IReadOnlyList<string> requestedScopes)
     {
         if (requestedScopes.Count == 0)
@@ -152,6 +171,10 @@ public sealed class OidcClientValidator : IOidcClientValidator
 
         return null;
     }
+
+    private static bool IsPostLogoutRedirectUriMatch(string registered, string requested) =>
+        string.Equals(registered, requested, StringComparison.Ordinal)
+        || requested.StartsWith(registered + "?", StringComparison.Ordinal);
 
     public IReadOnlyList<string> ParseScopes(string? scope)
     {

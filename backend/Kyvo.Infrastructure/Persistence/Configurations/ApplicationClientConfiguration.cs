@@ -37,6 +37,12 @@ public sealed class ApplicationClientConfiguration : BaseEntityConfiguration<App
             .HasConversion(StringListJsonValueConverter.Converter, StringListJsonValueConverter.Comparer)
             .IsRequired();
 
+        builder.Property(x => x.PostLogoutRedirectUris)
+            .HasColumnName("post_logout_redirect_uris")
+            .HasColumnType("json")
+            .HasConversion(StringListJsonValueConverter.Converter, StringListJsonValueConverter.Comparer)
+            .IsRequired();
+
         builder.Property(x => x.AllowedScopes)
             .HasColumnName("allowed_scopes")
             .HasColumnType("json")

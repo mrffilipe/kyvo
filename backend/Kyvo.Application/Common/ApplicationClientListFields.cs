@@ -19,6 +19,18 @@ public static class ApplicationClientListFields
         return values.ToList();
     }
 
+    public static List<string> ParseAndValidatePostLogoutRedirectUris(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return [];
+        }
+
+        var values = Parse(raw);
+        ValidateRedirectUris(values);
+        return values.ToList();
+    }
+
     public static List<string> ParseAndValidateAllowedScopes(string? raw, IReadOnlyList<string>? scopesList)
     {
         var values = scopesList is { Count: > 0 }

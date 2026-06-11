@@ -13,6 +13,7 @@ public sealed class ApplicationClient : BaseEntity
     public string? ClientSecretHash { get; private set; }
     public ClientType ClientType { get; private set; }
     public List<string> RedirectUris { get; private set; } = [];
+    public List<string> PostLogoutRedirectUris { get; private set; } = [];
     public List<string> AllowedScopes { get; private set; } = [];
     public int AccessTokenTtlSeconds { get; private set; }
 
@@ -34,6 +35,7 @@ public sealed class ApplicationClient : BaseEntity
         IReadOnlyList<string> redirectUris,
         IReadOnlyList<string> allowedScopes,
         int accessTokenTtlSeconds,
+        IReadOnlyList<string>? postLogoutRedirectUris = null,
         bool isSystem = false)
     {
         if (applicationId == Guid.Empty || string.IsNullOrWhiteSpace(clientId))
@@ -46,6 +48,7 @@ public sealed class ApplicationClient : BaseEntity
         ClientSecretHash = clientSecretHash;
         ClientType = clientType;
         RedirectUris = redirectUris.ToList();
+        PostLogoutRedirectUris = postLogoutRedirectUris?.ToList() ?? [];
         AllowedScopes = allowedScopes.ToList();
         AccessTokenTtlSeconds = accessTokenTtlSeconds > 0 ? accessTokenTtlSeconds : 900;
         IsSystem = isSystem;
