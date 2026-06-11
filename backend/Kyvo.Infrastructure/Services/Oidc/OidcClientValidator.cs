@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Kyvo.Application.Exceptions;
 using Kyvo.Application.Services.Oidc;
 using Kyvo.Domain.Entities;
@@ -11,15 +10,9 @@ public sealed class OidcClientValidator : IOidcClientValidator
 {
     private readonly IApplicationClientRepository _clients;
 
-    public OidcClientValidator(IApplicationClientRepository clients)
-    {
-        _clients = clients;
-    }
+    public OidcClientValidator(IApplicationClientRepository clients) => _clients = clients;
 
-    public async Task<(ApplicationClient? Client, OidcError? Error)> ValidateClientAsync(
-        string? clientId,
-        string? clientSecret,
-        CancellationToken cancellationToken = default)
+    public async Task<(ApplicationClient? Client, OidcError? Error)> ValidateClientAsync(string? clientId, string? clientSecret, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(clientId))
         {
@@ -30,7 +23,7 @@ public sealed class OidcClientValidator : IOidcClientValidator
             });
         }
 
-        var client = await _clients.GetByClientIdAsync(clientId, cancellationToken);
+        var client = await _clients.GetByClientIdAsync(clientId, ct);
         if (client is null)
         {
             return (null, new OidcError
@@ -47,7 +40,7 @@ public sealed class OidcClientValidator : IOidcClientValidator
                 return (null, new OidcError
                 {
                     Error = OidcConstants.Errors.InvalidClient,
-                    ErrorDescription = ApplicationErrorMessages.OAuthClient.ClientSecretRequired
+                    ErrorDescription = ApplicationErrorMessages.OAuthClient.ClientSecretNotAllowedForPublicClients
                 });
             }
 
@@ -63,10 +56,7 @@ public sealed class OidcClientValidator : IOidcClientValidator
             });
         }
 
-        var valid = client.ClientSecretHash.StartsWith("$2", StringComparison.Ordinal)
-            ? BCrypt.Net.BCrypt.Verify(clientSecret, client.ClientSecretHash)
-            : string.Equals(clientSecret, client.ClientSecretHash, StringComparison.Ordinal);
-
+        var valid = BCrypt.Net.BCrypt.Verify(clientSecret, client.ClientSecretHash);
         if (!valid)
         {
             return (null, new OidcError
@@ -86,12 +76,11 @@ public sealed class OidcClientValidator : IOidcClientValidator
             return new OidcError
             {
                 Error = OidcConstants.Errors.InvalidRequest,
-                ErrorDescription = ApplicationErrorMessages.OAuthClient.RedirectUriNotAllowed
+                ErrorDescription = ApplicationErrorMessages.OAuthClient.RedirectUrisRequired
             };
         }
 
-        var allowed = DeserializeList(client.RedirectUris);
-        if (!allowed.Any(uri => string.Equals(uri, redirectUri, StringComparison.Ordinal)))
+        if (!client.RedirectUris.Any(uri => string.Equals(uri, redirectUri, StringComparison.Ordinal)))
         {
             return new OidcError
             {
@@ -114,9 +103,9 @@ public sealed class OidcClientValidator : IOidcClientValidator
             };
         }
 
-        var allowed = DeserializeList(client.AllowedScopes);
+        var allowed = new HashSet<string>(client.AllowedScopes, StringComparer.Ordinal);
         var disallowed = requestedScopes
-            .Where(scope => !allowed.Contains(scope, StringComparer.Ordinal))
+            .Where(scope => !allowed.Contains(scope))
             .ToList();
 
         if (disallowed.Count > 0)
@@ -133,10 +122,7 @@ public sealed class OidcClientValidator : IOidcClientValidator
         return null;
     }
 
-    public OidcError? ValidatePkceForAuthorize(
-        ApplicationClient client,
-        string? codeChallenge,
-        string? codeChallengeMethod)
+    public OidcError? ValidatePkceForAuthorize(ApplicationClient client, string? codeChallenge, string? codeChallengeMethod)
     {
         var challengeError = PkceHelper.ValidateCodeChallenge(codeChallenge);
         if (challengeError is not null)
@@ -178,17 +164,5 @@ public sealed class OidcClientValidator : IOidcClientValidator
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.Ordinal)
             .ToList();
-    }
-
-    private static IReadOnlyList<string> DeserializeList(string rawJson)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<string[]>(rawJson) ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
     }
 }

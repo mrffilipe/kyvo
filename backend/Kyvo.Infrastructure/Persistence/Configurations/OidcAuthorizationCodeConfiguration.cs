@@ -1,5 +1,6 @@
 using Kyvo.Domain.Entities;
 using Kyvo.Infrastructure.Common;
+using Kyvo.Infrastructure.Persistence.ValueConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -34,6 +35,7 @@ public sealed class OidcAuthorizationCodeConfiguration : BaseEntityConfiguration
         builder.Property(x => x.Scopes)
             .HasColumnName("scopes")
             .HasColumnType("json")
+            .HasConversion(StringListJsonValueConverter.Converter, StringListJsonValueConverter.Comparer)
             .IsRequired();
 
         builder.Property(x => x.CodeChallenge)

@@ -13,7 +13,7 @@ public sealed class OidcAuthorizationCode : BaseEntity
     public AuthSession AuthSession { get; private set; } = null!;
 
     public string RedirectUri { get; private set; } = default!;
-    public string Scopes { get; private set; } = "[]";
+    public List<string> Scopes { get; private set; } = [];
     public string CodeChallenge { get; private set; } = default!;
     public string CodeChallengeMethod { get; private set; } = "S256";
     public string? Nonce { get; private set; }
@@ -29,7 +29,7 @@ public sealed class OidcAuthorizationCode : BaseEntity
         Guid applicationClientId,
         Guid authSessionId,
         string redirectUri,
-        string scopes,
+        IReadOnlyList<string> scopes,
         string codeChallenge,
         string codeChallengeMethod,
         string? nonce,
@@ -39,7 +39,7 @@ public sealed class OidcAuthorizationCode : BaseEntity
         ApplicationClientId = applicationClientId;
         AuthSessionId = authSessionId;
         RedirectUri = redirectUri;
-        Scopes = scopes;
+        Scopes = scopes.ToList();
         CodeChallenge = codeChallenge;
         CodeChallengeMethod = codeChallengeMethod;
         Nonce = nonce;

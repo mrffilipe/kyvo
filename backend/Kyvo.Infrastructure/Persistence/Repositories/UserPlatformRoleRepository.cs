@@ -8,34 +8,26 @@ public sealed class UserPlatformRoleRepository : IUserPlatformRoleRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public UserPlatformRoleRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public UserPlatformRoleRepository(ApplicationDbContext context) => _context = context;
 
-    public Task AddAsync(UserPlatformRole assignment, CancellationToken cancellationToken = default)
+    public Task AddAsync(UserPlatformRole assignment, CancellationToken ct = default)
     {
         return _context.UserPlatformRoles
-            .AddAsync(assignment, cancellationToken)
+            .AddAsync(assignment, ct)
             .AsTask();
     }
 
-    public async Task<IReadOnlyList<UserPlatformRole>> ListByUserIdAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<UserPlatformRole>> ListByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
         return await _context.UserPlatformRoles
             .Include(x => x.Role)
             .Where(x => x.UserId == userId)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
-    public Task<bool> AssignmentAlreadyExistsAsync(
-        Guid userId,
-        Guid roleId,
-        CancellationToken cancellationToken = default)
+    public Task<bool> AssignmentAlreadyExistsAsync(Guid userId, Guid roleId, CancellationToken ct = default)
     {
         return _context.UserPlatformRoles
-            .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, cancellationToken);
+            .AnyAsync(x => x.UserId == userId && x.RoleId == roleId, ct);
     }
 }

@@ -8,39 +8,35 @@ public sealed class ApplicationClientRepository : IApplicationClientRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public ApplicationClientRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public ApplicationClientRepository(ApplicationDbContext context) => _context = context;
 
-    public Task AddAsync(ApplicationClient client, CancellationToken cancellationToken = default)
+    public Task AddAsync(ApplicationClient client, CancellationToken ct = default)
     {
         return _context.ApplicationClients
-            .AddAsync(client, cancellationToken)
+            .AddAsync(client, ct)
             .AsTask();
     }
 
-    public Task<ApplicationClient?> GetByClientIdAsync(string clientId, CancellationToken cancellationToken = default)
+    public Task<ApplicationClient?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return _context.ApplicationClients
             .Include(x => x.Application)
-            .FirstOrDefaultAsync(x => x.ClientId == clientId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
-    public Task<ApplicationClient?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<ApplicationClient?> GetByClientIdAsync(string clientId, CancellationToken ct = default)
     {
         return _context.ApplicationClients
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .Include(x => x.Application)
+            .FirstOrDefaultAsync(x => x.ClientId == clientId, ct);
     }
 
-    public async Task<IReadOnlyList<ApplicationClient>> ListByApplicationIdAsync(
-        Guid applicationId,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<ApplicationClient>> ListByApplicationIdAsync(Guid applicationId, CancellationToken ct = default)
     {
         return await _context.ApplicationClients
             .AsNoTracking()
             .Where(x => x.ApplicationId == applicationId)
             .OrderBy(x => x.ClientId)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 }

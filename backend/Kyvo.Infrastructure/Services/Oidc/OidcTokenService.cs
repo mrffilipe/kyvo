@@ -72,7 +72,7 @@ public sealed class OidcTokenService : IOidcTokenService
             return (null, InvalidGrant("OAuth client not found."));
         }
 
-        var scopes = DeserializeScopes(client.AllowedScopes);
+        var scopes = client.AllowedScopes;
         if (scopes.Count == 0)
         {
             scopes =
@@ -154,8 +154,7 @@ public sealed class OidcTokenService : IOidcTokenService
         }
 
         stored.Consume();
-        var scopes = DeserializeScopes(stored.Scopes);
-        return await IssueTokensAsync(client, stored.AuthSessionId, scopes, stored.Nonce, cancellationToken);
+        return await IssueTokensAsync(client, stored.AuthSessionId, stored.Scopes, stored.Nonce, cancellationToken);
     }
 
     private async Task<(OidcTokenResponse? Response, OidcError? Error)> ExchangeRefreshTokenAsync(

@@ -7,10 +7,7 @@ namespace Kyvo.Application.Common;
 
 public static class ApplicationClientListFields
 {
-    public static IReadOnlyList<string> ParseRedirectUris(string? json) => ParseJsonArray(json);
-    public static IReadOnlyList<string> ParseAllowedScopes(string? json) => ParseJsonArray(json);
-
-    public static string ToRedirectUrisJson(string raw)
+    public static List<string> ParseAndValidateRedirectUris(string raw)
     {
         var values = Parse(raw);
         if (values.Count == 0)
@@ -19,10 +16,10 @@ public static class ApplicationClientListFields
         }
 
         ValidateRedirectUris(values);
-        return JsonSerializer.Serialize(values);
+        return values.ToList();
     }
 
-    public static string ToAllowedScopesJson(string? raw, IReadOnlyList<string>? scopesList)
+    public static List<string> ParseAndValidateAllowedScopes(string? raw, IReadOnlyList<string>? scopesList)
     {
         var values = scopesList is { Count: > 0 }
             ? Normalize(scopesList)
@@ -34,7 +31,7 @@ public static class ApplicationClientListFields
         }
 
         ValidateAllowedScopes(values);
-        return JsonSerializer.Serialize(values);
+        return values.ToList();
     }
 
     private static void ValidateRedirectUris(IReadOnlyList<string> values)
@@ -102,22 +99,5 @@ public static class ApplicationClientListFields
             .Select(value => value.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-    }
-
-    private static IReadOnlyList<string> ParseJsonArray(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return [];
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<string[]>(json) ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
     }
 }

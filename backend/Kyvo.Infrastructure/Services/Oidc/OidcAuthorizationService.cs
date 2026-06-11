@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using System.Text.Json;
+using Kyvo.Application.Exceptions;
 using Kyvo.Application.Services.Oidc;
 using Kyvo.Application.Services.RefreshTokenHasher;
 using Kyvo.Domain.Entities;
@@ -26,16 +26,14 @@ public sealed class OidcAuthorizationService : IOidcAuthorizationService
         _unitOfWork = unitOfWork;
     }
 
-    public OidcError? ValidateAuthorizeRequest(
-        OidcAuthorizeRequest request,
-        ApplicationClientValidationContext clientContext)
+    public OidcError? ValidateAuthorizeRequest(OidcAuthorizeRequest request, ApplicationClientValidationContext clientContext)
     {
         if (!string.Equals(request.ResponseType, "code", StringComparison.Ordinal))
         {
             return new OidcError
             {
                 Error = OidcConstants.Errors.InvalidRequest,
-                ErrorDescription = "response_type must be code."
+                ErrorDescription = ApplicationErrorMessages.OAuthAuthorization.ResponseTypeMustBeCode
             };
         }
 
@@ -47,7 +45,7 @@ public sealed class OidcAuthorizationService : IOidcAuthorizationService
         Guid authSessionId,
         Guid applicationClientId,
         IReadOnlyList<string> scopes,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         var code = GenerateSecret();
         var entity = new OidcAuthorizationCode(
@@ -55,14 +53,14 @@ public sealed class OidcAuthorizationService : IOidcAuthorizationService
             applicationClientId,
             authSessionId,
             request.RedirectUri,
-            JsonSerializer.Serialize(scopes),
+            scopes.ToList(),
             request.CodeChallenge ?? string.Empty,
             request.CodeChallengeMethod ?? OidcConstants.CodeChallengeMethodS256,
             request.Nonce,
             DateTime.UtcNow.Add(AuthorizationCodeLifetime));
 
-        await _authorizationCodes.AddAsync(entity, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _authorizationCodes.AddAsync(entity, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
         return (code, null);
     }
 

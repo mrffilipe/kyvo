@@ -13,6 +13,7 @@ public static class ApplicationErrorMessages
         public const string ClientIdRequired = "client_id is required.";
         public const string ClientIdInvalid = "client_id is invalid.";
         public const string ClientSecretRequired = "client_secret is required for confidential clients.";
+        public const string ClientSecretNotAllowedForPublicClients = "Public clients must not provide a client secret.";
         public const string ClientSecretInvalid = "client_secret is invalid.";
         public const string RedirectUriNotAllowed = "redirect_uri is not allowed for this client.";
         public const string RedirectUrisRequired = "At least one redirect URI is required.";
@@ -23,6 +24,11 @@ public static class ApplicationErrorMessages
         public const string RequestedScopesNotAllowed = "Requested scopes are not allowed: {0}.";
         public const string PlatformAdminConsoleAccessDenied =
             "Access denied. Only platform administrators may use the Platform Admin console.";
+    }
+
+    public static class OAuthAuthorization
+    {
+        public const string ResponseTypeMustBeCode = "response_type must be code.";
     }
 
     public static class Pkce

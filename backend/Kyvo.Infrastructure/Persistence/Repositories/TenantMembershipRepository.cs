@@ -8,38 +8,32 @@ public sealed class TenantMembershipRepository : ITenantMembershipRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public TenantMembershipRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public TenantMembershipRepository(ApplicationDbContext context) => _context = context;
 
-    public Task AddAsync(TenantMembership membership, CancellationToken cancellationToken = default)
+    public Task AddAsync(TenantMembership membership, CancellationToken ct = default)
     {
         return _context.TenantMemberships
-            .AddAsync(membership, cancellationToken)
+            .AddAsync(membership, ct)
             .AsTask();
     }
 
-    public Task<TenantMembership?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<TenantMembership?> GetForUpdateAsync(Guid id, CancellationToken ct = default)
     {
         return _context.TenantMemberships
             .Include(x => x.Roles)
             .ThenInclude(x => x.Role)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
-    public Task<TenantMembership?> GetByUserIdAndTenantIdWithRolesAsync(
-        Guid userId,
-        Guid tenantId,
-        CancellationToken cancellationToken = default)
+    public Task<TenantMembership?> GetByUserIdAndTenantIdWithRolesAsync(Guid userId, Guid tenantId, CancellationToken ct = default)
     {
         return _context.TenantMemberships
             .Include(x => x.Roles)
             .ThenInclude(x => x.Role)
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.TenantId == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.TenantId == tenantId, ct);
     }
 
-    public async Task<IReadOnlyList<TenantMembership>> ListByUserIdWithTenantAndRolesAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TenantMembership>> ListByUserIdWithTenantAndRolesAsync(Guid userId, CancellationToken ct = default)
     {
         return await _context.TenantMemberships
             .AsNoTracking()
@@ -47,6 +41,6 @@ public sealed class TenantMembershipRepository : ITenantMembershipRepository
             .Include(x => x.Roles)
             .ThenInclude(x => x.Role)
             .Where(x => x.UserId == userId && x.IsActive)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 }

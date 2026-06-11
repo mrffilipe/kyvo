@@ -12,8 +12,8 @@ public sealed class ApplicationClient : BaseEntity
     public string ClientId { get; private set; } = default!;
     public string? ClientSecretHash { get; private set; }
     public ClientType ClientType { get; private set; }
-    public string RedirectUris { get; private set; } = "[]";
-    public string AllowedScopes { get; private set; } = "[]";
+    public List<string> RedirectUris { get; private set; } = [];
+    public List<string> AllowedScopes { get; private set; } = [];
     public int AccessTokenTtlSeconds { get; private set; }
 
     /// <summary>
@@ -31,8 +31,8 @@ public sealed class ApplicationClient : BaseEntity
         string clientId,
         string? clientSecretHash,
         ClientType clientType,
-        string redirectUris,
-        string allowedScopes,
+        IReadOnlyList<string> redirectUris,
+        IReadOnlyList<string> allowedScopes,
         int accessTokenTtlSeconds,
         bool isSystem = false)
     {
@@ -45,8 +45,8 @@ public sealed class ApplicationClient : BaseEntity
         ClientId = clientId.Trim();
         ClientSecretHash = clientSecretHash;
         ClientType = clientType;
-        RedirectUris = string.IsNullOrWhiteSpace(redirectUris) ? "[]" : redirectUris;
-        AllowedScopes = string.IsNullOrWhiteSpace(allowedScopes) ? "[]" : allowedScopes;
+        RedirectUris = redirectUris.ToList();
+        AllowedScopes = allowedScopes.ToList();
         AccessTokenTtlSeconds = accessTokenTtlSeconds > 0 ? accessTokenTtlSeconds : 900;
         IsSystem = isSystem;
     }

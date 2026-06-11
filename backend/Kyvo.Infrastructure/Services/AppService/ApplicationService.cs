@@ -97,8 +97,8 @@ public sealed class ApplicationService : IApplicationService
             request.ClientId,
             request.ClientSecretHash,
             request.ClientType,
-            ApplicationClientListFields.ToRedirectUrisJson(request.RedirectUris),
-            ApplicationClientListFields.ToAllowedScopesJson(request.AllowedScopes, request.AllowedScopesList),
+            ApplicationClientListFields.ParseAndValidateRedirectUris(request.RedirectUris),
+            ApplicationClientListFields.ParseAndValidateAllowedScopes(request.AllowedScopes, request.AllowedScopesList),
             request.AccessTokenTtlSeconds);
 
         await _clients.AddAsync(client, cancellationToken);
@@ -359,8 +359,8 @@ public sealed class ApplicationService : IApplicationService
             Id = client.Id,
             ClientId = client.ClientId,
             ClientType = client.ClientType,
-            RedirectUris = ApplicationClientListFields.ParseRedirectUris(client.RedirectUris),
-            AllowedScopes = ApplicationClientListFields.ParseAllowedScopes(client.AllowedScopes),
+            RedirectUris = client.RedirectUris,
+            AllowedScopes = client.AllowedScopes,
             AccessTokenTtlSeconds = client.AccessTokenTtlSeconds,
             IsSystem = client.IsSystem
         };

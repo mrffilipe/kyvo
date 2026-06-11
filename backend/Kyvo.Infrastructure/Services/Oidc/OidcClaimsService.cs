@@ -25,30 +25,27 @@ public sealed class OidcClaimsService : IOidcClaimsService
         _userPlatformRoles = userPlatformRoles;
     }
 
-    public async Task<IReadOnlyList<Claim>?> TryBuildClaimsAsync(
-        Guid sessionId,
-        IReadOnlyList<string> scopes,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Claim>?> TryBuildClaimsAsync(Guid sessionId, IReadOnlyList<string> scopes, CancellationToken ct = default)
     {
-        var session = await _sessions.GetForUpdateAsync(sessionId, cancellationToken);
+        var session = await _sessions.GetForUpdateAsync(sessionId, ct);
         if (session is null || session.Status != SessionStatus.Active)
         {
             return null;
         }
 
-        var user = await _users.GetForUpdateAsync(session.UserId, cancellationToken);
+        var user = await _users.GetForUpdateAsync(session.UserId, ct);
         if (user is null)
         {
             return null;
         }
 
-        var memberships = await _memberships.ListByUserIdWithTenantAndRolesAsync(user.Id, cancellationToken);
+        var memberships = await _memberships.ListByUserIdWithTenantAndRolesAsync(user.Id, ct);
         var tenantRoles = memberships
             .FirstOrDefault(m => m.Id == session.MembershipId)
             ?.Roles.Select(r => r.Role.Key.Value)
             .ToList() ?? [];
 
-        var platformRoleAssignments = await _userPlatformRoles.ListByUserIdAsync(user.Id, cancellationToken);
+        var platformRoleAssignments = await _userPlatformRoles.ListByUserIdAsync(user.Id, ct);
         var platformRoles = platformRoleAssignments.Select(x => x.Role.Key).ToList();
 
         var login = new ExternalLoginResult

@@ -1,5 +1,6 @@
 using Kyvo.Domain.Entities;
 using Kyvo.Infrastructure.Common;
+using Kyvo.Infrastructure.Persistence.ValueConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -33,11 +34,13 @@ public sealed class ApplicationClientConfiguration : BaseEntityConfiguration<App
         builder.Property(x => x.RedirectUris)
             .HasColumnName("redirect_uris")
             .HasColumnType("json")
+            .HasConversion(StringListJsonValueConverter.Converter, StringListJsonValueConverter.Comparer)
             .IsRequired();
 
         builder.Property(x => x.AllowedScopes)
             .HasColumnName("allowed_scopes")
             .HasColumnType("json")
+            .HasConversion(StringListJsonValueConverter.Converter, StringListJsonValueConverter.Comparer)
             .IsRequired();
 
         builder.Property(x => x.AccessTokenTtlSeconds)

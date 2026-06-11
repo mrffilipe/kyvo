@@ -13,8 +13,6 @@ using Kyvo.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
-
 // Note: audit log is not created during bootstrap because AuditLog is a TenantEntity
 // and requires a TenantId — bootstrap predates any tenant. The bootstrap timestamp
 // is already tracked via PlatformConfiguration.BootstrappedAt.
@@ -194,8 +192,8 @@ public sealed class PlatformService : IPlatformService
                 PlatformDefaults.AdminConsole.ClientId,
                 clientSecretHash: null,
                 ClientType.Public,
-                JsonSerializer.Serialize(BuildAdminConsoleRedirectUris()),
-                JsonSerializer.Serialize(PlatformDefaults.AdminConsole.AllowedScopes),
+                BuildAdminConsoleRedirectUris().ToList(),
+                PlatformDefaults.AdminConsole.AllowedScopes.ToList(),
                 accessTokenTtlSeconds: 900,
                 isSystem: true);
             await _clients.AddAsync(client, transactionCt);
@@ -264,7 +262,7 @@ public sealed class PlatformService : IPlatformService
         }
 
         var expected = BuildAdminConsoleRedirectUris();
-        var current = JsonSerializer.Deserialize<List<string>>(client.RedirectUris) ?? [];
+        var current = client.RedirectUris;
         if (expected.All(uri => current.Contains(uri, StringComparer.Ordinal)))
         {
             return;
@@ -276,12 +274,10 @@ public sealed class PlatformService : IPlatformService
             merged.Add(uri);
         }
 
-        var updated = JsonSerializer.Serialize(merged.ToList());
-
         await _context.ApplicationClients
             .Where(c => c.Id == client.Id)
             .ExecuteUpdateAsync(
-                setters => setters.SetProperty(c => c.RedirectUris, updated),
+                setters => setters.SetProperty(c => c.RedirectUris, merged.ToList()),
                 cancellationToken);
     }
 
@@ -296,14 +292,14 @@ public sealed class PlatformService : IPlatformService
             return;
         }
 
-        var scopes = JsonSerializer.Deserialize<List<string>>(client.AllowedScopes) ?? [];
+        var scopes = client.AllowedScopes;
         if (scopes.Contains(OidcConstants.Scopes.OfflineAccess, StringComparer.Ordinal))
         {
             return;
         }
 
-        scopes.Add(OidcConstants.Scopes.OfflineAccess);
-        var updatedScopes = JsonSerializer.Serialize(scopes);
+        var updatedScopes = scopes.ToList();
+        updatedScopes.Add(OidcConstants.Scopes.OfflineAccess);
 
         await _context.ApplicationClients
             .Where(c => c.Id == client.Id)

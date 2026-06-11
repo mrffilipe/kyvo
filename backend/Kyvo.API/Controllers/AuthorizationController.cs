@@ -58,11 +58,11 @@ public sealed class AuthorizationController : Controller
     [IgnoreAntiforgeryToken]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(typeof(OidcErrorJsonResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Authorize(CancellationToken cancellationToken)
+    public async Task<IActionResult> Authorize(CancellationToken ct)
     {
         var request = ReadAuthorizeRequest();
 
-        var (client, clientError) = await _clientValidator.ValidateClientAsync(request.ClientId, null, cancellationToken);
+        var (client, clientError) = await _clientValidator.ValidateClientAsync(request.ClientId, null, ct);
         if (clientError is not null)
         {
             return OAuthRedirectError(request.RedirectUri, request.State, clientError);
@@ -116,7 +116,7 @@ public sealed class AuthorizationController : Controller
         }
 
         var login = ReadLoginFromPrincipal(cookieAuth.Principal!);
-        var session = await _sessions.GetForUpdateAsync(login.SessionId, cancellationToken);
+        var session = await _sessions.GetForUpdateAsync(login.SessionId, ct);
         if (session is null || session.Status != SessionStatus.Active)
         {
             return OAuthRedirectError(request.RedirectUri, request.State, new OidcError
@@ -129,19 +129,16 @@ public sealed class AuthorizationController : Controller
         if (!session.ClientId.HasValue)
         {
             session.BindOAuthClient(client!.Id);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.SaveChangesAsync(ct);
         }
 
-        var accessError = await _platformAdminConsoleAccessGuard.TryValidateAccessAsync(
-            session.UserId,
-            client!.ClientId,
-            cancellationToken);
+        var accessError = await _platformAdminConsoleAccessGuard.TryValidateAccessAsync(session.UserId, client!.ClientId, ct);
         if (accessError is not null)
         {
             return OAuthRedirectError(request.RedirectUri, request.State, accessError);
         }
 
-        var claims = await _claimsService.TryBuildClaimsAsync(session.Id, scopes, cancellationToken);
+        var claims = await _claimsService.TryBuildClaimsAsync(session.Id, scopes, ct);
         if (claims is null)
         {
             return OAuthRedirectError(request.RedirectUri, request.State, new OidcError
@@ -156,7 +153,7 @@ public sealed class AuthorizationController : Controller
             session.Id,
             client!.Id,
             scopes,
-            cancellationToken);
+            ct);
         if (codeError is not null)
         {
             return OAuthRedirectError(request.RedirectUri, request.State, codeError);

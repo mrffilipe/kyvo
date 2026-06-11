@@ -19,14 +19,6 @@ internal static class PkceHelper
         return string.Equals(computed, codeChallenge, StringComparison.Ordinal);
     }
 
-    public static string Base64UrlEncode(byte[] data)
-    {
-        return Convert.ToBase64String(data)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-    }
-
     public static OidcError? ValidateCodeChallenge(string? codeChallenge)
     {
         if (string.IsNullOrWhiteSpace(codeChallenge))
@@ -71,5 +63,13 @@ internal static class PkceHelper
         }
 
         return null;
+    }
+
+    private static string Base64UrlEncode(byte[] data)
+    {
+        return Convert.ToBase64String(data)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 }

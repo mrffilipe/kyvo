@@ -1,10 +1,8 @@
 namespace Kyvo.Application.Services.Auth;
 
-public sealed class ExternalLoginTenantMembership
+public sealed record ExternalLoginTenantMembership
 {
     public required Guid TenantId { get; init; }
-
     public required Guid MembershipId { get; init; }
-
     public required IReadOnlyList<string> Roles { get; init; }
 }
