@@ -32,6 +32,10 @@ public static class ApplicationErrorMessages
     {
         public const string ResponseTypeMustBeCode = "response_type must be code.";
         public const string UnsupportedGrantType = "The specified grant type is not supported.";
+        public const string InteractiveLoginRequired = "Interactive login is required.";
+        public const string MissingLoginContext = "Login context is missing from the authentication cookie.";
+        public const string SessionNoLongerActive = "Session is no longer active.";
+        public const string UnableToBuildClaims = "Unable to build token claims.";
     }
 
     public static class Pkce

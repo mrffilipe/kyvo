@@ -22,6 +22,7 @@ public static class PlatformOidcServiceCollectionExtensions
         services.AddScoped<IOidcClientValidator, OidcClientValidator>();
         services.AddScoped<IOidcClaimsService, OidcClaimsService>();
         services.AddScoped<IOidcAuthorizationService, OidcAuthorizationService>();
+        services.AddScoped<IOidcAuthorizeHandler, OidcAuthorizeHandler>();
         services.AddScoped<IOidcTokenService, OidcTokenService>();
         services.AddScoped<IPlatformAdminConsoleAccessGuard, PlatformAdminConsoleAccessGuard>();
 

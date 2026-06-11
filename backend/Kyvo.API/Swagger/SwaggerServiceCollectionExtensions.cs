@@ -39,7 +39,6 @@ public static class SwaggerServiceCollectionExtensions
 
             options.OperationFilter<StandardErrorResponsesOperationFilter>();
             options.OperationFilter<OidcErrorResponsesOperationFilter>();
-            options.OperationFilter<OidcAuthorizeOperationFilter>();
         });
 
         return services;

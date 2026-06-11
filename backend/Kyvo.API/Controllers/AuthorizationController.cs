@@ -1,18 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text.Json;
 using Kyvo.API.Common;
 using Kyvo.API.Models.Oidc;
 using Kyvo.Application.Services.Oidc;
-using Kyvo.Application.Services.UnitOfWork;
-using Kyvo.Domain.Enums;
-using Kyvo.Domain.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Kyvo.API.Controllers;
 
@@ -23,157 +16,51 @@ namespace Kyvo.API.Controllers;
 [Tags("OAuth 2.0 / OpenID Connect")]
 public sealed class AuthorizationController : Controller
 {
-    private readonly IAuthSessionRepository _sessions;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IOidcClientValidator _clientValidator;
-    private readonly IOidcAuthorizationService _authorizationService;
+    private readonly IOidcAuthorizeHandler _authorizeHandler;
     private readonly IOidcTokenService _tokenService;
-    private readonly IOidcClaimsService _claimsService;
-    private readonly IPlatformAdminConsoleAccessGuard _platformAdminConsoleAccessGuard;
+    private readonly IOidcClientValidator _clientValidator;
     private readonly IJwtSigningService _jwtSigning;
 
     public AuthorizationController(
-        IAuthSessionRepository sessions,
-        IUnitOfWork unitOfWork,
-        IOidcClientValidator clientValidator,
-        IOidcAuthorizationService authorizationService,
+        IOidcAuthorizeHandler authorizeHandler,
         IOidcTokenService tokenService,
-        IOidcClaimsService claimsService,
-        IPlatformAdminConsoleAccessGuard platformAdminConsoleAccessGuard,
+        IOidcClientValidator clientValidator,
         IJwtSigningService jwtSigning)
     {
-        _sessions = sessions;
-        _unitOfWork = unitOfWork;
-        _clientValidator = clientValidator;
-        _authorizationService = authorizationService;
+        _authorizeHandler = authorizeHandler;
         _tokenService = tokenService;
-        _claimsService = claimsService;
-        _platformAdminConsoleAccessGuard = platformAdminConsoleAccessGuard;
+        _clientValidator = clientValidator;
         _jwtSigning = jwtSigning;
     }
 
     /// <summary>
-    /// OAuth 2.0 authorization endpoint (authorization code + PKCE).
+    /// OAuth 2.0 authorization endpoint (authorization code + PKCE) via query string.
     /// </summary>
     /// <remarks>
-    /// Accepts the same parameters via query string (GET) or form body (POST). On success, redirects to
-    /// <c>redirect_uri</c> with <c>code</c> and <c>state</c>. On failure, redirects with <c>error</c> and
-    /// <c>error_description</c>, or returns a JSON error when <c>redirect_uri</c> is invalid.
+    /// On success, redirects to <c>redirect_uri</c> with <c>code</c> and <c>state</c>. On failure, redirects with
+    /// <c>error</c> and <c>error_description</c>, or returns a JSON error when <c>redirect_uri</c> is invalid.
     /// </remarks>
     [HttpGet("~/connect/authorize")]
-    [HttpPost("~/connect/authorize")]
     [IgnoreAntiforgeryToken]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(typeof(OidcErrorJsonResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Authorize(CancellationToken ct)
-    {
-        var request = ReadAuthorizeRequest();
+    public Task<IActionResult> AuthorizeGet([FromQuery] OidcAuthorizeQueryRequest query, CancellationToken ct) =>
+        AuthorizeAsync(query.ToOidcAuthorizeRequest(), OidcAuthorizeReturnUrl.FromQuery(Request), ct);
 
-        var (client, clientError) = await _clientValidator.ValidateClientAsync(request.ClientId, null, ct);
-        if (clientError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, clientError);
-        }
-
-        var redirectError = _clientValidator.ValidateRedirectUri(client!, request.RedirectUri);
-        if (redirectError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, redirectError);
-        }
-
-        var scopes = _clientValidator.ParseScopes(request.Scope);
-        var scopeError = _clientValidator.ValidateScopes(client!, scopes);
-        if (scopeError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, scopeError);
-        }
-
-        var pkceError = _clientValidator.ValidatePkceForAuthorize(client!, request.CodeChallenge, request.CodeChallengeMethod);
-        if (pkceError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, pkceError);
-        }
-
-        var clientContext = new ApplicationClientValidationContext { Client = client!, Scopes = scopes };
-        var requestError = _authorizationService.ValidateAuthorizeRequest(request, clientContext);
-        if (requestError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, requestError);
-        }
-
-        var cookieAuth = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        var prompt = request.Prompt ?? string.Empty;
-        if (!cookieAuth.Succeeded ||
-            prompt.Contains("login", StringComparison.OrdinalIgnoreCase) ||
-            (request.MaxAge is not null && cookieAuth.Properties?.IssuedUtc is not null &&
-             DateTimeOffset.UtcNow - cookieAuth.Properties.IssuedUtc > TimeSpan.FromSeconds(request.MaxAge.Value)))
-        {
-            if (prompt.Contains("none", StringComparison.OrdinalIgnoreCase))
-            {
-                return OAuthRedirectError(request.RedirectUri, request.State, new OidcError
-                {
-                    Error = OidcConstants.Errors.LoginRequired,
-                    ErrorDescription = ApiErrorMessages.OidcLogin.InteractiveLoginRequired
-                });
-            }
-
-            return Challenge(
-                new AuthenticationProperties { RedirectUri = BuildAuthorizeReturnUrl() },
-                CookieAuthenticationDefaults.AuthenticationScheme);
-        }
-
-        var login = ReadLoginFromPrincipal(cookieAuth.Principal!);
-        var session = await _sessions.GetForUpdateAsync(login.SessionId, ct);
-        if (session is null || session.Status != SessionStatus.Active)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, new OidcError
-            {
-                Error = OidcConstants.Errors.LoginRequired,
-                ErrorDescription = ApiErrorMessages.OidcLogin.SessionNoLongerActive
-            });
-        }
-
-        if (!session.ClientId.HasValue)
-        {
-            session.BindOAuthClient(client!.Id);
-            await _unitOfWork.SaveChangesAsync(ct);
-        }
-
-        var accessError = await _platformAdminConsoleAccessGuard.TryValidateAccessAsync(session.UserId, client!.ClientId, ct);
-        if (accessError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, accessError);
-        }
-
-        var claims = await _claimsService.TryBuildClaimsAsync(session.Id, scopes, ct);
-        if (claims is null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, new OidcError
-            {
-                Error = OidcConstants.Errors.LoginRequired,
-                ErrorDescription = ApiErrorMessages.OidcLogin.UnableToBuildClaims
-            });
-        }
-
-        var (code, codeError) = await _authorizationService.CreateAuthorizationCodeAsync(
-            request,
-            session.Id,
-            client!.Id,
-            scopes,
-            ct);
-        if (codeError is not null)
-        {
-            return OAuthRedirectError(request.RedirectUri, request.State, codeError);
-        }
-
-        var redirect = QueryString.Create(new Dictionary<string, string?>
-        {
-            ["code"] = code,
-            ["state"] = request.State
-        }.Where(x => !string.IsNullOrWhiteSpace(x.Value)));
-
-        return Redirect($"{request.RedirectUri}{redirect}");
-    }
+    /// <summary>
+    /// OAuth 2.0 authorization endpoint (authorization code + PKCE) via form body.
+    /// </summary>
+    /// <remarks>
+    /// Same behavior as GET; parameters are sent as <c>application/x-www-form-urlencoded</c>. On success, redirects to
+    /// <c>redirect_uri</c> with <c>code</c> and <c>state</c>.
+    /// </remarks>
+    [HttpPost("~/connect/authorize")]
+    [IgnoreAntiforgeryToken]
+    [Consumes("application/x-www-form-urlencoded")]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(typeof(OidcErrorJsonResponse), StatusCodes.Status400BadRequest)]
+    public Task<IActionResult> AuthorizePost([FromForm] OidcAuthorizeFormRequest form, CancellationToken ct) =>
+        AuthorizeAsync(form.ToOidcAuthorizeRequest(), OidcAuthorizeReturnUrl.FromForm(Request), ct);
 
     /// <summary>
     /// OAuth 2.0 token endpoint (authorization_code and refresh_token grants).
@@ -201,7 +88,7 @@ public sealed class AuthorizationController : Controller
         var (response, error) = await _tokenService.ExchangeAsync(request, ct);
         if (error is not null)
         {
-            return OAuthJsonError(error);
+            return OidcOAuthResults.JsonError(error);
         }
 
         return Ok(response);
@@ -250,7 +137,7 @@ public sealed class AuthorizationController : Controller
             return Redirect("/");
         }
 
-        var resolvedClientId = clientId ?? TryGetClientIdFromIdTokenHint(idTokenHint);
+        var resolvedClientId = clientId ?? IdTokenHintClientIdResolver.TryResolveClientId(idTokenHint, _jwtSigning);
         if (string.IsNullOrWhiteSpace(resolvedClientId))
         {
             return Redirect("/");
@@ -271,99 +158,11 @@ public sealed class AuthorizationController : Controller
         return Redirect(postLogoutRedirectUri);
     }
 
-    private OidcAuthorizeRequest ReadAuthorizeRequest()
+    private async Task<IActionResult> AuthorizeAsync(OidcAuthorizeRequest request, string challengeReturnUrl, CancellationToken ct)
     {
-        string Read(string key) =>
-            Request.HasFormContentType ? Request.Form[key].ToString() : Request.Query[key].ToString();
-
-        return new OidcAuthorizeRequest
-        {
-            ClientId = Read("client_id"),
-            RedirectUri = Read("redirect_uri"),
-            ResponseType = Read("response_type"),
-            Scope = Read("scope"),
-            State = NullIfEmpty(Read("state")),
-            Prompt = NullIfEmpty(Read("prompt")),
-            MaxAge = int.TryParse(Read("max_age"), out var maxAge) ? maxAge : null,
-            CodeChallenge = NullIfEmpty(Read("code_challenge")),
-            CodeChallengeMethod = NullIfEmpty(Read("code_challenge_method")),
-            Nonce = NullIfEmpty(Read("nonce"))
-        };
+        var cookieAuth = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        var authState = OidcCookieAuthenticationStateFactory.From(cookieAuth);
+        var outcome = await _authorizeHandler.HandleAsync(request, authState, ct);
+        return OidcOAuthResults.FromAuthorizeOutcome(outcome, challengeReturnUrl);
     }
-
-    private static string? NullIfEmpty(string value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value;
-
-    private string? TryGetClientIdFromIdTokenHint(string? idTokenHint)
-    {
-        if (string.IsNullOrWhiteSpace(idTokenHint))
-        {
-            return null;
-        }
-
-        try
-        {
-            var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
-            var parameters = new TokenValidationParameters
-            {
-                ValidIssuer = _jwtSigning.Issuer,
-                IssuerSigningKey = _jwtSigning.SigningKey,
-                ValidateAudience = false,
-                ValidateLifetime = false,
-                ClockSkew = TimeSpan.FromMinutes(5)
-            };
-
-            var principal = handler.ValidateToken(idTokenHint, parameters, out _);
-            return principal.FindFirst("aud")?.Value;
-        }
-        catch (SecurityTokenException)
-        {
-            return null;
-        }
-    }
-
-    private string BuildAuthorizeReturnUrl()
-    {
-        var query = Request.HasFormContentType
-            ? Request.Form.Select(pair => new KeyValuePair<string, string?>(pair.Key, pair.Value.ToString()))
-            : Request.Query.Select(pair => new KeyValuePair<string, string?>(pair.Key, pair.Value.ToString()));
-
-        return Request.PathBase + Request.Path + QueryString.Create(query);
-    }
-
-    private static OidcLoginContext ReadLoginFromPrincipal(ClaimsPrincipal principal)
-    {
-        var loginJson = principal.FindFirstValue("idp_login");
-        if (string.IsNullOrWhiteSpace(loginJson))
-        {
-            throw new InvalidOperationException(ApiErrorMessages.OidcLogin.MissingLoginContext);
-        }
-
-        return JsonSerializer.Deserialize<OidcLoginContext>(loginJson)
-            ?? throw new InvalidOperationException(ApiErrorMessages.OidcLogin.InvalidLoginContext);
-    }
-
-    private IActionResult OAuthRedirectError(string? redirectUri, string? state, OidcError error)
-    {
-        if (string.IsNullOrWhiteSpace(redirectUri))
-        {
-            return OAuthJsonError(error);
-        }
-
-        var query = QueryString.Create(new Dictionary<string, string?>
-        {
-            ["error"] = error.Error,
-            ["error_description"] = error.ErrorDescription,
-            ["state"] = state
-        }.Where(x => !string.IsNullOrWhiteSpace(x.Value)));
-
-        return Redirect($"{redirectUri}{query}");
-    }
-
-    private ActionResult OAuthJsonError(OidcError error) =>
-        BadRequest(new OidcErrorJsonResponse
-        {
-            Error = error.Error,
-            ErrorDescription = error.ErrorDescription
-        });
 }
