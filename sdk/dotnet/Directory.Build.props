@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <Authors>Kyvo</Authors>
+    <Company>Kyvo</Company>
+    <Product>Kyvo SDK</Product>
+    <PackageTags>kyvo;oidc;identity;multi-tenant</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/mrffilipe/kyvo</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mrffilipe/kyvo</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright © 2026 Kyvo</Copyright>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,48 @@
+{
+  "name": "@kyvo-client/client",
+  "version": "2.0.0",
+  "description": "Kyvo product SDK — OIDC (PKCE), session, JWT claims, REST v1 for browser SPAs",
+  "license": "MIT",
+  "author": "Kyvo",
+  "keywords": [
+    "kyvo",
+    "oidc",
+    "pkce",
+    "identity",
+    "multi-tenant",
+    "spa",
+    "authentication"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrffilipe/kyvo.git",
+    "directory": "sdk/typescript/@kyvo/client"
+  },
+  "homepage": "https://github.com/mrffilipe/kyvo/tree/main/sdk/typescript/@kyvo/client#readme",
+  "bugs": "https://github.com/mrffilipe/kyvo/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "~5.8.3"
+  }
+}

@@ -1,0 +1,825 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OAuth 2.0, OpenID Connect & Account",
+    "description": "Browser login forms under /account, OAuth authorization and token endpoints under /connect, and OpenID Provider metadata under /.well-known.",
+    "version": "1.0"
+  },
+  "paths": {
+    "/account/signin": {
+      "post": {
+        "tags": [
+          "Account (browser login)"
+        ],
+        "summary": "Local email/password sign-in; establishes an authentication cookie for the OAuth authorize flow.",
+        "description": "On failure, redirects to `/account/login` with an `error` query code\r\n(`invalid_credentials`, `missing_fields`, `session_expired`, etc.).",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Email": {
+                    "type": "string"
+                  },
+                  "Password": {
+                    "type": "string"
+                  },
+                  "ReturnUrl": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "Email": {
+                  "style": "form"
+                },
+                "Password": {
+                  "style": "form"
+                },
+                "ReturnUrl": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/register": {
+      "post": {
+        "tags": [
+          "Account (browser login)"
+        ],
+        "summary": "Self-registration; creates the user and establishes an authentication cookie for OAuth authorize.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "DisplayName": {
+                    "type": "string"
+                  },
+                  "Email": {
+                    "type": "string"
+                  },
+                  "Password": {
+                    "type": "string"
+                  },
+                  "PasswordConfirm": {
+                    "type": "string"
+                  },
+                  "ReturnUrl": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "DisplayName": {
+                  "style": "form"
+                },
+                "Email": {
+                  "style": "form"
+                },
+                "Password": {
+                  "style": "form"
+                },
+                "PasswordConfirm": {
+                  "style": "form"
+                },
+                "ReturnUrl": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login/federated/{alias}": {
+      "get": {
+        "tags": [
+          "Account (browser login)"
+        ],
+        "summary": "Starts federated OAuth redirect for the given identity provider alias.",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to upstream IdP"
+          }
+        }
+      }
+    },
+    "/callback/login/{alias}": {
+      "get": {
+        "tags": [
+          "Account (browser login)"
+        ],
+        "summary": "OAuth callback for federated login (GET).",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Account (browser login)"
+        ],
+        "summary": "OAuth callback for federated login (POST).",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          }
+        }
+      }
+    },
+    "/account/logout": {
+      "post": {
+        "tags": [
+          "Account (browser login)"
+        ],
+        "summary": "Signs out the browser session cookie.",
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connect/authorize": {
+      "get": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "OAuth 2.0 authorization endpoint (authorization code + PKCE).",
+        "description": "Accepts the same parameters via query string (GET) or form body (POST). On success, redirects to\r\n`redirect_uri` with `code` and `state`. On failure, redirects with `error` and\r\n`error_description`, or returns a JSON error when `redirect_uri` is invalid.",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "description": "Registered OAuth client identifier.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "description": "Must match a redirect URI registered for the client.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "description": "Must be \"code\" (authorization code flow).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Space-delimited scopes (e.g. openid profile email offline_access).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Opaque value echoed back on redirect.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "prompt",
+            "in": "query",
+            "description": "login, none, or combinations per OIDC.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "max_age",
+            "in": "query",
+            "description": "Maximum authentication age in seconds.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "in": "query",
+            "description": "PKCE code challenge (S256).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge_method",
+            "in": "query",
+            "description": "PKCE method; must be S256 when challenge is sent.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nonce",
+            "in": "query",
+            "description": "Replay protection for the ID token.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "OAuth 2.0 authorization endpoint (authorization code + PKCE).",
+        "description": "Accepts the same parameters via query string (GET) or form body (POST). On success, redirects to\r\n`redirect_uri` with `code` and `state`. On failure, redirects with `error` and\r\n`error_description`, or returns a JSON error when `redirect_uri` is invalid.",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "description": "Registered OAuth client identifier.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "description": "Must match a redirect URI registered for the client.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "description": "Must be \"code\" (authorization code flow).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Space-delimited scopes (e.g. openid profile email offline_access).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Opaque value echoed back on redirect.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "prompt",
+            "in": "query",
+            "description": "login, none, or combinations per OIDC.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "max_age",
+            "in": "query",
+            "description": "Maximum authentication age in seconds.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "in": "query",
+            "description": "PKCE code challenge (S256).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge_method",
+            "in": "query",
+            "description": "PKCE method; must be S256 when challenge is sent.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nonce",
+            "in": "query",
+            "description": "Replay protection for the ID token.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connect/token": {
+      "post": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "OAuth 2.0 token endpoint (authorization_code and refresh_token grants).",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "redirect_uri": {
+                    "type": "string"
+                  },
+                  "client_id": {
+                    "type": "string"
+                  },
+                  "client_secret": {
+                    "type": "string"
+                  },
+                  "code_verifier": {
+                    "type": "string"
+                  },
+                  "refresh_token": {
+                    "type": "string"
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "grant_type": {
+                  "style": "form"
+                },
+                "code": {
+                  "style": "form"
+                },
+                "redirect_uri": {
+                  "style": "form"
+                },
+                "client_id": {
+                  "style": "form"
+                },
+                "client_secret": {
+                  "style": "form"
+                },
+                "code_verifier": {
+                  "style": "form"
+                },
+                "refresh_token": {
+                  "style": "form"
+                },
+                "scope": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connect/userinfo": {
+      "get": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "OpenID Connect UserInfo endpoint (requires Bearer access token).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcUserInfoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "OpenID Connect UserInfo endpoint (requires Bearer access token).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcUserInfoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connect/logout": {
+      "get": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "Ends the browser session (cookie) and optionally redirects to the client post-logout URI.",
+        "parameters": [
+          {
+            "name": "post_logout_redirect_uri",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "OAuth 2.0 / OpenID Connect"
+        ],
+        "summary": "Ends the browser session (cookie) and optionally redirects to the client post-logout URI.",
+        "parameters": [
+          {
+            "name": "post_logout_redirect_uri",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/openid-configuration": {
+      "get": {
+        "tags": [
+          "OpenID Connect Discovery"
+        ],
+        "summary": "OpenID Connect discovery document (issuer, endpoints, supported algorithms).",
+        "description": "Field names follow the OpenID Provider Metadata specification (snake_case).",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "tags": [
+          "OpenID Connect Discovery"
+        ],
+        "summary": "JSON Web Key Set used to validate tokens issued by this platform.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "OAuth error (invalid_request, invalid_client, invalid_grant, etc.).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcErrorJsonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OidcErrorJsonResponse": {
+        "required": [
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "error_description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "OAuth 2.0 error response (RFC 6749 Section 5.2)."
+      },
+      "OidcTokenResponse": {
+        "required": [
+          "access_token",
+          "expires_in",
+          "token_type"
+        ],
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "token_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refresh_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "id_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OidcUserInfoResponse": {
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "tid": {
+            "type": "string",
+            "nullable": true
+          },
+          "mid": {
+            "type": "string",
+            "nullable": true
+          },
+          "trole": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "prole": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "OpenID Connect UserInfo response (standard claim names)."
+      }
+    }
+  }
+}

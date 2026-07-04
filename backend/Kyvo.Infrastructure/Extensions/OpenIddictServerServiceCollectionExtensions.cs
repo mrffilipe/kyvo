@@ -1,0 +1,73 @@
+using Kyvo.Application.Configurations;
+using Kyvo.Infrastructure.Persistence;
+using Kyvo.Infrastructure.Services.Certificates;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenIddict.Abstractions;
+
+namespace Kyvo.Infrastructure.Extensions;
+
+public static class OpenIddictServerServiceCollectionExtensions
+{
+    /// <summary>
+    /// Configures the OpenIddict authorization server (authorization code + PKCE, refresh tokens, userinfo,
+    /// RP-initiated logout) and the OpenIddict validation stack used to protect the versioned JSON API.
+    /// </summary>
+    public static IServiceCollection AddKyvoOpenIddictServer(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jwtOptions = configuration.GetSection(JwtOptions.SECTION).Get<JwtOptions>()
+            ?? throw new InvalidOperationException("Jwt configuration section is missing.");
+
+        var certificate = SigningCertificateFactory.Create(jwtOptions);
+
+        services.AddOpenIddict()
+            .AddCore(options =>
+            {
+                options.UseEntityFrameworkCore()
+                       .UseDbContext<ApplicationDbContext>()
+                       .ReplaceDefaultEntities<Guid>();
+            })
+            .AddServer(options =>
+            {
+                options.SetIssuer(new Uri(jwtOptions.Issuer));
+
+                options.SetAuthorizationEndpointUris("connect/authorize")
+                       .SetTokenEndpointUris("connect/token")
+                       .SetUserInfoEndpointUris("connect/userinfo")
+                       .SetEndSessionEndpointUris("connect/logout");
+
+                options.AllowAuthorizationCodeFlow()
+                       .RequireProofKeyForCodeExchange();
+                options.AllowRefreshTokenFlow();
+
+                options.RegisterScopes(
+                    OpenIddictConstants.Scopes.OpenId,
+                    OpenIddictConstants.Scopes.Profile,
+                    OpenIddictConstants.Scopes.Email,
+                    OpenIddictConstants.Scopes.OfflineAccess);
+
+                options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
+                options.SetRefreshTokenLifetime(TimeSpan.FromDays(jwtOptions.RefreshTokenDays));
+                options.SetAuthorizationCodeLifetime(TimeSpan.FromMinutes(10));
+
+                options.AddSigningCertificate(certificate)
+                       .AddEncryptionCertificate(certificate);
+
+                options.UseAspNetCore()
+                       .EnableAuthorizationEndpointPassthrough()
+                       .EnableTokenEndpointPassthrough()
+                       .EnableUserInfoEndpointPassthrough()
+                       .EnableEndSessionEndpointPassthrough()
+                       .EnableStatusCodePagesIntegration()
+                       .DisableTransportSecurityRequirement();
+            })
+            .AddValidation(options =>
+            {
+                options.UseLocalServer();
+                options.UseAspNetCore();
+                options.AddAudiences(jwtOptions.Audience);
+            });
+
+        return services;
+    }
+}

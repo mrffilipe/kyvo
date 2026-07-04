@@ -1,0 +1,153 @@
+@page "/account/register"
+@using Kyvo.API.Common
+@using Kyvo.Application.Exceptions
+@using Kyvo.Application.Services.IdentityProvider
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IAccountLoginPageStateProvider LoginPageState
+
+<HeadContent>
+    <title>@PageTitle</title>
+</HeadContent>
+
+<div class="account-page">
+    <header class="account-header">
+        <AccountBrandLogo CssClass="account-header-brand" />
+        <h1>Crie sua conta</h1>
+        <p class="account-subtitle">Uma identidade para todas as aplicações conectadas.</p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="account-alert" role="alert" aria-live="polite">
+            @_errorMessage
+        </div>
+    }
+
+    <form method="post" action="/account/register" class="account-form" novalidate>
+        <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+        <div class="account-field">
+            <label for="display-name">Nome completo</label>
+            <input id="display-name"
+                   type="text"
+                   name="displayName"
+                   autocomplete="name"
+                   required
+                   maxlength="120"
+                   placeholder="Maria Silva" />
+        </div>
+
+        <div class="account-field">
+            <label for="email">E-mail</label>
+            <input id="email"
+                   type="email"
+                   name="email"
+                   autocomplete="email"
+                   inputmode="email"
+                   required
+                   placeholder="voce@empresa.com" />
+        </div>
+
+        <div class="account-field">
+            <label for="password">Senha</label>
+            <input id="password"
+                   type="password"
+                   name="password"
+                   autocomplete="new-password"
+                   required
+                   placeholder="••••••••" />
+            <div class="account-hint">Mínimo de 12 caracteres, com pelo menos uma letra e um número.</div>
+        </div>
+
+        <div class="account-field">
+            <label for="password-confirm">Confirmar senha</label>
+            <input id="password-confirm"
+                   type="password"
+                   name="passwordConfirm"
+                   autocomplete="new-password"
+                   required
+                   placeholder="••••••••" />
+        </div>
+
+        <button type="submit" class="account-btn account-btn-primary">Criar conta</button>
+    </form>
+
+    @if (_pageState is not null)
+    {
+        <AccountExternalProviders ReturnUrl="@ReturnUrl"
+                                AntiforgeryToken="@_antiforgeryToken"
+                                ShowDivider="@_pageState.HasFederatedProviders"
+                                Providers="@_pageState.FederatedProviders" />
+    }
+
+    <footer class="account-footer">
+        <span>Já tem uma conta?</span>
+        <a href="@($"/account/login?returnUrl={Uri.EscapeDataString(ReturnUrl ?? string.Empty)}")">Entrar</a>
+    </footer>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error_description")]
+    public string? ErrorDescription { get; set; }
+
+    [CascadingParameter]
+    private AccountBrandingViewModel? Branding { get; set; }
+
+    private string PageTitle =>
+        Branding is { UseKyvoDefaults: false, ApplicationName: not null and not "" } app
+            ? $"Criar conta - {app.ApplicationName}"
+            : "Criar conta - Kyvo";
+
+    private string? _errorMessage;
+    private string _antiforgeryToken = string.Empty;
+    private AccountLoginPageState? _pageState;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available.");
+
+        _antiforgeryToken = Antiforgery.GetAndStoreTokens(httpContext).RequestToken ?? string.Empty;
+        _errorMessage = ResolveErrorMessage(Error, ErrorDescription);
+        _pageState = await LoginPageState.GetStateAsync(httpContext.RequestAborted);
+    }
+
+    private static string? ResolveErrorMessage(string? code, string? detail) => code switch
+    {
+        null or "" => null,
+        "password_mismatch" => "A senha e a confirmação não coincidem.",
+        "email_exists" => "Já existe uma conta com este e-mail.",
+        "validation" => MapValidationDetail(detail),
+        "session_expired" => ApiErrorMessages.Account.SESSION_EXPIRED_RETRY_LOGIN,
+        "registration_failed" => MapRegistrationFailure(detail),
+        _ => detail ?? "Não foi possível concluir o cadastro. Tente novamente."
+    };
+
+    private static string MapValidationDetail(string? detail) => detail switch
+    {
+        ApplicationErrorMessages.Registration.EMAIL_REQUIRED => "Informe o e-mail.",
+        ApplicationErrorMessages.Registration.PASSWORD_REQUIRED => "Informe a senha.",
+        ApplicationErrorMessages.Registration.PASSWORD_TOO_WEAK => "A senha não atende aos requisitos mínimos.",
+        ApplicationErrorMessages.Registration.DISPLAY_NAME_REQUIRED => "Informe o nome completo.",
+        ApplicationErrorMessages.Registration.LOCAL_PASSWORD_DISABLED =>
+            "O cadastro com e-mail e senha não está disponível no momento.",
+        _ => "Verifique os dados e tente novamente."
+    };
+
+    private static string MapRegistrationFailure(string? detail) => detail switch
+    {
+        ApplicationErrorMessages.Registration.EMAIL_ALREADY_EXISTS => "Já existe uma conta com este e-mail.",
+        ApplicationErrorMessages.Registration.LOCAL_PASSWORD_DISABLED =>
+            "O cadastro com e-mail e senha não está disponível no momento.",
+        _ => "Não foi possível concluir o cadastro. Tente novamente."
+    };
+}

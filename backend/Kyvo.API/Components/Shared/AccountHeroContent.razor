@@ -1,0 +1,16 @@
+@using Kyvo.Application.Services.AccountBranding
+
+<div class="account-hero-content">
+    <AccountBrandLogo CssClass="account-hero-brand" />
+    <h2 class="account-hero-title">@_heroTitle</h2>
+    <p class="account-hero-subtitle">@_heroSubtitle</p>
+</div>
+
+@code {
+    [CascadingParameter]
+    private AccountBrandingViewModel? Branding { get; set; }
+
+    private string _heroTitle => Branding?.HeroTitle ?? AccountBrandingDefaults.HERO_TITLE;
+
+    private string _heroSubtitle => Branding?.HeroSubtitle ?? AccountBrandingDefaults.HERO_SUBTITLE;
+}

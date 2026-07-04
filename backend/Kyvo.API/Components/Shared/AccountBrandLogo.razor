@@ -1,0 +1,25 @@
+@using Kyvo.Application.Services.AccountBranding
+
+<div class="@CssClass">
+    <img src="@LogoUrl"
+         alt="@AltText"
+         width="128"
+         height="128"
+         decoding="async" />
+</div>
+
+@code {
+    [CascadingParameter]
+  private AccountBrandingViewModel? Branding { get; set; }
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    private string LogoUrl =>
+        string.IsNullOrWhiteSpace(Branding?.LogoUrl)
+            ? AccountBrandingDefaults.KYVO_LOGO_URL
+            : Branding.LogoUrl;
+
+    private string AltText =>
+        string.IsNullOrWhiteSpace(Branding?.ApplicationName) ? "Kyvo" : Branding.ApplicationName;
+}

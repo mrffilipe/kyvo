@@ -1,0 +1,103 @@
+# Maintainer workflow: build, test, and publish Kyvo product SDKs to NuGet and npm.
+#
+# Packages:
+#   npm  — @kyvo-client/client
+#   NuGet — Kyvo.AspNetCore, Kyvo.AspNetCore.TenancyKit, Kyvo.Client
+#
+# Triggers:
+#   - Push of a version tag matching v* (e.g. v1.0.0)
+#   - Manual run (workflow_dispatch) with a semver version input
+#
+# Required repository secrets:
+#   NUGET_API_KEY — nuget.org API key (push scope)
+#   NPM_TOKEN     — npm granular access token: Publish on @kyvo-client, "Bypass 2FA" enabled
+#                   (required when npm account/org has 2FA — classic tokens fail with E403 in CI)
+
+name: SDK publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver version to publish (e.g. 1.0.0)"
+        required: true
+        default: "1.0.0"
+
+jobs:
+  publish-sdks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Resolve package version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?(\+[A-Za-z0-9.]+)?$ ]]; then
+            echo "Invalid semver: $VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing SDK version: $VERSION"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sdk/typescript/package-lock.json
+          registry-url: https://registry.npmjs.org
+
+      - name: Restore and test .NET SDK
+        run: |
+          dotnet restore sdk/dotnet/Kyvo.sln
+          dotnet test sdk/dotnet/Kyvo.sln -c Release --no-restore
+
+      - name: Install npm dependencies and test TypeScript SDK
+        working-directory: sdk/typescript
+        run: |
+          npm ci
+          npm test
+
+      - name: Pack NuGet packages
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          OUT="${{ runner.temp }}/nupkgs"
+          mkdir -p "$OUT"
+          dotnet pack sdk/dotnet/Kyvo.AspNetCore/Kyvo.AspNetCore.csproj \
+            -c Release -o "$OUT" /p:PackageVersion="$VERSION" --no-restore
+          dotnet pack sdk/dotnet/Kyvo.AspNetCore.TenancyKit/Kyvo.AspNetCore.TenancyKit.csproj \
+            -c Release -o "$OUT" /p:PackageVersion="$VERSION" --no-restore
+          dotnet pack sdk/dotnet/Kyvo.Client/Kyvo.Client.csproj \
+            -c Release -o "$OUT" /p:PackageVersion="$VERSION" --no-restore
+          ls -la "$OUT"
+          echo "NUPKG_DIR=$OUT" >> "$GITHUB_ENV"
+
+      - name: Push packages to NuGet.org
+        run: |
+          dotnet nuget push "$NUPKG_DIR"/*.nupkg \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Publish @kyvo-client/client to npm
+        working-directory: sdk/typescript/@kyvo/client
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm publish --access public

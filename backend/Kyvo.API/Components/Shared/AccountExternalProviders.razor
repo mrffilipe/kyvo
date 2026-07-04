@@ -1,0 +1,36 @@
+@using Kyvo.Application.Services.IdentityProvider
+
+@if (ShowDivider && Providers.Count > 0)
+{
+    <div class="account-divider"><span>ou continue com</span></div>
+}
+
+@if (Providers.Count > 0)
+{
+    <div class="account-social">
+        @foreach (var provider in Providers)
+        {
+            <a class="account-btn account-btn-social"
+               href="@BuildFederatedLoginUrl(provider.Alias)">
+                Continuar com @provider.DisplayName
+            </a>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
+    [Parameter]
+    public bool ShowDivider { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<AccountFederatedProviderState> Providers { get; set; } = Array.Empty<AccountFederatedProviderState>();
+
+    private string BuildFederatedLoginUrl(string alias)
+    {
+        var url = $"/login/federated/{alias}";
+        return string.IsNullOrWhiteSpace(ReturnUrl) ? url : $"{url}?returnUrl={Uri.EscapeDataString(ReturnUrl)}";
+    }
+}

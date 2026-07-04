@@ -1,0 +1,27 @@
+@if (Branding is not null && !Branding.UseKyvoDefaults)
+{
+    <style>
+        html[data-theme="light"] {
+            --primary: @Branding.PrimaryColor;
+            --primary-hover: color-mix(in srgb, @Branding.PrimaryColor 85%, #000000);
+            --primary-foreground: #ffffff;
+            --focus-ring: color-mix(in srgb, @Branding.PrimaryColor 35%, transparent);
+            --hero-from: @Branding.PrimaryColor;
+            --hero-to: @Branding.SecondaryColor;
+        }
+
+        html[data-theme="dark"] {
+            --primary: @Branding.PrimaryColor;
+            --primary-hover: color-mix(in srgb, @Branding.PrimaryColor 75%, #ffffff);
+            --primary-foreground: #1b1b27;
+            --focus-ring: color-mix(in srgb, @Branding.PrimaryColor 45%, transparent);
+            --hero-from: color-mix(in srgb, @Branding.PrimaryColor 55%, #000000);
+            --hero-to: color-mix(in srgb, @Branding.SecondaryColor 70%, #000000);
+        }
+    </style>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public AccountBrandingViewModel Branding { get; set; } = AccountBrandingViewModel.KyvoDefaults();
+}

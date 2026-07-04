@@ -1,0 +1,101 @@
+# Maintainer workflow: build and push Kyvo API and frontend images to Docker Hub.
+#
+# Images:
+#   mrffilipe/kyvo-api      — ASP.NET Core API (port 8080)
+#   mrffilipe/kyvo-frontend — Admin SPA (nginx :80, HTTP only; TLS at external proxy)
+#
+# Triggers:
+#   - Manual run (workflow_dispatch)
+#   - Push tag docker-v* (e.g. docker-v1.0.0) — same semver on both images
+#
+# Required repository secret:
+#   DOCKERHUB_TOKEN — access token for user mrffilipe (push permission)
+
+name: Docker publish
+
+on:
+  push:
+    tags:
+      - "docker-v*"
+  workflow_dispatch:
+
+jobs:
+  build-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: mrffilipe
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Generate image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: mrffilipe/kyvo-api
+          tags: |
+            type=semver,pattern={{version}},prefix=docker-v
+            type=semver,pattern={{major}}.{{minor}},prefix=docker-v
+            type=semver,pattern={{major}},prefix=docker-v
+            type=raw,value=latest
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=kyvo-api
+          cache-to: type=gha,mode=max,scope=kyvo-api
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: mrffilipe
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Generate image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: mrffilipe/kyvo-frontend
+          tags: |
+            type=semver,pattern={{version}},prefix=docker-v
+            type=semver,pattern={{major}}.{{minor}},prefix=docker-v
+            type=semver,pattern={{major}},prefix=docker-v
+            type=raw,value=latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
+            VITE_OAUTH_REDIRECT_URI=${{ vars.VITE_OAUTH_REDIRECT_URI }}
+            VITE_API_VERSION=${{ vars.VITE_API_VERSION }}
+            VITE_API_TIMEOUT_MS=${{ vars.VITE_API_TIMEOUT_MS }}
+            VITE_OAUTH_CLIENT_ID=${{ vars.VITE_OAUTH_CLIENT_ID }}
+          cache-from: type=gha,scope=kyvo-frontend
+          cache-to: type=gha,mode=max,scope=kyvo-frontend

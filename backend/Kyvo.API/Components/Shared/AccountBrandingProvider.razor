@@ -1,0 +1,77 @@
+@using Kyvo.Application.Services.AccountBranding
+@inject IAccountBrandingStateProvider BrandingState
+@inject NavigationManager Navigation
+
+@if (_ready)
+{
+    <CascadingValue Value="_branding">
+        <AccountBrandingStyles Branding="_branding" />
+        @ChildContent
+    </CascadingValue>
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private AccountBrandingViewModel _branding = AccountBrandingViewModel.KyvoDefaults();
+    private bool _ready;
+    private bool _skipNextParametersSet;
+    private string? _loadedBrandingKey;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBrandingAsync();
+        _ready = true;
+        _skipNextParametersSet = true;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_ready)
+        {
+            return;
+        }
+
+        if (_skipNextParametersSet)
+        {
+            _skipNextParametersSet = false;
+            return;
+        }
+
+        var key = GetBrandingKey();
+        if (key == _loadedBrandingKey)
+        {
+            return;
+        }
+
+        await LoadBrandingAsync();
+    }
+
+    private async Task LoadBrandingAsync()
+    {
+        var (returnUrl, clientId) = ParseBrandingQuery();
+        _loadedBrandingKey = GetBrandingKey(returnUrl, clientId);
+        _branding = await BrandingState.GetBrandingAsync(returnUrl, clientId);
+    }
+
+    private (string? ReturnUrl, string? ClientId) ParseBrandingQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        query.TryGetValue("returnUrl", out var returnUrlValues);
+        query.TryGetValue(AccountBrandingClientIdParser.CLIENT_ID_PARAMETER, out var clientIdValues);
+
+        var returnUrl = returnUrlValues.Count > 0 ? returnUrlValues[0] : null;
+        var clientId = clientIdValues.Count > 0 ? clientIdValues[0] : null;
+        return (returnUrl, clientId);
+    }
+
+    private string GetBrandingKey()
+    {
+        var (returnUrl, clientId) = ParseBrandingQuery();
+        return GetBrandingKey(returnUrl, clientId);
+    }
+
+    private static string GetBrandingKey(string? returnUrl, string? clientId) => $"{returnUrl}\0{clientId}";
+}

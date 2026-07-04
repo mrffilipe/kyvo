@@ -1,0 +1,627 @@
+# Getting Started — Kyvo
+
+[English](./GETTING_STARTED.md) | [Português](./GETTING_STARTED.pt-BR.md)
+
+> **Pronunciation:** *Kyvo* is pronounced like **"Key"vo** — rhymes with English *key* plus *vo*.
+
+Guide to run Kyvo in **development** (from source) or **production** (published Docker images).
+
+### Choose your path
+
+| Path | Audience | Sections |
+|------|----------|----------|
+| **Development** | You cloned this repository and will run the API and admin SPA from source | **1–6** below |
+| **Production** | You deploy published images with Docker Compose (no build from this repo) | **[§ 7 — Production deployment](#7-production-deployment-docker-compose)** |
+
+> **Maintainers** (build and push images): see [docs/DOCKER_PUBLISH.md](./docs/DOCKER_PUBLISH.md), not this guide.
+
+---
+
+## Development (sections 1–6)
+
+---
+
+## 1. Prerequisites
+
+Install before continuing:
+
+| Tool | How to install | Minimum version |
+|------|----------------|-----------------|
+| .NET SDK | [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0) | 8.0 |
+| Node.js | [nodejs.org](https://nodejs.org/) | Current LTS |
+| PostgreSQL | [postgresql.org](https://www.postgresql.org/download/) | 14 |
+| Redis | [redis.io](https://redis.io/downloads/) | Optional (in-memory cache fallback in dev) |
+| dotnet-ef (CLI) | `dotnet tool install --global dotnet-ef` | 8.x |
+| openssl | Bundled with macOS/Linux; Windows: Git Bash or scoop | Any |
+
+Clone the repository:
+
+```bash
+git clone https://github.com/mrffilipe/kyvo.git
+cd kyvo
+```
+
+---
+
+## 2. Configure the database
+
+Create a PostgreSQL database for the project:
+
+```sql
+CREATE DATABASE kyvo_db;
+```
+
+Or via the command line:
+
+```bash
+createdb kyvo_db
+```
+
+---
+
+## 3. Configure the backend
+
+### 3.1 Edit the development appsettings
+
+In `backend/Kyvo.API/appsettings.Development.json` update the connection string:
+
+```json
+{
+  "Database": {
+    "ConnectionString": "Host=localhost;Port=5432;Database=kyvo_db;Username=YOUR_USER;Password=YOUR_PASSWORD"
+  }
+}
+```
+
+The remaining sections already ship with safe defaults for local development.
+
+### 3.2 Generate the RSA key used to sign JWTs
+
+OIDC uses RS256 (RSA + SHA-256). Generate a 2048-bit RSA private key **outside the repo** and configure the API with exactly one of `Jwt:SigningKeyPath`, `Jwt:SigningKeyPem`, or `Jwt:SigningKeyPemBase64`. Do not commit the PEM file.
+
+**Linux / macOS** (OpenSSL on PATH):
+
+```bash
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out oidc-signing.pem
+```
+
+**Windows** (OpenSSL on PATH — Git for Windows, Chocolatey, or `winget install ShiningLight.OpenSSL`):
+
+```powershell
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out oidc-signing.pem
+```
+
+**Windows** (no OpenSSL — .NET):
+
+```powershell
+$path = Join-Path $env:LOCALAPPDATA 'kyvo\oidc-signing.pem'
+New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null
+$rsa = [System.Security.Cryptography.RSA]::Create(2048)
+[System.IO.File]::WriteAllText($path, $rsa.ExportPkcs8PrivateKeyPem())
+```
+
+For local development, set the path via environment variable (or .NET user secrets) before starting the API:
+
+```bash
+# Linux / macOS — adjust the path to your PEM file
+export Jwt__SigningKeyPath="$HOME/.local/share/kyvo/oidc-signing.pem"
+```
+
+```powershell
+# Windows
+$env:Jwt__SigningKeyPath = "$env:LOCALAPPDATA\kyvo\oidc-signing.pem"
+```
+
+`appsettings.Development.json` leaves `SigningKeyPath` empty; production uses `Jwt__SigningKeyPemBase64` (see §7).
+
+### 3.3 Configure bootstrap admin credentials
+
+The first administrator's credentials are read from environment variables **or** the `Bootstrap` section of `appsettings.Development.json`.
+
+For development, the simplest path is to edit appsettings:
+
+```json
+{
+  "Bootstrap": {
+    "AdminEmail": "admin@localhost",
+    "AdminPassword": "YourSecurePassword@123",
+    "AdminDisplayName": "Platform Admin"
+  }
+}
+```
+
+> In production or Docker, use environment variables in the `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword`, `Bootstrap__AdminDisplayName` format (the `__` represents JSON nesting) and **never** commit real credentials to appsettings.
+
+### 3.4 Apply the migration to the database
+
+```bash
+cd backend
+
+dotnet ef database update \
+  --project Kyvo.Infrastructure \
+  --startup-project Kyvo.API
+```
+
+This creates every table (`AspNetUsers`, `OpenIddict*` entities, `identity_providers`, `tenants`, `applications`, `application_clients`, `auth_sessions`, `audit_logs`, etc.).
+
+### 3.5 Start the API
+
+```bash
+cd backend
+dotnet run --project Kyvo.API
+```
+
+The API is available at `http://localhost:5000`. Swagger lives at `http://localhost:5000/swagger`.
+
+Confirm it is healthy:
+
+```bash
+curl http://localhost:5000/v1.0/platform/status
+# Expected response after startup: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
+```
+
+On first startup, the API automatically initializes the platform (admin, local IdP, OAuth client) using the `Bootstrap` credentials. If `Bootstrap__*` is not configured, status stays `requiresBootstrap: true` until you configure and restart the API.
+
+---
+
+## 4. Configure and start the frontend
+
+### 4.1 Optionally create the .env file
+
+```bash
+cd frontend
+cp .env.example .env
+```
+
+`.env.example` lists the variables that the admin SPA understands; the same values are baked into `src/config/env.ts` as defaults, so the SPA also runs **without** an `.env` file in local development:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
+VITE_API_VERSION=1.0
+VITE_API_TIMEOUT_MS=30000
+VITE_OAUTH_CLIENT_ID=platform-admin-web
+VITE_OAUTH_REDIRECT_URI=http://localhost:3000/auth/callback
+```
+
+No edits are required for local development.
+
+### 4.2 Install dependencies and start
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs at `http://localhost:3000`.
+
+---
+
+## 5. Sign in
+
+Open `http://localhost:3000` (with both the API and the frontend running).
+
+The platform is initialized automatically when the API starts (with `Bootstrap` section or `Bootstrap__*` env vars configured). On the first successful run, the API creates:
+
+- Admin user with the password configured in appsettings / env vars
+- Platform role `plat_admin` assigned to the admin
+- `local` Identity Provider enabled
+- Application `platform-admin` + OAuth Client `platform-admin-web` (fixed, not editable via API)
+
+If `Bootstrap__*` is not configured, `/login` shows a message asking you to configure the backend and restart the API.
+
+Check the status:
+
+```bash
+curl http://localhost:5000/v1.0/platform/status
+# { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
+```
+
+> After a successful production initialization, remove `Bootstrap__*` from the environment. They no longer have any effect.
+
+### Sign in
+
+1. Click **"Sign in to the platform"**
+2. You are redirected to `/account/login` on the backend (Blazor SSR page; federated providers redirect via `/login/federated/{alias}`)
+3. Enter the email and password configured during bootstrap (e.g., `admin@localhost` / `YourSecurePassword@123`)
+4. After authentication, the backend redirects to the OIDC callback
+5. The frontend stores the tokens and opens the admin console
+
+### Self-registration (new users)
+
+For end users who do NOT yet have an account in the platform (typical SaaS onboarding):
+
+1. From any consumer app (e.g., Pulse CRM) the user clicks "Sign in" and is redirected to `/connect/authorize`.
+2. The IdP login page exposes a **Create account** link to `/account/register`.
+3. The user fills email, password (matching `PasswordPolicy` requirements) and display name. The endpoint is rate-limited by the `account_register` policy.
+4. After successful registration the platform creates an Identity user and signs the user in via the cookie scheme — NO tenant or membership is created at this point.
+5. The user is redirected back to `/connect/authorize`; the consumer app receives the OIDC `code`.
+6. The consumer app detects the missing `tid` claim in the access token and triggers its onboarding flow, calling `POST /v1.0/auth/subscribe` with tenant + plan to attach the user to a tenant. After a refresh token, the new access token includes `tid` / `mid`.
+7. To update tenant metadata later, use `PATCH /v1.0/Tenants/{id}` (name only; `tenantKey` is immutable). To leave an application, call `DELETE /v1.0/auth/account` in the OAuth session context — owners hard-delete the tenant when there are no blocking issues; the global user record is removed only when no active memberships remain.
+
+This central signup model means client apps NEVER implement their own "create account" pages; password collection only happens on the IdP domain.
+
+---
+
+## 6. Next steps
+
+### Create a tenant
+
+In the admin console go to **Tenants** → **Create tenant**. Provide a name and a unique key (e.g., `my-org`).
+
+### Invite members
+
+Inside a tenant, navigate to **Tenants** → **Invite member** (or open **Memberships** to manage pending invites). AWS SES must be configured under `Email.*` for delivery — if email sending fails, **no invite is persisted**. On success, the API returns `acceptPath` (e.g. `/accept-invite?token=…`); copy the full URL from the admin console or from **Memberships** → pending invites.
+
+### Register an OAuth application
+
+Go to **Applications** → **New application**. After creation, open the details and register an **OAuth Client** with your consumer application's redirect URIs.
+
+### Add external identity providers (optional)
+
+As a platform admin, navigate to **Identity Providers** → **Add IdP**. The `local` provider (bootstrap) stays enabled for email/password.
+
+Identity provider OAuth client secrets (`clientSecret` in `ConfigJson`) are stored **encrypted at rest** using ASP.NET Core Data Protection. The plaintext values are required during creation/update only and are never returned by `GET` endpoints.
+
+#### Capabilities
+
+Each identity provider declares one or more `IdpCapability` flags. The admin form surfaces them as checkboxes:
+
+| Capability | Allowed for | Conflict policy |
+|------------|-------------|-----------------|
+| `LocalPassword` | `Local` only (hard-locked) | Only **one** enabled provider can advertise it. Adding a second one fails. |
+| `GoogleSocial` | Google, GenericOidc | Adding a second enabled provider returns a `warnings` payload but is allowed. |
+| `MicrosoftSocial` | Microsoft, GenericOidc | Soft warning on conflict. |
+| `AppleSocial` | GenericOidc | Soft warning on conflict. |
+| `GenericOidc` | GenericOidc | Soft warning on conflict. |
+
+The hard-lock for `LocalPassword` mirrors what Microsoft Entra and other enterprise IdPs do: a single source of email/password authentication keeps account linking deterministic and avoids UI ambiguity ("which email/password form is legitimate?"). Social providers are softer: legitimate multi-realm setups can run two Google connections side by side and you only get a warning so the admin acknowledges the conflict.
+
+#### Federated OAuth redirect (Google, Microsoft, GitHub, Generic OIDC)
+
+External providers use **OAuth redirect** (OpenIddict Client), not popup or id_token POST. Configuration is a single `FederatedProviderConfig` schema in `ConfigJson`:
+
+| Field | Required | Purpose |
+|-------|----------|---------|
+| `clientId` | Yes | OAuth client id from the upstream provider |
+| `clientSecret` | Yes | OAuth client secret (encrypted at rest) |
+| `issuer` | GenericOidc only | Issuer URL for discovery (well-known providers resolve issuer from preset) |
+
+Steps:
+
+1. Create an OAuth app in Google Cloud / Azure / GitHub (or your OIDC issuer) with redirect URI `https://<kyvo-host>/callback/login/<alias>`.
+2. Admin console (`http://localhost:3000`) → **Identity Providers** → **Add IdP** → type **Google** (or Microsoft/GitHub/GenericOidc), alias e.g. `google`, enter `clientId` + `clientSecret` → **Enabled**.
+3. Keep the `local` IdP enabled (from bootstrap).
+4. Test: any OIDC app → redirect → `/account/login` → **Continue with Google** (or provider button) → upstream OAuth → `/callback/login/google` → session cookie → OAuth `returnUrl`.
+
+**Pulse CRM with Google:** the CRM does not integrate Google directly; it redirects to the platform OIDC. With a Google IdP enabled, on `/account/login` the user signs in via redirect, returns to the CRM with a `code`, completes onboarding/subscribe, refreshes tokens for `tid`/`mid` claims, and uses the API normally. See `samples/pulse-crm/backend/README.md`.
+
+### Integrate a consumer application
+
+1. Register an **Application** and an **OAuth Client** in the admin console (your app's redirect URIs).
+2. Use the discovery URL: `http://localhost:5000/.well-known/openid-configuration` (in production replace it with the public host of the API).
+3. Implement authorization code + PKCE in your client (SPA, backend, etc.).
+
+---
+
+## 7. Production deployment (Docker Compose)
+
+Deploy Kyvo using **two published container images** (API + admin SPA). TLS termination and path routing are handled by an **external reverse proxy** (Traefik on Coolify, nginx, etc.). You do not need to clone this repository except optionally to generate the OIDC signing key.
+
+**PostgreSQL and Redis are required** and are not included in the application compose example below.
+
+### Prerequisites
+
+| Tool | Purpose |
+|------|---------|
+| Docker Engine + Docker Compose v2 | Run containers |
+| PostgreSQL + Redis | Reachable from the API container |
+| Published images on Docker Hub | `mrffilipe/kyvo-api:<tag>` and `mrffilipe/kyvo-frontend:<tag>` (set `IMAGE_TAG` in `.env`) |
+| Reverse proxy with HTTPS | Routes one public host to API paths and SPA paths (see below) |
+
+You do **not** need the .NET SDK or Node.js on the host unless you generate the OIDC key from this repo.
+
+### Single public URL (recommended)
+
+With `Jwt__Issuer=https://auth.example.com` and TLS on that host, users and the SPA use the **same origin**. The proxy forwards API paths to `kyvo-api` and everything else to `kyvo-frontend`:
+
+| What you open or call | URL | Routed to |
+|----------------------|-----|-----------|
+| Admin console (SPA) | `https://auth.example.com/` | `kyvo-frontend` (nginx :80) |
+| OAuth callback | `https://auth.example.com/auth/callback` | `kyvo-frontend` |
+| API (JSON, OIDC, login pages) | `https://auth.example.com/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...`, `/js/...` | `kyvo-api` (:8080) |
+
+Set **`Jwt__Issuer`** to exactly the URL browsers use (scheme + host, no trailing slash). The frontend image is built with empty `VITE_*` URLs so the SPA uses `window.location.origin` at runtime.
+
+**Proxy path prefixes for the API** (must not be served by the SPA container):
+
+- `/v1.0/`
+- `/connect/`
+- `/account/`
+- `/.well-known/`
+- `/swagger`
+- `/css/`, `/js/`, and `/brand/` (Blazor account static assets — e.g. `account-theme.js`, `firebase-google-signin.js`, logos)
+
+### Suggested deploy directory
+
+Create a folder outside this repository (for example `kyvo-deploy/`) with:
+
+```
+kyvo-deploy/
+  docker-compose.yml
+  .env
+```
+
+### PostgreSQL and Redis (infra)
+
+Save as `docker-compose.infra.yml` in the same deploy folder (or use managed services).
+
+```yaml
+# Suggested local PostgreSQL + Redis (not part of the Kyvo repo)
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-kyvo_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-kyvo_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-default_password}
+      --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
+```
+
+Example `.env` for the snippet (same directory as the file above):
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgrespassword
+POSTGRES_DB=kyvo_db
+POSTGRES_PORT=5432
+REDIS_PASSWORD=default_password
+REDIS_PORT=6379
+```
+
+Start infra:
+
+```bash
+docker compose -f docker-compose.infra.local.yml --env-file .env.infra up -d
+```
+
+| Infra variable | Suggested default | Purpose |
+|----------------|-------------------|---------|
+| `POSTGRES_USER` | `postgres` | Database user |
+| `POSTGRES_PASSWORD` | (set a strong value) | Database password |
+| `POSTGRES_DB` | `kyvo_db` | Database name |
+| `POSTGRES_PORT` | `5432` | Published host port |
+| `REDIS_PASSWORD` | (set a strong value) | Redis password |
+| `REDIS_PORT` | `6379` | Published host port |
+
+Align `Database__ConnectionString` and `Redis__ConnectionString` in `.env` with these values (the example below uses `host.docker.internal` when infra publishes ports on the host).
+
+### `docker-compose.yml` (production)
+
+Save as `docker-compose.yml` in your deploy directory. Expose ports only if your proxy runs on the same host; on Coolify/Traefik you typically attach labels instead of publishing ports.
+
+```yaml
+# Kyvo — split images (API + admin SPA). TLS at external proxy.
+# Requires PostgreSQL and Redis reachable from the API container.
+
+services:
+  api:
+    image: mrffilipe/kyvo-api:${IMAGE_TAG:-latest}
+    container_name: kyvo-api
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      - app-dataprotection:/app/keys/data-protection
+
+  frontend:
+    image: mrffilipe/kyvo-frontend:${IMAGE_TAG:-latest}
+    container_name: kyvo-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"
+
+volumes:
+  app-dataprotection:
+```
+
+### `.env` (application)
+
+Save as `.env` next to `docker-compose.yml`:
+
+```env
+# --- Published images (Docker Hub) ---
+IMAGE_TAG=1.0.0
+API_PORT=8080
+FRONTEND_PORT=8081
+
+# --- Database (required) ---
+Database__ConnectionString=Host=host.docker.internal;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword
+Database__ApplyMigrationsOnStartup=true
+
+# --- JWT / OIDC (required) ---
+# Must match the public URL users use (same host as the external HTTPS proxy).
+Jwt__Issuer=https://auth.example.com
+Jwt__Audience=kyvo-api
+Jwt__KeyId=default
+Jwt__RefreshTokenDays=30
+# RSA private key (PEM) as Base64 — generate from oidc-signing.pem (see below). Do not mount key files.
+Jwt__SigningKeyPemBase64=
+
+# --- Redis (recommended) ---
+Redis__ConnectionString=host.docker.internal:6379,password=default_password,ssl=false
+Redis__InstanceName=kyvo:
+Redis__TenantIdentifierCacheMinutes=5
+
+# --- Data Protection ---
+SecretProtection__KeyDirectoryPath=keys/data-protection
+SecretProtection__ApplicationName=Kyvo
+
+# --- Bootstrap (first deploy only — remove after success) ---
+Bootstrap__AdminEmail=admin@example.com
+Bootstrap__AdminPassword=ChangeMe_Strong_Password_12
+Bootstrap__AdminDisplayName=Platform Admin
+
+# --- Email (AWS SES — for invites) ---
+Email__FromAddress=noreply@example.com
+Email__Region=us-east-1
+Email__AccessKeyId=
+Email__SecretAccessKey=
+Email__SessionToken=
+```
+
+**Encode the OIDC signing key for `Jwt__SigningKeyPemBase64`:**
+
+```bash
+# Linux/macOS
+openssl base64 -A -in oidc-signing.pem
+
+# PowerShell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("oidc-signing.pem"))
+```
+
+ASP.NET Core uses the `Section__Property` form. You do **not** set `VITE_*` in `.env` for production — the frontend image uses **same-origin** routing when built without custom build-args.
+
+| Variable | Rebuild image? | Notes |
+|----------|----------------|-------|
+| `Database__*`, `Redis__*`, `Jwt__*`, `Bootstrap__*`, `Email__*` | No | Edit `.env`, then `docker compose restart api` |
+| `Jwt__Issuer` | No | Must match your public URL (`https://auth.example.com`) |
+| Platform code | Yes | Pull new `kyvo-api` and `kyvo-frontend` tags with the same `IMAGE_TAG` |
+
+For **local development** (sections 1–6), optional `VITE_*` in `frontend/.env` still apply when using `npm run dev` on port 3000 with the API on port 5000.
+
+For **separate API/UI hosts**, rebuild `kyvo-frontend` with `--build-arg VITE_API_BASE_URL=...` and `VITE_OAUTH_REDIRECT_URI=...` (see [frontend/Dockerfile](./frontend/Dockerfile)).
+
+### Deploy steps
+
+1. Start PostgreSQL and Redis (infra snippet or managed services).
+2. Generate `oidc-signing.pem` (step 3.2 in development, or on a trusted machine with this repo).
+3. Base64-encode the PEM and set `Jwt__SigningKeyPemBase64` in `.env`.
+4. Create the deploy directory files above; configure your reverse proxy (HTTPS + path routing).
+5. Set `Jwt__Issuer` to your public `https://` URL (same host users will open in the browser).
+6. Start the stack:
+
+```bash
+cd kyvo-deploy
+docker compose --env-file .env up -d
+```
+
+7. Open `https://your-public-host` (the API initializes automatically on startup). After confirming login works, remove `Bootstrap__*` from `.env` and restart:
+
+```bash
+docker compose --env-file .env restart api
+```
+
+### Production troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Cannot connect to database | Verify PostgreSQL and `Database__ConnectionString` |
+| API container exits or unhealthy | `docker logs kyvo-api` — often missing or invalid `Jwt__SigningKeyPemBase64` |
+| API restart: "Configure only one of Jwt:SigningKeyPath…" | `Jwt__SigningKeyPemBase64` is set but `SigningKeyPath` still comes from defaults | Set only `Jwt__SigningKeyPemBase64`; clear path with `Jwt__SigningKeyPath=` (empty). Images after 1.0.1 ship with empty path in `appsettings.json`. |
+| OAuth redirect mismatch | Align `Jwt__Issuer` with the browser URL; verify OAuth client redirect URI (`https://<host>/auth/callback`) |
+| SPA calls wrong API URL | Same-origin: set `Jwt__Issuer` to the browser URL; split hosts: rebuild frontend with `VITE_*` build-args |
+| 404 on `/connect` or `/account` | Proxy must route API path prefixes to `kyvo-api`, not `kyvo-frontend` |
+| 404 on `firebase-google-signin.js` or `account-theme.js` | `/js/` not routed to API (only `/css/` configured) | Add `PathPrefix(\`/js\`)` to the API Traefik rule |
+
+---
+
+## 8. Production configuration
+
+### Critical environment variables
+
+| Environment variable (`__`) | Production |
+|-----------------------------|------------|
+| `Database__ConnectionString` | Managed database connection string (RDS, Cloud SQL, etc.) |
+| `Jwt__SigningKeyPemBase64` | Base64-encoded PEM of the RSA private key (production; no key file mount) |
+| `Jwt__Issuer` | Public backend URL (e.g., `https://auth.mysite.com`) |
+| `Bootstrap__AdminEmail` | Only on the first deploy; remove after bootstrap |
+| `Bootstrap__AdminPassword` | Only on the first deploy; remove after bootstrap |
+| `Bootstrap__AdminDisplayName` | Optional on the first deploy |
+| `Email__FromAddress`, `Email__Region`, etc. | AWS SES configuration for invites |
+| `Redis__ConnectionString` | Distributed cache (ElastiCache, Redis Cloud, etc.) |
+| `SecretProtection__KeyDirectoryPath` | Persistent directory for the data protection key ring (must survive restarts and be backed up) |
+| `SecretProtection__ApplicationName` | Logical name for key isolation (defaults to `Kyvo`) |
+In a production `appsettings.json`, use `:` instead (e.g., `Database:ConnectionString`).
+
+### Frontend in production
+
+The admin SPA runs in `mrffilipe/kyvo-frontend` (nginx on port 80, HTTP only). Configure `Jwt__Issuer` in `.env` (section 7) and route the public host through your proxy. For API and UI on different hosts, rebuild the frontend image with `VITE_*` build-args.
+
+### HTTPS
+
+In production every connection must use HTTPS. `Jwt:Issuer` must use `https://` for OIDC to work correctly.
+
+---
+
+## 9. Command quick reference
+
+```bash
+# Backend: apply migrations
+dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
+
+# Backend: create a new migration
+dotnet ef migrations add MigrationName --project Kyvo.Infrastructure --startup-project Kyvo.API --output-dir Migrations
+
+# Backend: run in dev
+dotnet run --project backend/Kyvo.API
+
+# Frontend: run in dev
+cd frontend && npm run dev
+
+# Frontend: build
+cd frontend && npm run build
+
+# OIDC signing key (see §3.2)
+# export Jwt__SigningKeyPath="$HOME/.local/share/kyvo/oidc-signing.pem"
+
+# Platform status (after starting the API)
+curl http://localhost:5000/v1.0/platform/status
+```
+
+---
+
+## 10. Troubleshooting
+
+| Issue | Likely cause | Solution |
+|-------|--------------|----------|
+| API fails to start: RSA key error | `Jwt:SigningKeyPath` / `Jwt:SigningKeyPem` / `Jwt:SigningKeyPemBase64` not configured | Generate a PEM (step 3.2) and set `Jwt__SigningKeyPath` (or another single source) |
+| Platform not initialized (`requiresBootstrap: true`) | Credentials not configured in appsettings/env | Verify the `Bootstrap` section or `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` and restart the API |
+| Frontend does not load after login | `VITE_OAUTH_REDIRECT_URI` is wrong | Confirm that the `redirect_uri` matches the `platform-admin-web` client |
+| Expired JWT / 401 | Token expired and refresh failed | Sign out and sign in again |
+| Invites do not arrive by email | AWS SES is not configured | Configure `Email:*` with valid SES credentials |
+| CORS error | Frontend on a different URL | Verify `VITE_API_BASE_URL` and the API's CORS settings |
+| Cannot decrypt an existing IdP configuration | Data Protection key ring lost | Restore the `SecretProtection:KeyDirectoryPath` from backup, or recreate the IdP entry |
+| Docker: cannot connect to PostgreSQL/Redis | Infra not running or wrong connection strings | Start infra or managed services; check `Database__*` and `Redis__*` in deploy `.env` |
+| Docker: OAuth redirect error after login | `Jwt__Issuer` does not match the browser URL | Set `Jwt__Issuer` to your public URL and restart `api` (redirect `https://<host>/auth/callback` is registered at bootstrap) |
+| Docker: HTTPS / OIDC scheme wrong | Proxy not forwarding `X-Forwarded-Proto` or wrong `Jwt__Issuer` | Terminate TLS at the proxy; set `Jwt__Issuer` to `https://...` |

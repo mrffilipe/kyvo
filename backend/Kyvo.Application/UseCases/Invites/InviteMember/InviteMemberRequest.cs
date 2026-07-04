@@ -1,0 +1,11 @@
+namespace Kyvo.Application.UseCases.Invites.InviteMember;
+
+public sealed record InviteMemberRequest
+{
+    public required Guid TenantId { get; init; }
+    public required string Email { get; init; }
+    public required IReadOnlyCollection<string> Roles { get; init; }
+    public Guid InvitedByUserId { get; init; }
+    public Guid ActorUserId { get; init; }
+    public required IReadOnlyCollection<string> ActorPlatformRoles { get; init; }
+}

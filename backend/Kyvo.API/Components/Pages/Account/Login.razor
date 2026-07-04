@@ -1,0 +1,115 @@
+@page "/account/login"
+@using Kyvo.API.Common
+@using Kyvo.Application.Services.IdentityProvider
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAccountLoginPageStateProvider LoginPageState
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<HeadContent>
+    <title>@PageTitle</title>
+</HeadContent>
+
+<div class="account-page">
+    <header class="account-header">
+        <AccountBrandLogo CssClass="account-header-brand" />
+        <h1>Bem-vindo de volta</h1>
+        <p class="account-subtitle">Entre para continuar nas suas aplicações.</p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <div class="account-alert" role="alert" aria-live="polite">
+            @ResolveErrorMessage(Error)
+        </div>
+    }
+
+    @if (_pageState?.ShowLocalLogin == true)
+    {
+        <form method="post" action="/account/signin" class="account-form" novalidate>
+            <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+            <div class="account-field">
+                <label for="email">E-mail</label>
+                <input id="email"
+                       type="email"
+                       name="email"
+                       autocomplete="username"
+                       inputmode="email"
+                       required
+                       placeholder="voce@empresa.com" />
+            </div>
+
+            <div class="account-field">
+                <label for="password">Senha</label>
+                <input id="password"
+                       type="password"
+                       name="password"
+                       autocomplete="current-password"
+                       required
+                       placeholder="••••••••" />
+            </div>
+
+            <button type="submit" class="account-btn account-btn-primary">
+                Entrar
+            </button>
+        </form>
+    }
+    else if (_pageState is not null)
+    {
+        <div class="account-notice" role="status">
+            Login com e-mail e senha não está habilitado. Use um provedor abaixo ou fale com o administrador.
+        </div>
+    }
+
+    @if (_pageState is not null)
+    {
+        <AccountExternalProviders ReturnUrl="@ReturnUrl"
+                                AntiforgeryToken="@_antiforgeryToken"
+                                ShowDivider="@(_pageState.ShowLocalLogin && _pageState.HasFederatedProviders)"
+                                Providers="@_pageState.FederatedProviders" />
+    }
+
+    <footer class="account-footer">
+        <span>Não tem uma conta?</span>
+        <a href="@($"/account/register?returnUrl={Uri.EscapeDataString(ReturnUrl ?? string.Empty)}")">Cadastre-se</a>
+    </footer>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Error { get; set; }
+
+    [CascadingParameter]
+    private AccountBrandingViewModel? Branding { get; set; }
+
+    private string PageTitle =>
+        Branding is { UseKyvoDefaults: false, ApplicationName: not null and not "" } app
+            ? $"Entrar - {app.ApplicationName}"
+            : "Entrar - Kyvo";
+
+    private AccountLoginPageState? _pageState;
+    private string _antiforgeryToken = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available.");
+
+        _antiforgeryToken = Antiforgery.GetAndStoreTokens(httpContext).RequestToken ?? string.Empty;
+        _pageState = await LoginPageState.GetStateAsync(httpContext.RequestAborted);
+    }
+
+    private static string ResolveErrorMessage(string code) => code switch
+    {
+        "invalid_credentials" => ApiErrorMessages.Account.INVALID_EMAIL_OR_PASSWORD,
+        "missing_fields" => ApiErrorMessages.Account.EMAIL_AND_PASSWORD_REQUIRED,
+        "invalid_provider" => ApiErrorMessages.Account.INVALID_PROVIDER_OR_TOKEN,
+        "session_expired" => ApiErrorMessages.Account.SESSION_EXPIRED_RETRY_LOGIN,
+        _ => "Não foi possível entrar. Tente novamente."
+    };
+}
