@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Semver version to publish (e.g. 1.0.0)"
+        description: "Semver version to publish (e.g. 2.0.0)"
         required: true
-        default: "1.0.0"
+        default: "2.0.0"
 
 jobs:
   publish-sdks:
@@ -99,5 +99,30 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
-          npm publish --access public
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$VERSION" != "$PKG_VERSION" ]]; then
+            echo "Version mismatch: workflow resolved $VERSION but package.json is $PKG_VERSION."
+            echo "Tag v$PKG_VERSION (or bump package.json) before publishing."
+            exit 1
+          fi
+
+          if npm view "@kyvo-client/client@${VERSION}" version 2>/dev/null | grep -qxF "$VERSION"; then
+            echo "npm: @kyvo-client/client@${VERSION} already published — skipping (same as NuGet --skip-duplicate)."
+            exit 0
+          fi
+
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          for attempt in 1 2 3; do
+            if npm publish --access public; then
+              echo "npm publish succeeded on attempt $attempt"
+              exit 0
+            fi
+            if [[ $attempt -lt 3 ]]; then
+              echo "npm publish failed (attempt $attempt); retrying in 60s (npm 409 can be transient)..."
+              sleep 60
+            fi
+          done
+          echo "npm publish failed after 3 attempts"
+          exit 1
