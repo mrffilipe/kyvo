@@ -84,7 +84,7 @@ cd backend
 cp .env.example .env
 ```
 
-Edite `.env` com credenciais do PostgreSQL/Redis, admin de bootstrap e opções do compose (`API_PORT`, `JWT_SIGNING_KEY_HOST_PATH`). O template já usa `host.docker.internal` para banco e Redis.
+Edite `.env` com credenciais do PostgreSQL/Redis, admin de bootstrap e opções do compose (`API_PORT`). O template já usa `host.docker.internal` para banco e Redis.
 
 ### 3.2 Chave de assinatura OIDC (RSA)
 
@@ -92,11 +92,11 @@ O Kyvo assina tokens OIDC com **RS256** (RSA + SHA-256). Configure **exatamente 
 
 | Cenário | Variável | Como fornecer a chave |
 |---------|----------|------------------------|
-| **Desenvolvimento** (compose) | `Jwt__SigningKeyPath=keys/oidc-signing.pem` | Gerar PEM em `backend/keys/oidc-signing.pem`; compose monta via `JWT_SIGNING_KEY_HOST_PATH` |
+| **Desenvolvimento** (compose) | `Jwt__SigningKeyPath=keys/oidc-signing.pem` | Gerar PEM em `backend/keys/oidc-signing.pem` **antes** do primeiro `docker compose up`; compose monta `./keys` |
 | **Produção** (§7) | `Jwt__SigningKeyPemBase64` | Gerar PEM fora do repo → codificar Base64 → colar no `.env` de deploy; **não** montar arquivo |
 | Evitar | Múltiplas fontes | Defina apenas **uma** entre Path / Pem / PemBase64 |
 
-**Gerar o PEM** (chave privada RSA 2048 bits):
+**Gerar o PEM** (chave privada RSA 2048 bits) **antes** de subir o Docker Compose. Se o arquivo não existir, o Docker Desktop pode criar `keys/oidc-signing.pem` como **pasta** e o container falha — apague essa pasta e gere um arquivo PEM de verdade.
 
 ```bash
 cd backend
@@ -112,7 +112,15 @@ New-Item -ItemType Directory -Force -Path keys | Out-Null
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/oidc-signing.pem
 ```
 
-**Windows** (sem OpenSSL — .NET):
+**Windows** (sem OpenSSL — Docker):
+
+```powershell
+cd backend
+New-Item -ItemType Directory -Force -Path keys | Out-Null
+docker run --rm -v "${PWD}/keys:/keys" alpine/openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /keys/oidc-signing.pem
+```
+
+**Windows** (sem OpenSSL — .NET 5+ / PowerShell 7+):
 
 ```powershell
 cd backend
@@ -124,7 +132,6 @@ $rsa = [System.Security.Cryptography.RSA]::Create(2048)
 **Ligação em desenvolvimento** (já em `.env.example`):
 
 ```env
-JWT_SIGNING_KEY_HOST_PATH=./keys/oidc-signing.pem
 Jwt__SigningKeyPath=keys/oidc-signing.pem
 Jwt__SigningKeyPem=
 Jwt__SigningKeyPemBase64=
@@ -667,6 +674,7 @@ curl http://localhost:5000/v1.0/platform/status
 | Problema | Causa provável | Solução |
 |----------|---------------|---------|
 | API não inicia: erro de chave RSA | Chave ausente ou múltiplas fontes | Gerar PEM (§3.2); dev: `Jwt__SigningKeyPath` + volume; prod: só `Jwt__SigningKeyPemBase64` |
+| Compose: `not a directory` ao montar `oidc-signing.pem` | PEM ausente no primeiro `up` — Docker criou uma pasta com esse nome | Remova `backend/keys/oidc-signing.pem` se for diretório; gere o arquivo PEM (§3.2) e tente de novo |
 | API reinicia: "Configure only one of Jwt:SigningKeyPath…" | Base64 e Path definidos juntos | Produção: limpe `Jwt__SigningKeyPath` e `Jwt__SigningKeyPem`; use só `Jwt__SigningKeyPemBase64` |
 | `dotnet ef` não conecta | Host ou credenciais errados em `appsettings.Development.json` | Use `Host=localhost` nas migrations; mantenha `host.docker.internal` no `.env` do container. O `dotnet ef` não lê `backend/.env` |
 | `dotnet ef` falha na senha mesmo com `.env` correto | EF usa `ApplicationDbContextFactory` + appsettings, não `.env` | Ajuste `Database:ConnectionString` em `appsettings.Development.json` (ou exporte `Database__ConnectionString`) |

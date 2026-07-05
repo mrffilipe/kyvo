@@ -78,7 +78,6 @@
     @if (_pageState is not null)
     {
         <AccountExternalProviders ReturnUrl="@ReturnUrl"
-                                AntiforgeryToken="@_antiforgeryToken"
                                 ShowDivider="@_pageState.HasFederatedProviders"
                                 Providers="@_pageState.FederatedProviders" />
     }

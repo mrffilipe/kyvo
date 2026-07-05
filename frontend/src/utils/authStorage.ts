@@ -155,10 +155,36 @@ export function clearAuthSession(): void {
 }
 
 export const ACCESS_DENIED_LOGOUT_SESSION_KEY = 'kyvo.auth.access_denied.logout_done'
+export const ACCESS_DENIED_MESSAGE_SESSION_KEY = 'kyvo.auth.access_denied.message'
+
+export function stageAccessDeniedLoginMessage(description?: string): void {
+  if (!isBrowser()) {
+    return
+  }
+
+  sessionStorage.setItem(
+    ACCESS_DENIED_MESSAGE_SESSION_KEY,
+    description ?? PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE,
+  )
+}
+
+export function consumeAccessDeniedLoginMessage(): string | null {
+  if (!isBrowser()) {
+    return null
+  }
+
+  const message = sessionStorage.getItem(ACCESS_DENIED_MESSAGE_SESSION_KEY)
+  if (message) {
+    sessionStorage.removeItem(ACCESS_DENIED_MESSAGE_SESSION_KEY)
+  }
+
+  return message
+}
 
 export function clearAccessDeniedLogoutFlag(): void {
   if (isBrowser()) {
     sessionStorage.removeItem(ACCESS_DENIED_LOGOUT_SESSION_KEY)
+    sessionStorage.removeItem(ACCESS_DENIED_MESSAGE_SESSION_KEY)
   }
 }
 

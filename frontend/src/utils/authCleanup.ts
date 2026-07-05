@@ -3,6 +3,7 @@ import {
   ACCESS_DENIED_LOGOUT_SESSION_KEY,
   clearAuthSession,
   PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE,
+  stageAccessDeniedLoginMessage,
 } from './authStorage'
 import { setSelectedTenantId } from './tenantStorage'
 
@@ -22,11 +23,18 @@ function markAccessDeniedCookieLogoutDone(): void {
   sessionStorage.setItem(ACCESS_DENIED_LOGOUT_SESSION_KEY, '1')
 }
 
-export function buildLoginUrlWithAccessDenied(description?: string): string {
-  const url = new URL(`${window.location.origin}/login`)
-  url.searchParams.set('error', 'access_denied')
-  url.searchParams.set('error_description', description ?? PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE)
-  return url.toString()
+/** Registered post_logout_redirect_uri for platform-admin-web (no query string). */
+export function buildLoginRedirectUri(): string {
+  return `${window.location.origin}/login`
+}
+
+function parseAccessDeniedDescription(loginUrlWithError: string): string {
+  try {
+    const url = new URL(loginUrlWithError)
+    return url.searchParams.get('error_description') ?? PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE
+  } catch {
+    return PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE
+  }
 }
 
 /**
@@ -36,7 +44,8 @@ export function buildLoginUrlWithAccessDenied(description?: string): string {
 export function completeFailedPlatformLoginCleanup(description?: string): void {
   clearClientAuthState()
   markAccessDeniedCookieLogoutDone()
-  window.location.replace(buildLogoutUrl(buildLoginUrlWithAccessDenied(description)))
+  stageAccessDeniedLoginMessage(description)
+  window.location.replace(buildLogoutUrl(buildLoginRedirectUri()))
 }
 
 /**
@@ -50,6 +59,7 @@ export function ensureAccessDeniedCookieLogout(loginUrlWithError: string): boole
 
   markAccessDeniedCookieLogoutDone()
   clearClientAuthState()
-  window.location.replace(buildLogoutUrl(loginUrlWithError))
+  stageAccessDeniedLoginMessage(parseAccessDeniedDescription(loginUrlWithError))
+  window.location.replace(buildLogoutUrl(buildLoginRedirectUri()))
   return true
 }

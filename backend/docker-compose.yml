@@ -1,7 +1,7 @@
 # Kyvo API — local container (PostgreSQL/Redis run separately on the host or elsewhere).
 #
 #   cp .env.example .env
-#   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/oidc-signing.pem
+#   Generate backend/keys/oidc-signing.pem BEFORE the first compose up (see GETTING_STARTED §3.2).
 #   docker compose up -d
 #
 # Compose reads variable substitution from `.env` in this directory.
@@ -19,7 +19,9 @@ services:
     ports:
       - "${API_PORT:-5000}:8080"
     volumes:
-      - ${JWT_SIGNING_KEY_HOST_PATH:-./keys/oidc-signing.pem}:/app/keys/oidc-signing.pem:ro
+      # Bind the keys directory (generate keys/oidc-signing.pem before the first up).
+      # Not :ro — the named data-protection volume mounts under /app/keys/data-protection.
+      - ./keys:/app/keys
       - dataprotection:/app/keys/data-protection
 
 volumes:

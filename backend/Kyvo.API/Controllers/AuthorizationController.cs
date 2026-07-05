@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenIddict.Validation.AspNetCore;
+using System.Security.Claims;
 
 namespace Kyvo.API.Controllers;
 
@@ -70,7 +71,7 @@ public sealed class AuthorizationController : ControllerBase
                 });
         }
 
-        var appUser = await _userManager.GetUserAsync(authenticateResult.Principal)
+        var appUser = await ResolveApplicationUserAsync(authenticateResult.Principal)
             ?? throw new InvalidOperationException("The authenticated user could not be resolved.");
 
         if (!Guid.TryParse(authenticateResult.Principal.FindFirst("sid")?.Value, out var sessionId))
@@ -131,8 +132,11 @@ public sealed class AuthorizationController : ControllerBase
             return ForbidWithError(OpenIddictConstants.Errors.InvalidGrant, "The token is no longer valid.");
         }
 
-        var appUser = await _userManager.GetUserAsync(authenticateResult.Principal)
-            ?? throw new InvalidOperationException("The authenticated user could not be resolved.");
+        var appUser = await ResolveApplicationUserAsync(authenticateResult.Principal);
+        if (appUser is null)
+        {
+            return ForbidWithError(OpenIddictConstants.Errors.InvalidGrant, "The authenticated user could not be resolved.");
+        }
 
         if (!Guid.TryParse(authenticateResult.Principal.FindFirst("sid")?.Value, out var sessionId))
         {
@@ -204,6 +208,23 @@ public sealed class AuthorizationController : ControllerBase
             {
                 RedirectUri = "/"
             });
+    }
+
+    private async Task<ApplicationUser?> ResolveApplicationUserAsync(ClaimsPrincipal principal)
+    {
+        var fromIdentity = await _userManager.GetUserAsync(principal);
+        if (fromIdentity is not null)
+        {
+            return fromIdentity;
+        }
+
+        // OpenIddict principals carry the user id as "sub"/"uid", not ClaimTypes.NameIdentifier.
+        var userIdValue = principal.FindFirst("uid")?.Value
+            ?? principal.FindFirst(OpenIddictConstants.Claims.Subject)?.Value;
+
+        return Guid.TryParse(userIdValue, out var userId)
+            ? await _userManager.FindByIdAsync(userId.ToString())
+            : null;
     }
 
     private ForbidResult ForbidWithError(string error, string description)

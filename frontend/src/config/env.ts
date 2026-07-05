@@ -29,7 +29,8 @@ function resolveApiBaseUrl(): string {
     return baked.replace(/\/$/, '')
   }
 
-  if (typeof window !== 'undefined') {
+  // Production image is built with an empty VITE_API_BASE_URL; API and SPA share the public host.
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
     return window.location.origin
   }
 
@@ -42,7 +43,7 @@ function resolveOAuthRedirectUri(): string {
     return baked.replace(/\/$/, '')
   }
 
-  if (typeof window !== 'undefined') {
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
     return `${window.location.origin}/auth/callback`
   }
 

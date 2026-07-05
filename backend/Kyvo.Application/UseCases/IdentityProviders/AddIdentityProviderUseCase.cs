@@ -1,4 +1,5 @@
 using Kyvo.Application.Exceptions;
+using Kyvo.Application.Ports.Federation;
 using Kyvo.Application.Services.IdentityProvider;
 using Kyvo.Application.UseCases.IdentityProviders.AddIdentityProvider;
 using Kyvo.Application.Services.UnitOfWork;
@@ -21,17 +22,20 @@ public sealed class AddIdentityProviderUseCase : IAddIdentityProviderUseCase
     private readonly IIdentityProviderConfigValidator _configValidator;
     private readonly IIdentityProviderConfigCipher _configCipher;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFederatedProviderRegistrationCache _registrationCache;
 
     public AddIdentityProviderUseCase(
         IIdentityProviderRepository identityProviders,
         IIdentityProviderConfigValidator configValidator,
         IIdentityProviderConfigCipher configCipher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IFederatedProviderRegistrationCache registrationCache)
     {
         _identityProviders = identityProviders;
         _configValidator = configValidator;
         _configCipher = configCipher;
         _unitOfWork = unitOfWork;
+        _registrationCache = registrationCache;
     }
 
     public async Task<AddIdentityProviderResult> ExecuteAsync(AddIdentityProviderRequest request, CancellationToken ct = default)
@@ -62,6 +66,11 @@ public sealed class AddIdentityProviderUseCase : IAddIdentityProviderUseCase
 
         await _identityProviders.AddAsync(provider, ct);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        if (provider.ProviderType != IdentityProviderType.Local)
+        {
+            _registrationCache.Invalidate(provider.Alias);
+        }
 
         var warnings = await BuildSocialWarningsAsync(provider.Id, request.Capabilities, ct);
         return new AddIdentityProviderResult { Id = provider.Id, Warnings = warnings };

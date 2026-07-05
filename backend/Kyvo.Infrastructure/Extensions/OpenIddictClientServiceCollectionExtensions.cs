@@ -2,6 +2,7 @@ using Kyvo.Application.Ports.Federation;
 using Kyvo.Infrastructure.Services.Federation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenIddict.Client;
 
 namespace Kyvo.Infrastructure.Extensions;
@@ -21,6 +22,11 @@ public static class OpenIddictClientServiceCollectionExtensions
             .AddClient(options =>
             {
                 options.AllowAuthorizationCodeFlow();
+
+                // Placeholder URIs satisfy OpenIddict startup validation; OpenIddictClientEndpointConfigurer
+                // replaces them with per-provider paths from the database (or keeps placeholders when none exist).
+                options.SetRedirectionEndpointUris(OpenIddictClientEndpointConfigurer.RedirectionPlaceholderPath);
+                options.SetPostLogoutRedirectionEndpointUris(OpenIddictClientEndpointConfigurer.PostLogoutPlaceholderPath);
 
                 // Certificates only protect the OpenIddict.Client-internal state token; they don't need to
                 // be stable across restarts like the server's signing/encryption certificates.
@@ -45,6 +51,11 @@ public static class OpenIddictClientServiceCollectionExtensions
         // to invalidate the cache after an edit) can inject either OpenIddictClientService or the
         // concrete DynamicOpenIddictClientService interchangeably.
         services.AddSingleton<DynamicOpenIddictClientService>();
+        services.AddSingleton<OpenIddictClientEndpointConfigurer>();
+        services.AddSingleton<IPostConfigureOptions<OpenIddictClientOptions>>(sp =>
+            sp.GetRequiredService<OpenIddictClientEndpointConfigurer>());
+        services.AddSingleton<IOptionsChangeTokenSource<OpenIddictClientOptions>>(sp =>
+            sp.GetRequiredService<OpenIddictClientEndpointConfigurer>());
         services.Replace(ServiceDescriptor.Singleton<OpenIddictClientService>(
             sp => sp.GetRequiredService<DynamicOpenIddictClientService>()));
         services.AddScoped<IFederatedProviderRegistrationCache, FederatedProviderRegistrationCache>();

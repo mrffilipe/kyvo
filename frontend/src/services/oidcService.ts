@@ -122,10 +122,13 @@ export async function refreshOidcTokens(refreshToken: string): Promise<OidcToken
 }
 
 export function buildLogoutUrl(postLogoutRedirectUri?: string): string {
-  const redirect = postLogoutRedirectUri ?? `${window.location.origin}/login`
+  const raw = postLogoutRedirectUri ?? `${window.location.origin}/login`
+  const redirectUrl = new URL(raw, window.location.origin)
+  redirectUrl.search = ''
+  redirectUrl.hash = ''
   const params = new URLSearchParams({
     client_id: env.oauthClientId,
-    post_logout_redirect_uri: redirect,
+    post_logout_redirect_uri: redirectUrl.toString(),
   })
   return `${getOidcOrigin()}${apiPaths.connectLogout}?${params.toString()}`
 }

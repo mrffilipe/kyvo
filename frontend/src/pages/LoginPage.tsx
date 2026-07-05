@@ -6,20 +6,26 @@ import { FeedbackAlerts } from '../components/ui'
 import { redirectToOidcLogin } from '../services/oidcService'
 import type { LoginLoaderData } from '../routes/loaders'
 import { ensureAccessDeniedCookieLogout } from '../utils/authCleanup'
-import { PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE } from '../utils/authStorage'
+import { consumeAccessDeniedLoginMessage, PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE } from '../utils/authStorage'
 import { useAuth } from '../contexts/AuthContext'
 
 export function LoginPage() {
   const { requiresBootstrap } = useLoaderData() as LoginLoaderData
   const { logoutLocal } = useAuth()
   const [searchParams] = useSearchParams()
-  const isAccessDenied = searchParams.get('error') === 'access_denied'
+  const stagedAccessDeniedMessage = useMemo(() => consumeAccessDeniedLoginMessage(), [])
+  const isAccessDenied =
+    searchParams.get('error') === 'access_denied' || stagedAccessDeniedMessage !== null
   const accessDeniedMessage = useMemo(() => {
     if (!isAccessDenied) {
       return null
     }
-    return searchParams.get('error_description') ?? PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE
-  }, [isAccessDenied, searchParams])
+    return (
+      searchParams.get('error_description')
+      ?? stagedAccessDeniedMessage
+      ?? PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE
+    )
+  }, [isAccessDenied, searchParams, stagedAccessDeniedMessage])
   const [loading, setLoading] = useState(!requiresBootstrap && !isAccessDenied)
   const [error, setError] = useState<string | null>(accessDeniedMessage)
   const [pendingCookieLogout, setPendingCookieLogout] = useState(false)
