@@ -14,7 +14,7 @@ Inspirado no modelo Keycloak-like: um IdP gerenciado, multi-tenant, com painel a
 
 | Caminho | Uso |
 |---------|-----|
-| **Desenvolvimento** | Clone o repo e siga [GETTING_STARTED.pt-BR.md](./GETTING_STARTED.pt-BR.md) seções **1–6** (código-fonte, PostgreSQL/Redis local) |
+| **Desenvolvimento** | Clone o repo e siga [GETTING_STARTED.pt-BR.md](./GETTING_STARTED.pt-BR.md) seções **1–6** (Docker Compose, `.env`, PostgreSQL/Redis no host) |
 | **Produção** | Imagens `kyvo-api` + `kyvo-frontend` — [GETTING_STARTED.pt-BR.md § Produção](./GETTING_STARTED.pt-BR.md#7-deploy-em-produção-docker-compose) (imagens separadas, proxy HTTPS externo) |
 | **Mantenedores** | Build e push de imagens — [docs/DOCKER_PUBLISH.pt-BR.md](./docs/DOCKER_PUBLISH.pt-BR.md) |
 

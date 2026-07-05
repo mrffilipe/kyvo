@@ -67,7 +67,14 @@ Domain `User` (profile/lifecycle) is separate from Infrastructure `ApplicationUs
 
 ## Configuration
 
-All configuration lives in `Kyvo.API/appsettings.json` (template) and `appsettings.Development.json` (local development values).
+Configuration uses `Kyvo.API/appsettings.json` (template), `appsettings.Development.json` (host tooling), and **`backend/.env`** (Docker Compose API container). See [GETTING_STARTED.md §3](../GETTING_STARTED.md#3-configure-the-backend).
+
+| File | Used by | `Database` host (typical) |
+|------|---------|---------------------------|
+| `appsettings.Development.json` | `dotnet ef` on the host (`ApplicationDbContextFactory`) | `localhost` |
+| `backend/.env` | `docker compose` (`env_file` on `kyvo.api`) | `host.docker.internal` |
+
+Copy [`.env.example`](./.env.example) to `.env` and keep credentials aligned with `appsettings.Development.json`.
 
 ### Appsettings sections
 
@@ -161,7 +168,7 @@ ASP.NET Core maps `Section__Property` to `Section:Property` (equivalent to neste
 
 Other common keys: `Database__ConnectionString`, `Jwt__Issuer`, `Jwt__RefreshTokenDays`, `Jwt__SigningKeyPemBase64`, `Redis__ConnectionString`, `Email__FromAddress`, `Email__SessionToken`, `SecretProtection__KeyDirectoryPath`, etc.
 
-In local development the `Bootstrap` section in `appsettings.Development.json` is sufficient.
+In local development, bootstrap and database settings live in **`backend/.env`** (container) and **`appsettings.Development.json`** (`dotnet ef`). See [GETTING_STARTED.md](../GETTING_STARTED.md).
 
 > After bootstrap, remove `Bootstrap__*` from the production environment. They are only needed on the first run.
 
@@ -233,24 +240,24 @@ docker build -f backend/Dockerfile -t mrffilipe/kyvo-api:<tag> .
 
 ---
 
-## Run locally
+## Run locally (Docker Compose)
+
+See [GETTING_STARTED.md §3–3.5](../GETTING_STARTED.md#3-configure-the-backend). Summary:
 
 ```bash
 cd backend
+cp .env.example .env
+# Generate backend/keys/oidc-signing.pem (see GETTING_STARTED §3.2)
+# Align Database:ConnectionString in appsettings.Development.json (localhost) and backend/.env (host.docker.internal)
 
-# 1. Restore dependencies
-dotnet restore
-
-# 2. Apply migrations (the database must already exist)
 dotnet ef database update \
   --project Kyvo.Infrastructure \
   --startup-project Kyvo.API
 
-# 3. Start the API
-dotnet run --project Kyvo.API
+docker compose up -d --build
 ```
 
-The API runs at `http://localhost:5000`. Swagger is available under `/swagger` in Development/Staging.
+`dotnet ef` reads `appsettings.Development.json` via `ApplicationDbContextFactory` — not `backend/.env`. The API container uses `.env` at runtime.
 
 ---
 
@@ -258,7 +265,7 @@ The API runs at `http://localhost:5000`. Swagger is available under `/swagger` i
 
 The platform is initialized automatically on API startup, once, while `PlatformConfiguration.IsBootstrapped` is `false` and `Bootstrap:AdminEmail` / `Bootstrap:AdminPassword` are configured.
 
-Configure credentials before starting the API (`Bootstrap` section in appsettings or `Bootstrap__*` env vars). On startup, the API creates:
+Configure credentials before starting the API (`Bootstrap__*` in `backend/.env` for local dev, or env vars in production). On startup, the API creates:
 
 - Root admin user (`ApplicationUser` + domain `User` profile) with ASP.NET Core Identity local credentials
 - `plat_admin` platform role assigned to the admin
@@ -418,6 +425,8 @@ Memberships and additional application CRUD: see `frontend/swagger.json`.
 ---
 
 ## Migrations
+
+In local development, `dotnet ef` reads `Database:ConnectionString` from `Kyvo.API/appsettings.Development.json` via `ApplicationDbContextFactory` (use `localhost` for the database host). The API container uses `backend/.env` instead. See [GETTING_STARTED.md §3.4](../GETTING_STARTED.md#34-apply-migrations-on-the-host).
 
 ```bash
 # Create a new migration

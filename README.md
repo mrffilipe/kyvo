@@ -14,7 +14,7 @@ Inspired by Keycloak-style platforms: a managed, multi-tenant IdP with its own a
 
 | Path | Use |
 |------|-----|
-| **Development** | Clone the repo and follow [GETTING_STARTED.md](./GETTING_STARTED.md) sections **1–6** (source, local PostgreSQL/Redis) |
+| **Development** | Clone the repo and follow [GETTING_STARTED.md](./GETTING_STARTED.md) sections **1–6** (Docker Compose, `.env`, PostgreSQL/Redis on the host) |
 | **Production** | Deploy `kyvo-api` + `kyvo-frontend` — [GETTING_STARTED.md § Production](./GETTING_STARTED.md#7-production-deployment-docker-compose) (split images, external HTTPS proxy) |
 | **Maintainers** | Build and push images — [docs/DOCKER_PUBLISH.md](./docs/DOCKER_PUBLISH.md) |
 

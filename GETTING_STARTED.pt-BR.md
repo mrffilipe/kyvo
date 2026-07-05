@@ -68,7 +68,14 @@ PostgreSQL e Redis **não** estão em [backend/docker-compose.yml](./backend/doc
 
 ## 3. Configurar o backend
 
-O desenvolvimento usa [backend/docker-compose.yml](./backend/docker-compose.yml) e [backend/.env.example](./backend/.env.example). A configuração é via **`backend/.env`**, não `appsettings.Development.json`.
+O desenvolvimento usa [backend/docker-compose.yml](./backend/docker-compose.yml) e [backend/.env.example](./backend/.env.example). A configuração é dividida entre **`.env`** (container da API) e **`appsettings.Development.json`** (`dotnet ef` no host):
+
+| Arquivo | Usado por | Host em `Database` |
+|---------|-----------|-------------------|
+| `backend/.env` | `docker compose` (container da API) | `host.docker.internal` |
+| `Kyvo.API/appsettings.Development.json` | `dotnet ef` (host) | `localhost` |
+
+Mantenha credenciais e demais valores alinhados nos dois arquivos (veja comentários em `.env.example`).
 
 ### 3.1 Preparar o arquivo `.env`
 
@@ -136,30 +143,38 @@ Defina o primeiro administrador em `backend/.env`:
 ```env
 Bootstrap__AdminEmail=admin@localhost
 Bootstrap__AdminPassword=SuaSenhaSegura@123
-Bootstrap__AdminDisplayName=Platform Admin
+Bootstrap__AdminDisplayName=Admin
 ```
 
 > Nunca commite senhas reais. Após o primeiro login em produção, remova `Bootstrap__*` do ambiente (veja §7).
 
 ### 3.4 Aplicar migrations (no host)
 
-A imagem de desenvolvimento não executa o bundle de migrations EF. Aplique migrations **na sua máquina** com connection string usando **`localhost`**, não `host.docker.internal`:
+A imagem de desenvolvimento não executa o bundle de migrations EF. Aplique migrations **na sua máquina**.
+
+1. Defina `Database:ConnectionString` em `Kyvo.API/appsettings.Development.json` com **`localhost`** (não `host.docker.internal`). Ajuste usuário, senha e nome do banco conforme seu PostgreSQL.
+2. Execute:
 
 ```bash
 cd backend
-
-# Linux / macOS — ajuste usuário, senha e nome do banco
-export Database__ConnectionString="Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
 
 dotnet ef database update \
   --project Kyvo.Infrastructure \
   --startup-project Kyvo.API
 ```
 
+O `dotnet ef` carrega a configuração via `ApplicationDbContextFactory`, que lê **`appsettings.Development.json`** (e opcionalmente `Database__ConnectionString` no ambiente). Ele **não** lê `backend/.env`.
+
+Substituição pontual opcional:
+
+```bash
+# Linux / macOS
+export Database__ConnectionString="Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
+```
+
 ```powershell
 # Windows (PowerShell)
 $env:Database__ConnectionString = "Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
-dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
 ```
 
 Isso cria todas as tabelas (`AspNetUsers`, entidades `OpenIddict*`, `identity_providers`, `tenants`, `applications`, `application_clients`, `auth_sessions`, `audit_logs`, etc.).
@@ -517,7 +532,7 @@ SecretProtection__ApplicationName=Kyvo
 
 Bootstrap__AdminEmail=admin@example.com
 Bootstrap__AdminPassword=ChangeMe_Strong_Password_12
-Bootstrap__AdminDisplayName=Platform Admin
+Bootstrap__AdminDisplayName=Admin
 
 Email__FromAddress=noreply@example.com
 Email__Region=us-east-1
@@ -627,9 +642,8 @@ cd backend && docker compose up -d --build
 cd backend && docker compose logs -f kyvo.api
 cd backend && docker compose restart kyvo.api
 
-# Backend: aplicar migrations (no host — use localhost na connection string)
+# Backend: aplicar migrations (lê appsettings.Development.json — use localhost em Database)
 cd backend
-export Database__ConnectionString="Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
 dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
 
 # Backend: gerar nova migration
@@ -654,7 +668,8 @@ curl http://localhost:5000/v1.0/platform/status
 |----------|---------------|---------|
 | API não inicia: erro de chave RSA | Chave ausente ou múltiplas fontes | Gerar PEM (§3.2); dev: `Jwt__SigningKeyPath` + volume; prod: só `Jwt__SigningKeyPemBase64` |
 | API reinicia: "Configure only one of Jwt:SigningKeyPath…" | Base64 e Path definidos juntos | Produção: limpe `Jwt__SigningKeyPath` e `Jwt__SigningKeyPem`; use só `Jwt__SigningKeyPemBase64` |
-| `dotnet ef` não conecta | `host.docker.internal` usado no host | Use `Host=localhost` em `Database__ConnectionString` para migrations (§3.4) |
+| `dotnet ef` não conecta | Host ou credenciais errados em `appsettings.Development.json` | Use `Host=localhost` nas migrations; mantenha `host.docker.internal` no `.env` do container. O `dotnet ef` não lê `backend/.env` |
+| `dotnet ef` falha na senha mesmo com `.env` correto | EF usa `ApplicationDbContextFactory` + appsettings, não `.env` | Ajuste `Database:ConnectionString` em `appsettings.Development.json` (ou exporte `Database__ConnectionString`) |
 | Container da API não alcança PostgreSQL | Host errado em `backend/.env` | Use `host.docker.internal` em `Database__ConnectionString` quando o banco está no host |
 | Plataforma não inicializada (`requiresBootstrap: true`) | `Bootstrap__*` ausente em `backend/.env` | Defina `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` e `docker compose restart kyvo.api` |
 | Frontend não carrega após login | `VITE_OAUTH_REDIRECT_URI` incorreta | Confirme `redirect_uri` do `platform-admin-web` em `frontend/.env` |

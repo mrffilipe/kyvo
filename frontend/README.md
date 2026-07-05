@@ -24,14 +24,14 @@ Admin SPA for the Kyvo. Consumes the API via OIDC (authorization code + PKCE) an
 ## Prerequisites
 
 - Node.js (compatible with the version declared in `package.json`)
-- Backend running at `VITE_API_BASE_URL` (see configuration)
-- Bootstrap credentials configured in the backend (`Bootstrap` in appsettings or `Bootstrap__*` env vars); the API initializes the platform automatically on startup
+- Backend running at `VITE_API_BASE_URL` (see [GETTING_STARTED.md §3–4](../GETTING_STARTED.md#3-configure-the-backend))
+- Bootstrap credentials in `backend/.env` (`Bootstrap__*`); the API initializes the platform on startup
 
 ---
 
 ## Configuration
 
-Every variable below has a built-in default in `src/config/env.ts`, so the SPA runs in local development without an `.env` file. To override defaults locally, copy `.env.example` to `.env`:
+Local development uses [docker-compose.yml](./docker-compose.yml) and [`.env.example`](./.env.example). Copy the example file and adjust ports or API URL if needed:
 
 ```bash
 cp .env.example .env
@@ -39,13 +39,18 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `FRONTEND_PORT` | `3000` | Host port mapped to the Vite dev server in the container |
 | `VITE_API_BASE_URL` | `http://localhost:5000` | Backend API base URL |
 | `VITE_API_VERSION` | `1.0` | API version (produces `/v1.0/...`) |
 | `VITE_API_TIMEOUT_MS` | `30000` | Axios request timeout (ms) |
 | `VITE_OAUTH_CLIENT_ID` | `platform-admin-web` | OAuth client registered in Kyvo |
 | `VITE_OAUTH_REDIRECT_URI` | `http://localhost:3000/auth/callback` | OIDC callback URI |
 
-Defaults are kept in sync with the backend constants (`PlatformDefaults.AdminConsole.ClientId` and `DefaultRedirectUris`) and `appsettings.Development.json` — change them together.
+Defaults match the API on port `5000` and the SPA on port `3000`. Change them only if you use different ports.
+
+Built-in defaults also exist in `src/config/env.ts` when running Vite on the host without Docker (see **Run** below).
+
+Defaults are kept in sync with the backend constants (`PlatformDefaults.AdminConsole.ClientId` and `DefaultRedirectUris`) and `backend/.env` — change them together.
 
 ### Docker image
 
@@ -61,17 +66,22 @@ Set `Jwt__Issuer` on the **API** service `.env` to your public URL (see [GETTING
 
 ## Run
 
+**Recommended (Docker Compose)** — see [GETTING_STARTED.md §4](../GETTING_STARTED.md#4-configure-and-start-the-frontend):
+
 ```bash
-# Install dependencies
+cd frontend
+cp .env.example .env
+docker compose up
+```
+
+The admin SPA runs at `http://localhost:3000`.
+
+**Alternative (Vite on the host)** — for frontend-only work with the API already running:
+
+```bash
 npm install
-
-# Development (port 3000)
-npm run dev
-
-# Production build
+npm run dev    # http://localhost:3000
 npm run build
-
-# Preview the build
 npm run preview
 ```
 
