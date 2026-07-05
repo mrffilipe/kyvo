@@ -1,0 +1,9 @@
+# Visual Studio / local overrides (merged automatically by Docker Compose).
+# Environment variables come from `.env` (copy from `.env.example`).
+
+services:
+  kyvo.api:
+    labels:
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.arguments: Kyvo.API.dll
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app

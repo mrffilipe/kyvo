@@ -4,13 +4,13 @@
 
 > **Pronúncia:** *Kyvo* pronuncia-se como **"Key"vo** — parecido com a palavra inglesa *key* + *vo*.
 
-Guia para rodar o Kyvo em **desenvolvimento** (código-fonte) ou **produção** (imagens Docker publicadas).
+Guia para rodar o Kyvo em **desenvolvimento** (Docker Compose + `.env` neste repositório) ou **produção** (imagens Docker publicadas).
 
 ### Escolha o caminho
 
 | Caminho | Público | Seções |
 |---------|---------|--------|
-| **Desenvolvimento** | Você clonou o repositório e roda API e SPA do código-fonte | **1–6** abaixo |
+| **Desenvolvimento** | Você clonou o repositório e roda API e SPA com Docker Compose + `.env` | **1–6** abaixo |
 | **Produção** | Você implanta imagens publicadas com Docker Compose (sem build deste repo) | **[§ 7 — Deploy em produção](#7-deploy-em-produção-docker-compose)** |
 
 > **Mantenedores** (build e push de imagens): veja [docs/DOCKER_PUBLISH.pt-BR.md](./docs/DOCKER_PUBLISH.pt-BR.md), não este guia.
@@ -25,14 +25,14 @@ Guia para rodar o Kyvo em **desenvolvimento** (código-fonte) ou **produção** 
 
 Instale antes de continuar:
 
-| Ferramenta | Como instalar | Versão mínima |
-|------------|---------------|---------------|
-| .NET SDK | [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0) | 8.0 |
-| Node.js | [nodejs.org](https://nodejs.org/) | LTS atual |
-| PostgreSQL | [postgresql.org](https://www.postgresql.org/download/) | 14 |
-| Redis | [redis.io](https://redis.io/downloads/) | Opcional (in-memory em dev) |
-| dotnet-ef (CLI) | `dotnet tool install --global dotnet-ef` | 8.x |
-| openssl | Incluso no macOS/Linux; Windows: Git Bash ou scoop | Qualquer |
+| Ferramenta | Como instalar | Versão mínima | Finalidade |
+|------------|---------------|---------------|------------|
+| Docker Engine + Compose v2 | [docker.com](https://docs.docker.com/get-docker/) | Atual | Rodar containers da API e do SPA admin |
+| PostgreSQL | [postgresql.org](https://www.postgresql.org/download/) | 14 | Banco no **host** (fora do compose do Kyvo) |
+| Redis | [redis.io](https://redis.io/downloads/) | Opcional | Cache no host; API usa in-memory se vazio |
+| .NET SDK | [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0) | 8.0 | Rodar migrations `dotnet ef` no host |
+| dotnet-ef (CLI) | `dotnet tool install --global dotnet-ef` | 8.x | Aplicar migrations EF |
+| openssl | macOS/Linux incluso; Windows: Git for Windows ou `winget install ShiningLight.OpenSSL` | Qualquer | Gerar chave RSA de assinatura OIDC |
 
 Clone o repositório:
 
@@ -45,7 +45,7 @@ cd kyvo
 
 ## 2. Configurar o banco de dados
 
-Crie um banco PostgreSQL para o projeto:
+Crie um banco PostgreSQL na sua máquina (ou em outro servidor que você gerencie). O container da API alcança o banco via **`host.docker.internal`** (veja [backend/.env.example](./backend/.env.example)).
 
 ```sql
 CREATE DATABASE kyvo_db;
@@ -57,125 +57,152 @@ Ou via linha de comando:
 createdb kyvo_db
 ```
 
+PostgreSQL e Redis **não** estão em [backend/docker-compose.yml](./backend/docker-compose.yml). Rode-os no host (ou em outro lugar) e aponte `Database__ConnectionString` / `Redis__ConnectionString` em `backend/.env` para `host.docker.internal`.
+
+| Quem conecta | Host na connection string | Motivo |
+|--------------|---------------------------|--------|
+| Container da API (`backend/.env`) | `host.docker.internal` | DNS do Docker para serviços no host |
+| `dotnet ef` no host | `localhost` | CLI roda fora do container |
+
 ---
 
 ## 3. Configurar o backend
 
-### 3.1 Editar appsettings de desenvolvimento
+O desenvolvimento usa [backend/docker-compose.yml](./backend/docker-compose.yml) e [backend/.env.example](./backend/.env.example). A configuração é via **`backend/.env`**, não `appsettings.Development.json`.
 
-No arquivo `backend/Kyvo.API/appsettings.Development.json`, ajuste a string de conexão:
-
-```json
-{
-  "Database": {
-    "ConnectionString": "Host=localhost;Port=5432;Database=kyvo_db;Username=SEU_USUARIO;Password=SUA_SENHA"
-  }
-}
-```
-
-As demais seções já têm valores padrão adequados para desenvolvimento local.
-
-### 3.2 Gerar a chave RSA para assinar os JWTs
-
-O OIDC usa RS256 (RSA + SHA-256). Gere uma chave privada RSA de 2048 bits **fora do repositório** e configure a API com exatamente uma das opções: `Jwt:SigningKeyPath`, `Jwt:SigningKeyPem` ou `Jwt:SigningKeyPemBase64`. Não commite o arquivo PEM.
-
-**Linux / macOS** (OpenSSL no PATH):
+### 3.1 Preparar o arquivo `.env`
 
 ```bash
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out oidc-signing.pem
+cd backend
+cp .env.example .env
 ```
 
-**Windows** (OpenSSL no PATH — Git for Windows, Chocolatey ou `winget install ShiningLight.OpenSSL`):
+Edite `.env` com credenciais do PostgreSQL/Redis, admin de bootstrap e opções do compose (`API_PORT`, `JWT_SIGNING_KEY_HOST_PATH`). O template já usa `host.docker.internal` para banco e Redis.
+
+### 3.2 Chave de assinatura OIDC (RSA)
+
+O Kyvo assina tokens OIDC com **RS256** (RSA + SHA-256). Configure **exatamente uma** fonte de chave. Nunca commite o PEM (`backend/keys/*.pem` está no `.gitignore`).
+
+| Cenário | Variável | Como fornecer a chave |
+|---------|----------|------------------------|
+| **Desenvolvimento** (compose) | `Jwt__SigningKeyPath=keys/oidc-signing.pem` | Gerar PEM em `backend/keys/oidc-signing.pem`; compose monta via `JWT_SIGNING_KEY_HOST_PATH` |
+| **Produção** (§7) | `Jwt__SigningKeyPemBase64` | Gerar PEM fora do repo → codificar Base64 → colar no `.env` de deploy; **não** montar arquivo |
+| Evitar | Múltiplas fontes | Defina apenas **uma** entre Path / Pem / PemBase64 |
+
+**Gerar o PEM** (chave privada RSA 2048 bits):
+
+```bash
+cd backend
+mkdir -p keys
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/oidc-signing.pem
+```
+
+**Windows** (OpenSSL no PATH):
 
 ```powershell
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out oidc-signing.pem
+cd backend
+New-Item -ItemType Directory -Force -Path keys | Out-Null
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/oidc-signing.pem
 ```
 
 **Windows** (sem OpenSSL — .NET):
 
 ```powershell
-$path = Join-Path $env:LOCALAPPDATA 'kyvo\oidc-signing.pem'
-New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null
+cd backend
+New-Item -ItemType Directory -Force -Path keys | Out-Null
 $rsa = [System.Security.Cryptography.RSA]::Create(2048)
-[System.IO.File]::WriteAllText($path, $rsa.ExportPkcs8PrivateKeyPem())
+[System.IO.File]::WriteAllText("$PWD\keys\oidc-signing.pem", $rsa.ExportPkcs8PrivateKeyPem())
 ```
 
-Em desenvolvimento local, defina o caminho via variável de ambiente (ou user secrets) antes de subir a API:
+**Ligação em desenvolvimento** (já em `.env.example`):
 
-```bash
-# Linux / macOS — ajuste o caminho do seu PEM
-export Jwt__SigningKeyPath="$HOME/.local/share/kyvo/oidc-signing.pem"
+```env
+JWT_SIGNING_KEY_HOST_PATH=./keys/oidc-signing.pem
+Jwt__SigningKeyPath=keys/oidc-signing.pem
+Jwt__SigningKeyPem=
+Jwt__SigningKeyPemBase64=
+Jwt__Issuer=http://localhost:5000
 ```
 
-```powershell
-# Windows
-$env:Jwt__SigningKeyPath = "$env:LOCALAPPDATA\kyvo\oidc-signing.pem"
+- `Jwt__Issuer` deve coincidir com a URL que o **navegador** usa para a API (`http://localhost:5000` com `API_PORT=5000` padrão).
+- Dentro do container o path é `keys/oidc-signing.pem`; no host é `backend/keys/oidc-signing.pem`.
+
+**Produção:** codifique o mesmo PEM em Base64 (veja [§7](#7-deploy-em-produção-docker-compose)); defina `Jwt__SigningKeyPemBase64` e deixe `Jwt__SigningKeyPath` vazio.
+
+### 3.3 Credenciais do admin raiz (bootstrap)
+
+Defina o primeiro administrador em `backend/.env`:
+
+```env
+Bootstrap__AdminEmail=admin@localhost
+Bootstrap__AdminPassword=SuaSenhaSegura@123
+Bootstrap__AdminDisplayName=Platform Admin
 ```
 
-O `appsettings.Development.json` deixa `SigningKeyPath` vazio; em produção use `Jwt__SigningKeyPemBase64` (ver §7).
+> Nunca commite senhas reais. Após o primeiro login em produção, remova `Bootstrap__*` do ambiente (veja §7).
 
-### 3.3 Configurar credenciais do admin raiz (bootstrap)
+### 3.4 Aplicar migrations (no host)
 
-As credenciais do primeiro administrador são lidas de variáveis de ambiente **ou** da seção `Bootstrap` do appsettings.Development.json.
-
-Para desenvolvimento, a forma mais simples é editar o appsettings:
-
-```json
-{
-  "Bootstrap": {
-    "AdminEmail": "admin@localhost",
-    "AdminPassword": "SuaSenhaSegura@123",
-    "AdminDisplayName": "Platform Admin"
-  }
-}
-```
-
-> Em produção ou Docker, use variáveis de ambiente no formato `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword`, `Bootstrap__AdminDisplayName` (o `__` representa o aninhamento JSON) e **nunca** coloque credenciais reais no appsettings commitado.
-
-### 3.4 Aplicar a migration ao banco
+A imagem de desenvolvimento não executa o bundle de migrations EF. Aplique migrations **na sua máquina** com connection string usando **`localhost`**, não `host.docker.internal`:
 
 ```bash
 cd backend
+
+# Linux / macOS — ajuste usuário, senha e nome do banco
+export Database__ConnectionString="Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
 
 dotnet ef database update \
   --project Kyvo.Infrastructure \
   --startup-project Kyvo.API
 ```
 
+```powershell
+# Windows (PowerShell)
+$env:Database__ConnectionString = "Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
+dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
+```
+
 Isso cria todas as tabelas (`AspNetUsers`, entidades `OpenIddict*`, `identity_providers`, `tenants`, `applications`, `application_clients`, `auth_sessions`, `audit_logs`, etc.).
 
-### 3.5 Iniciar a API
+### 3.5 Subir a API
 
 ```bash
 cd backend
-dotnet run --project Kyvo.API
+docker compose up -d --build
 ```
 
-A API estará disponível em `http://localhost:5000`. O Swagger fica em `http://localhost:5000/swagger`.
+A API fica em `http://localhost:5000` (`API_PORT` padrão). Swagger: `http://localhost:5000/swagger`.
 
 Confirme que está saudável:
 
 ```bash
 curl http://localhost:5000/v1.0/platform/status
-# Resposta esperada após a subida: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
+# Esperado: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
-Na primeira subida, a API inicializa automaticamente a plataforma (admin, IdP local, client OAuth) usando as credenciais da seção `Bootstrap`. Se `Bootstrap__*` não estiver configurado, o status permanece `requiresBootstrap: true` até você configurar e reiniciar a API.
+Na primeira subida, a API inicializa a plataforma (admin, IdP local, client OAuth) com `Bootstrap__*` do `.env`. Se faltar configuração, o status permanece `requiresBootstrap: true` até ajustar `.env` e reiniciar:
+
+```bash
+docker compose restart kyvo.api
+```
 
 ---
 
 ## 4. Configurar e iniciar o frontend
 
-### 4.1 Criar o arquivo .env (opcional)
+Suba o **backend** (§3.5) antes do frontend.
+
+### 4.1 Preparar o arquivo `.env`
 
 ```bash
 cd frontend
 cp .env.example .env
 ```
 
-O `.env.example` lista as variáveis suportadas; os mesmos valores estão embutidos em `src/config/env.ts` como defaults, então o SPA também roda **sem** um `.env` em ambiente local:
+O [frontend/.env.example](./frontend/.env.example) documenta as variáveis usadas por [frontend/docker-compose.yml](./frontend/docker-compose.yml):
 
 ```env
+FRONTEND_PORT=3000
 VITE_API_BASE_URL=http://localhost:5000
 VITE_API_VERSION=1.0
 VITE_API_TIMEOUT_MS=30000
@@ -183,31 +210,31 @@ VITE_OAUTH_CLIENT_ID=platform-admin-web
 VITE_OAUTH_REDIRECT_URI=http://localhost:3000/auth/callback
 ```
 
-Não é necessário alterar nada para dev local.
+Os defaults batem com API na porta `5000` e SPA na `3000`. Altere só se usar outras portas.
 
-### 4.2 Instalar dependências e iniciar
+### 4.2 Subir o SPA
 
 ```bash
 cd frontend
-npm install
-npm run dev
+docker compose up
 ```
 
-O frontend estará em `http://localhost:3000`.
+O painel admin fica em `http://localhost:3000`.
 
 ---
 
 ## 5. Fazer login
 
-Acesse `http://localhost:3000` (API e frontend rodando).
+Acesse `http://localhost:3000` (containers da API e do frontend rodando).
 
-A plataforma é inicializada automaticamente na subida da API (seção `Bootstrap` ou env `Bootstrap__*` configurados). Na primeira execução bem-sucedida, a API cria:
-- Usuário admin com a senha configurada no appsettings/env vars
+A plataforma é inicializada automaticamente na subida da API (com `Bootstrap__*` em `backend/.env`). Na primeira execução bem-sucedida, a API cria:
+
+- Usuário admin com a senha de `Bootstrap__AdminPassword`
 - Role de plataforma `plat_admin` atribuída ao admin
 - Identity Provider `local` habilitado
 - Application `platform-admin` + Client OAuth `platform-admin-web` (fixos, não editáveis via API)
 
-Se `Bootstrap__*` não estiver configurado, `/login` exibe uma mensagem pedindo para configurar o backend e reiniciar a API.
+Se `Bootstrap__*` não estiver configurado, `/login` pede para configurar `backend/.env` e reiniciar a API.
 
 Verifique o status:
 
@@ -216,13 +243,13 @@ curl http://localhost:5000/v1.0/platform/status
 # { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
-> Após a inicialização bem-sucedida em produção, remova `Bootstrap__*` do ambiente. Elas não têm mais efeito.
+> Após a inicialização bem-sucedida em produção, remova `Bootstrap__*` do `.env` de deploy. Elas não têm mais efeito.
 
 ### Login
 
 1. Clique em **"Entrar na plataforma"**
 2. Você será redirecionado para `/account/login` no backend (página Blazor SSR; provedores federados redirecionam via `/login/federated/{alias}`)
-3. Informe o email e senha configurados no bootstrap (ex: `admin@localhost` / `SuaSenhaSegura@123`)
+3. Informe email e senha de `Bootstrap__*` em `backend/.env` (ex.: `admin@localhost` / `SuaSenhaSegura@123`)
 4. Após autenticar, o backend redireciona para o callback OIDC
 5. O frontend salva os tokens e você acessa o painel
 
@@ -305,16 +332,27 @@ Passos:
 
 ## 7. Deploy em produção (Docker Compose)
 
-Implante o Kyvo com **duas imagens publicadas** (API + SPA admin). TLS e roteamento por path ficam em um **proxy reverso externo** (Traefik no Coolify, nginx, etc.). Não é necessário clonar este repositório, exceto opcionalmente para gerar a chave OIDC.
+Implante o Kyvo com **duas imagens publicadas** (API + SPA admin). TLS e roteamento por path ficam em um **proxy reverso externo** (Traefik no Coolify, nginx, etc.). Não é necessário clonar este repositório, exceto opcionalmente para gerar a chave OIDC (veja [§3.2](#32-chave-de-assinatura-oidc-rsa)).
 
 **PostgreSQL e Redis são obrigatórios** e não estão no exemplo de compose da aplicação abaixo.
+
+### Desenvolvimento vs produção
+
+| | Desenvolvimento (este repo) | Produção (`kyvo-deploy/`) |
+|---|----------------------------|---------------------------|
+| Compose | [backend/docker-compose.yml](./backend/docker-compose.yml) | `docker-compose.yml` na pasta de deploy (snippet abaixo) |
+| Imagem API | Build local (`Kyvo.API/Dockerfile`) | `mrffilipe/kyvo-api:${IMAGE_TAG}` |
+| Frontend | [frontend/docker-compose.yml](./frontend/docker-compose.yml) (Vite dev) | `mrffilipe/kyvo-frontend:${IMAGE_TAG}` |
+| Chave JWT | `Jwt__SigningKeyPath` + volume do PEM | Somente `Jwt__SigningKeyPemBase64` (sem montar PEM) |
+| Migrations | `dotnet ef` no host (§3.4) | `Database__ApplyMigrationsOnStartup=true` (entrypoint da imagem de produção) |
+| Config | `backend/.env` de [backend/.env.example](./backend/.env.example) | `.env` ao lado do `docker-compose.yml` de deploy |
 
 ### Pré-requisitos
 
 | Ferramenta | Finalidade |
 |------------|------------|
 | Docker Engine + Docker Compose v2 | Executar containers |
-| PostgreSQL + Redis | Acessíveis pelo container da API |
+| PostgreSQL + Redis | Acessíveis pelo container da API (`host.docker.internal` ou hostnames gerenciados) |
 | Imagens no Docker Hub | `mrffilipe/kyvo-api:<tag>` e `mrffilipe/kyvo-frontend:<tag>` (`IMAGE_TAG` no `.env`) |
 | Proxy reverso com HTTPS | Um host público roteando paths da API e do SPA (veja abaixo) |
 
@@ -401,7 +439,7 @@ REDIS_PORT=6379
 Subir a infra:
 
 ```bash
-docker compose -f docker-compose.infra.local.yml --env-file .env.infra up -d
+docker compose -f docker-compose.infra.yml --env-file .env.infra up -d
 ```
 
 | Variável de infra | Padrão sugerido | Uso |
@@ -454,7 +492,7 @@ Salve como `.env` ao lado de `docker-compose.yml`:
 
 ```env
 # Imagens publicadas (Docker Hub)
-IMAGE_TAG=1.0.0
+IMAGE_TAG=2.0.0
 API_PORT=8080
 FRONTEND_PORT=8081
 
@@ -465,6 +503,9 @@ Jwt__Issuer=https://auth.exemplo.com
 Jwt__Audience=kyvo-api
 Jwt__KeyId=default
 Jwt__RefreshTokenDays=30
+# Produção: chave RSA somente em Base64 — veja "Chave OIDC (produção)" abaixo.
+Jwt__SigningKeyPath=
+Jwt__SigningKeyPem=
 Jwt__SigningKeyPemBase64=
 
 Redis__ConnectionString=host.docker.internal:6379,password=default_password,ssl=false
@@ -485,12 +526,25 @@ Email__SecretAccessKey=
 Email__SessionToken=
 ```
 
-**Codificar a chave OIDC em `Jwt__SigningKeyPemBase64`:**
+### Chave OIDC (produção)
+
+1. **Gerar** o PEM (mesmos comandos de [§3.2](#32-chave-de-assinatura-oidc-rsa)) em máquina confiável. Guarde `oidc-signing.pem` com segurança; não commite nem inclua na imagem.
+2. **Codificar** o PEM em Base64 em uma linha:
 
 ```bash
 openssl base64 -A -in oidc-signing.pem
 # PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("oidc-signing.pem"))
 ```
+
+3. **Definir** no `.env` de deploy:
+
+```env
+Jwt__SigningKeyPemBase64=<cole-o-base64-aqui>
+Jwt__SigningKeyPath=
+Jwt__SigningKeyPem=
+```
+
+Em produção use **apenas** `Jwt__SigningKeyPemBase64`. Deixe `Jwt__SigningKeyPath` e `Jwt__SigningKeyPem` vazios para evitar erro na subida.
 
 ASP.NET Core usa `Section__Property`. Em produção **não** defina `VITE_*` no `.env` — a imagem do frontend usa **mesma origem** quando buildada sem build-args customizados.
 
@@ -505,8 +559,8 @@ Para **hosts separados** (API e UI), rebuild de `kyvo-frontend` com `--build-arg
 ### Passos de deploy
 
 1. Subir PostgreSQL e Redis (snippet de infra ou gerenciados).
-2. Gerar `oidc-signing.pem` (passo 3.2 ou em máquina confiável).
-3. Codificar em Base64 e definir `Jwt__SigningKeyPemBase64` no `.env`.
+2. Gerar `oidc-signing.pem` ([§3.2](#32-chave-de-assinatura-oidc-rsa)).
+3. Codificar em Base64 e definir `Jwt__SigningKeyPemBase64` no `.env` (deixe `Jwt__SigningKeyPath` vazio).
 4. Criar os arquivos de deploy; configurar o proxy (HTTPS + roteamento por path).
 5. Definir `Jwt__Issuer` com a URL pública `https://`.
 6. Subir a stack:
@@ -567,23 +621,26 @@ Em produção, toda comunicação deve ser via HTTPS. O `Jwt:Issuer` deve usar `
 ## 9. Referência rápida de comandos
 
 ```bash
-# Backend: aplicar migrations
+# Backend: preparar .env e subir API (desenvolvimento)
+cd backend && cp .env.example .env
+cd backend && docker compose up -d --build
+cd backend && docker compose logs -f kyvo.api
+cd backend && docker compose restart kyvo.api
+
+# Backend: aplicar migrations (no host — use localhost na connection string)
+cd backend
+export Database__ConnectionString="Host=localhost;Port=5432;Database=kyvo_db;Username=postgres;Password=postgrespassword"
 dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
 
 # Backend: gerar nova migration
 dotnet ef migrations add NomeDaMigration --project Kyvo.Infrastructure --startup-project Kyvo.API --output-dir Migrations
 
-# Backend: rodar em dev
-dotnet run --project backend/Kyvo.API
-
-# Frontend: rodar em dev
-cd frontend && npm run dev
-
-# Frontend: build
-cd frontend && npm run build
+# Frontend: preparar .env e subir SPA (desenvolvimento)
+cd frontend && cp .env.example .env
+cd frontend && docker compose up
 
 # Chave OIDC (ver §3.2)
-# export Jwt__SigningKeyPath="$HOME/.local/share/kyvo/oidc-signing.pem"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out backend/keys/oidc-signing.pem
 
 # Status da plataforma (após subir a API)
 curl http://localhost:5000/v1.0/platform/status
@@ -595,13 +652,16 @@ curl http://localhost:5000/v1.0/platform/status
 
 | Problema | Causa provável | Solução |
 |----------|---------------|---------|
-| API não inicia: erro de chave RSA | `Jwt:SigningKeyPath` / `Jwt:SigningKeyPem` / `Jwt:SigningKeyPemBase64` não configurado | Gerar PEM (passo 3.2) e definir `Jwt__SigningKeyPath` (ou outra fonte única) |
-| Plataforma não inicializada (`requiresBootstrap: true`) | Credenciais não configuradas no appsettings/env | Verificar seção `Bootstrap` ou `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` e reiniciar a API |
-| Frontend não carrega após login | `VITE_OAUTH_REDIRECT_URI` incorreta | Confirmar que o `redirect_uri` bate com o `platform-admin-web` client |
+| API não inicia: erro de chave RSA | Chave ausente ou múltiplas fontes | Gerar PEM (§3.2); dev: `Jwt__SigningKeyPath` + volume; prod: só `Jwt__SigningKeyPemBase64` |
+| API reinicia: "Configure only one of Jwt:SigningKeyPath…" | Base64 e Path definidos juntos | Produção: limpe `Jwt__SigningKeyPath` e `Jwt__SigningKeyPem`; use só `Jwt__SigningKeyPemBase64` |
+| `dotnet ef` não conecta | `host.docker.internal` usado no host | Use `Host=localhost` em `Database__ConnectionString` para migrations (§3.4) |
+| Container da API não alcança PostgreSQL | Host errado em `backend/.env` | Use `host.docker.internal` em `Database__ConnectionString` quando o banco está no host |
+| Plataforma não inicializada (`requiresBootstrap: true`) | `Bootstrap__*` ausente em `backend/.env` | Defina `Bootstrap__AdminEmail` / `Bootstrap__AdminPassword` e `docker compose restart kyvo.api` |
+| Frontend não carrega após login | `VITE_OAUTH_REDIRECT_URI` incorreta | Confirme `redirect_uri` do `platform-admin-web` em `frontend/.env` |
 | JWT expirado / 401 | Token expirado e refresh falhou | Fazer logout e login novamente |
-| Convites não chegam por email | AWS SES não configurado | Configurar `Email:*` com credenciais SES válidas |
-| Erro de CORS | Frontend em URL diferente | Verificar `VITE_API_BASE_URL` e CORS da API |
-| Não decripta IdP existente | Keyring do Data Protection perdido | Restaurar `SecretProtection:KeyDirectoryPath` do backup ou recriar o IdP |
+| Convites não chegam por email | AWS SES não configurado | Configurar `Email__*` com credenciais SES válidas no `.env` |
+| Erro de CORS | Frontend em URL diferente | Verificar `VITE_API_BASE_URL` em `frontend/.env` |
+| Não decripta IdP existente | Keyring do Data Protection perdido | Restaurar `SecretProtection__KeyDirectoryPath` do backup ou recriar o IdP |
 | Docker: não conecta ao PostgreSQL/Redis | Infra parada ou strings erradas | Subir infra ou serviços gerenciados; conferir `Database__*` e `Redis__*` no `.env` de deploy |
 | Docker: erro de redirect OAuth | `Jwt__Issuer` ou redirect do client OAuth | `Jwt__Issuer` = URL pública; client `platform-admin-web` com `https://<host>/auth/callback` |
 | Docker: HTTPS / esquema OIDC incorreto | Proxy sem `X-Forwarded-Proto` ou `Jwt__Issuer` incorreto | TLS no proxy; `Jwt__Issuer` com `https://...` |

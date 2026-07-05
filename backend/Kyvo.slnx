@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="Kyvo.API/Kyvo.API.csproj" />
   <Project Path="Kyvo.Application/Kyvo.Application.csproj" />
   <Project Path="Kyvo.Domain/Kyvo.Domain.csproj" />
