@@ -18,6 +18,9 @@ export interface CreatedMembershipIdResponse {
 }
 
 export interface TenantContextResult {
+  accessToken?: string
+  expiresIn?: number
+  tokenType?: string
   userId: string
   email: string
   tenantId?: string
@@ -38,7 +41,6 @@ export interface AuthSessionDto {
   sessionId: string
   tenantId?: string
   membershipId?: string
-  clientId?: string
   status: SessionStatus
   userAgent?: string
   ipAddress?: string

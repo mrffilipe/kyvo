@@ -14,7 +14,7 @@ namespace Kyvo.API.Controllers;
 /// <summary>
 /// Tenant membership management (create, list, update roles, revoke).
 /// </summary>
-public sealed class MembershipsController : V1ApiControllerBase
+public sealed class MembershipsController : TenantV1ApiControllerBase
 {
     private readonly ICreateMembershipUseCase _createMembershipUseCase;
     private readonly IListMembershipsByTenantQuery _listMembershipsByTenantQuery;

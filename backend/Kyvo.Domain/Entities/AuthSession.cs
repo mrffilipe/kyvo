@@ -9,9 +9,6 @@ public sealed class AuthSession : BaseEntity
     public Guid UserId { get; private set; }
     public User User { get; private set; } = null!;
 
-    public Guid? ClientId { get; private set; }
-    public ApplicationClient? ApplicationClient { get; private set; }
-
     public Guid? TenantId { get; private set; }
     public Tenant? Tenant { get; private set; }
 
@@ -30,7 +27,6 @@ public sealed class AuthSession : BaseEntity
 
     public AuthSession(
         Guid userId,
-        Guid? clientId,
         Guid? tenantId,
         Guid? membershipId,
         DateTime expiresAt,
@@ -43,7 +39,6 @@ public sealed class AuthSession : BaseEntity
         }
 
         UserId = userId;
-        ClientId = clientId;
         TenantId = tenantId;
         MembershipId = membershipId;
         Status = SessionStatus.Active;
@@ -64,17 +59,6 @@ public sealed class AuthSession : BaseEntity
 
         TenantId = tenantId;
         MembershipId = membershipId;
-        Touch();
-    }
-
-    public void BindOAuthClient(Guid applicationClientId)
-    {
-        if (applicationClientId == Guid.Empty)
-        {
-            throw new DomainValidationException(DomainErrorMessages.AuthSession.CLIENT_ID_REQUIRED);
-        }
-
-        ClientId = applicationClientId;
         Touch();
     }
 

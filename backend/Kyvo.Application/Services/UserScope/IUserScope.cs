@@ -9,6 +9,9 @@ public interface IUserScope
     Guid? MembershipId { get; }
     IReadOnlyList<string> TenantRoles { get; }
     IReadOnlyList<string> PlatformRoles { get; }
+    string? OAuthClientId { get; }
+    string? TokenUse { get; }
+    bool IsTenantToken { get; }
 
     bool HasAnyTenantRole(params string[] roleKeys);
     bool HasAnyPlatformRole(params string[] roleKeys);

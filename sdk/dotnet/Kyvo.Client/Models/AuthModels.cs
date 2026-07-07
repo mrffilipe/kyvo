@@ -19,7 +19,10 @@ public sealed record TenantContextResult(
     Guid? MembershipId,
     IReadOnlyList<string> TenantRoles,
     IReadOnlyList<string> PlatformRoles,
-    IReadOnlyList<AuthTenantSummaryDto> Tenants);
+    IReadOnlyList<AuthTenantSummaryDto> Tenants,
+    string? AccessToken = null,
+    int? ExpiresIn = null,
+    string? TokenType = null);
 
 public sealed record SubscribeTenantResponse(
     Guid UserId,
@@ -28,7 +31,10 @@ public sealed record SubscribeTenantResponse(
     Guid? MembershipId,
     IReadOnlyList<string> TenantRoles,
     IReadOnlyList<string> PlatformRoles,
-    IReadOnlyList<AuthTenantSummaryDto> Tenants);
+    IReadOnlyList<AuthTenantSummaryDto> Tenants,
+    string? AccessToken = null,
+    int? ExpiresIn = null,
+    string? TokenType = null);
 
 public sealed record SubscribeTenantResult(TenantContextResult Context);
 
@@ -38,7 +44,6 @@ public sealed record AuthSessionDto(
     Guid SessionId,
     Guid? TenantId,
     Guid? MembershipId,
-    Guid? ClientId,
     SessionStatus Status,
     string? UserAgent,
     string? IpAddress,

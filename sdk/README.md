@@ -1,4 +1,4 @@
-# Kyvo — Product SDK
+﻿# Kyvo — Product SDK
 
 SDK for **product applications** (SPAs and consumer APIs), not the admin console.
 
@@ -9,7 +9,7 @@ SDK for **product applications** (SPAs and consumer APIs), not the admin console
 | `Kyvo.Client` | Server: `SubscribeAsync` + typed REST (BFF) |
 | `Kyvo.AspNetCore.TenancyKit` | Optional EF multi-tenant bridge (TenancyKit + `tid` claim) |
 
-**Versioning:** SemVer per package, aligned with API `v1.0`. Current release: **2.0.0** (Identity + OpenIddict stack; `POST /auth/subscribe` no longer returns inline tokens — refresh via `/connect/token`). See [CHANGELOG.md](CHANGELOG.md).
+**Versioning:** SemVer per package, aligned with API `/api/v1`. Current release: **3.0.0** (dual-token: platform OIDC JWT + tenant JWT from switch-tenant/subscribe). See [CHANGELOG.md](CHANGELOG.md).
 
 **Publishing (maintainers):** [docs/SDK_PUBLISH.md](../docs/SDK_PUBLISH.md) — GitHub Actions workflow, NuGet + npm secrets, manual release.
 
@@ -39,7 +39,7 @@ SDK for **product applications** (SPAs and consumer APIs), not the admin console
 
 Admin-only endpoints (`GET /Users` search, `POST /Tenants`, Applications, Identity Providers, Platform) are **not** in these SDKs — use the Kyvo admin UI / `frontend` services.
 
-Paths use prefix `/v1.0/` (configurable via `apiVersion` / `KyvoClientOptions.ApiVersion`).
+Paths use prefix `/api/v1/` (`KyvoClientOptions.VersionPrefix` on .NET).
 
 ## TypeScript (`@kyvo-client/client`)
 
@@ -65,7 +65,7 @@ curl -o sdk/swagger-v1.json http://localhost:5000/swagger/v1/swagger.json
 cd sdk/typescript && npm run generate:types
 ```
 
-### Quick start
+### Quick start (two-step auth)
 
 ```ts
 import { createKyvoClient, hasTenant } from '@kyvo-client/client'
@@ -74,20 +74,26 @@ const kyvo = createKyvoClient({
   authority: 'http://localhost:5000',
   apiVersion: '1.0',
   oidc: {
-    clientId: 'pulse-crm-web',
+    clientId: 'kyvo-spa',
     redirectUri: 'http://localhost:5173/auth/callback',
-    scopes: 'openid profile email offline_access',
+    scopes: 'openid profile email offline_access kyvo_api',
   },
 })
 
+// 1. OIDC login → platform token (no tid)
 await kyvo.oidc.signInRedirect()
-// /auth/callback → kyvo.oidc.handleCallback(code, state)
-kyvo.session.saveFromTokens(tokens)
+// /auth/callback → kyvo.session.savePlatformTokens(tokens)
+
+// 2. Switch tenant → tenant-scoped JWT
+const ctx = await kyvo.switchTenant(selectedTenantId)
+// kyvo.getAccessToken() now returns the tenant token
 
 if (!hasTenant(kyvo.getAccessToken()!)) {
-  await kyvo.refreshAccessTokenWithTenant()
+  throw new Error('Tenant context missing after switch-tenant')
 }
 ```
+
+OIDC tokens are **pure** (no `tid`). Tenant context comes only from `POST /auth/switch-tenant`. To renew a tenant token, refresh the platform OIDC token and call `switchTenant` again.
 
 `POST /auth/subscribe` is intentionally **not** on `@kyvo-client/client` (BFF / `Kyvo.Client` only).
 
@@ -105,7 +111,7 @@ var token = KyvoClientServiceCollectionExtensions.GetUserAccessToken(httpContext
 var result = await kyvo.Auth.SubscribeAsync(token!, new SubscribeTenantRequest("Acme", "acme"));
 ```
 
-Models live in `Kyvo.Client.Models` and match Swagger (e.g. `PagedResult.Total`, invite/membership bodies use `roles`, sessions use `sessionId`).
+Models live in `Kyvo.Client.Models` and match Swagger (e.g. `PagedResult.Total`, invite/membership bodies use `roles`, sessions use `sessionId`). Product APIs use `IKyvoUserContext.OAuthClientId` (`client_id` JWT claim) for OAuth application context.
 
 ```bash
 dotnet build sdk/dotnet/Kyvo.sln

@@ -17,6 +17,12 @@ describe('parseAccessTokenClaims', () => {
     assert.deepEqual(claims.trole, ['owner', 'admin'])
   })
 
+  it('reads client_id claim', () => {
+    const token = fakeJwt({ sub: 'u1', client_id: 'pulse-crm-web' })
+    const claims = parseAccessTokenClaims(token)
+    assert.equal(claims.clientId, 'pulse-crm-web')
+  })
+
   it('hasTenant and requiresOnboarding', () => {
     const withTenant = fakeJwt({ tid: 'abc' })
     const without = fakeJwt({ sub: 'x' })

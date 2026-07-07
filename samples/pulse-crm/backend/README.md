@@ -1,8 +1,8 @@
-# PulseCRM API — authentication and authorization (Kyvo)
+﻿# PulseCRM API — authentication and authorization (Kyvo)
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
-Sample API that validates JWTs issued by the Kyvo and calls `POST /v1.0/auth/subscribe` to link tenant + plan (`ApplicationTenant`).
+Sample API that validates JWTs issued by the Kyvo and calls `POST /api/v1/auth/subscribe` to link tenant + plan (`ApplicationTenant`).
 
 ## 1. Register the Application and Client in the admin console
 
@@ -32,7 +32,7 @@ Sample API that validates JWTs issued by the Kyvo and calls `POST /v1.0/auth/sub
 4. SPA → POST {Authority}/connect/token (authorization_code + code_verifier)
 5. SPA stores access_token + refresh_token
 6. SPA → POST PulseCRM /api/onboarding/complete (Bearer access_token)
-7. PulseCRM → POST {Authority}/v1.0/auth/subscribe (forwards the same Bearer)
+7. PulseCRM → POST {Authority}/api/v1/auth/subscribe (forwards the same Bearer)
 8. SPA → POST /connect/token (refresh_token) to obtain a JWT with tid and mid claims
 ```
 
@@ -55,7 +55,7 @@ Useful access-token claims:
 
 No `tid` after login: the user has not subscribed yet, or has not refreshed the token.
 
-## 4. Kyvo SDK packages (NuGet `2.0.0`)
+## 4. Kyvo SDK packages (NuGet `3.0.0`)
 
 | Package | Role in this API |
 |---------|------------------|
@@ -72,7 +72,7 @@ Onboarding returns `Kyvo.Client.Models.OidcTokenResponse` and `TenantContextResu
 `POST /api/onboarding/complete` calls the platform:
 
 ```http
-POST /v1.0/auth/subscribe
+POST /api/v1/auth/subscribe
 Authorization: Bearer {access_token}
 Content-Type: application/json
 

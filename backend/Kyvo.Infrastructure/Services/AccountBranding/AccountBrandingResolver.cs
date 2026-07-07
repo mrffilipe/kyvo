@@ -1,3 +1,4 @@
+using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Services.AccountBranding;
 using Kyvo.Domain.Repositories;
 
@@ -5,9 +6,14 @@ namespace Kyvo.Infrastructure.Services.AccountBranding;
 
 public sealed class AccountBrandingResolver : IAccountBrandingResolver
 {
-    private readonly IApplicationClientRepository _clients;
+    private readonly IOAuthClientManager _oauthClients;
+    private readonly IApplicationRepository _applications;
 
-    public AccountBrandingResolver(IApplicationClientRepository clients) => _clients = clients;
+    public AccountBrandingResolver(IOAuthClientManager oauthClients, IApplicationRepository applications)
+    {
+        _oauthClients = oauthClients;
+        _applications = applications;
+    }
 
     public async Task<AccountBrandingViewModel> ResolveAsync(string? returnUrl, string? clientIdQuery, CancellationToken ct = default)
     {
@@ -17,13 +23,18 @@ public sealed class AccountBrandingResolver : IAccountBrandingResolver
             return AccountBrandingViewModel.KyvoDefaults();
         }
 
-        var client = await _clients.GetByClientIdAsync(clientId, ct);
-        if (client?.Application is null || !client.Application.HasEffectiveBranding)
+        var client = await _oauthClients.GetByClientIdAsync(clientId, ct);
+        if (client is null)
         {
             return AccountBrandingViewModel.KyvoDefaults();
         }
 
-        var application = client.Application;
+        var application = await _applications.GetByIdAsync(client.ApplicationId, ct);
+        if (application is null || !application.HasEffectiveBranding)
+        {
+            return AccountBrandingViewModel.KyvoDefaults();
+        }
+
         var logoUrl = !string.IsNullOrWhiteSpace(application.BrandingLogoPath)
             ? application.BrandingLogoPath
             : AccountBrandingDefaults.KYVO_LOGO_URL;

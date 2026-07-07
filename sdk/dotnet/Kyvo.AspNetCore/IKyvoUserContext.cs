@@ -14,6 +14,14 @@ public interface IKyvoUserContext
 
     IReadOnlyList<string> PlatformRoles { get; }
 
+    /// <summary>OAuth client_id from the access token (<c>client_id</c> claim).</summary>
+    string? OAuthClientId { get; }
+
+    /// <summary>Token use claim: <c>tenant</c> for tenant-scoped API tokens.</summary>
+    string? TokenUse { get; }
+
+    bool IsTenantToken { get; }
+
     bool HasTenantRole(params string[] roles);
 
     bool HasPlatformRole(params string[] roles);

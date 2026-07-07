@@ -42,6 +42,12 @@ public sealed class HttpUserScope : IUserScope
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList() ?? [];
 
+    public string? OAuthClientId => GetString("client_id");
+
+    public string? TokenUse => GetString("token_use");
+
+    public bool IsTenantToken => string.Equals(TokenUse, "tenant", StringComparison.OrdinalIgnoreCase);
+
     public bool HasAnyTenantRole(params string[] roleKeys)
     {
         var roles = TenantRoles.ToHashSet(StringComparer.OrdinalIgnoreCase);

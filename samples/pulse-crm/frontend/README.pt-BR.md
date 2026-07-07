@@ -1,4 +1,4 @@
-# PulseCRM — Frontend (sample)
+﻿# PulseCRM — Frontend (sample)
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -16,7 +16,7 @@ SPA consumidora do sample Pulse CRM. Dispara o fluxo OIDC **authorization code +
 | React | 19 | UI |
 | React Router | 7 | Rotas (loaders + `RequireAuth`) |
 | Material UI | 9 | Design system |
-| `@kyvo-client/client` | npm `^2.0.0` | OIDC (PKCE), sessão, claims JWT |
+| `@kyvo-client/client` | npm `^3.0.0` | OIDC (PKCE), sessão, claims JWT |
 | Axios | 1.x | HTTP client da API CRM |
 | TypeScript | 6 | Tipagem estática |
 | Vite | 8 | Dev server e build |
@@ -59,7 +59,7 @@ npm run lint
 npm run preview
 ```
 
-O app consome `@kyvo-client/client` do npm (`npm install` resolve `^2.0.0`).
+O app consome `@kyvo-client/client` do npm (`npm install` resolve `^3.0.0`).
 
 ---
 

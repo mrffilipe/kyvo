@@ -34,7 +34,6 @@ public sealed class Application : BaseEntity
     /// </summary>
     public string? BrandingLogoPath { get; private set; }
 
-    public ICollection<ApplicationClient> Clients { get; private set; } = [];
     public ICollection<ApplicationTenant> Tenants { get; private set; } = [];
 
     private Application()

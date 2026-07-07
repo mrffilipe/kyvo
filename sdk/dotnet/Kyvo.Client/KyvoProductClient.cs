@@ -52,12 +52,12 @@ public sealed class KyvoProductClient : IKyvoProductClient
     private sealed class AuthApi(KyvoProductClient client) : IKyvoAuthApi
     {
         public async Task<SubscribeTenantResult> SubscribeAsync(
-            string userAccessToken,
+            string platformAccessToken,
             SubscribeTenantRequest request,
             CancellationToken cancellationToken = default)
         {
             var response = await client.SendAsync(
-                userAccessToken,
+                platformAccessToken,
                 HttpMethod.Post,
                 $"{client.V}/auth/subscribe",
                 request,
@@ -73,18 +73,21 @@ public sealed class KyvoProductClient : IKyvoProductClient
                 data.MembershipId,
                 data.TenantRoles,
                 data.PlatformRoles,
-                data.Tenants);
+                data.Tenants,
+                data.AccessToken,
+                data.ExpiresIn,
+                data.TokenType);
 
             return new SubscribeTenantResult(context);
         }
 
         public async Task<TenantContextResult> SwitchTenantAsync(
-            string userAccessToken,
+            string platformAccessToken,
             Guid tenantId,
             CancellationToken cancellationToken = default)
         {
             var response = await client.SendAsync(
-                userAccessToken,
+                platformAccessToken,
                 HttpMethod.Post,
                 $"{client.V}/auth/switch-tenant",
                 new SwitchTenantRequest(tenantId),

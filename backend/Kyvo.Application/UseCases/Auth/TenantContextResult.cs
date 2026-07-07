@@ -9,4 +9,7 @@ public sealed record TenantContextResult
     public required IReadOnlyList<string> TenantRoles { get; init; }
     public required IReadOnlyList<string> PlatformRoles { get; init; }
     public required IReadOnlyList<AuthTenantSummaryDto> Tenants { get; init; }
+    public string? AccessToken { get; init; }
+    public int? ExpiresIn { get; init; }
+    public string? TokenType { get; init; }
 }

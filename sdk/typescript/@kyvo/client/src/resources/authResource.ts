@@ -1,11 +1,28 @@
 import type { HttpClient } from '../api/httpClient.js'
 import type { ApiPaths } from '../api/paths.js'
 import type { AuthSessionDto, TenantContextResult } from '../types/api.js'
+import type { SessionManager } from '../session/sessionManager.js'
 
-export function createAuthResource(http: HttpClient, paths: ApiPaths) {
+export function createAuthResource(http: HttpClient, paths: ApiPaths, session: SessionManager) {
   return {
-    switchTenant(tenantId: string): Promise<TenantContextResult> {
-      return http.request('POST', `${paths.auth}/switch-tenant`, { body: { tenantId } })
+    async switchTenant(tenantId: string): Promise<TenantContextResult> {
+      const result = await http.requestWithPlatformToken<TenantContextResult>(
+        'POST',
+        `${paths.auth}/switch-tenant`,
+        { body: { tenantId } },
+      )
+
+      const token = result.accessToken
+      if (token) {
+        session.saveTenantToken(
+          token,
+          result.expiresIn ?? 900,
+          result.tenantId,
+          result.membershipId,
+        )
+      }
+
+      return result
     },
 
     listSessions(): Promise<AuthSessionDto[]> {

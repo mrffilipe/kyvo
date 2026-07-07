@@ -4,6 +4,25 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-07-07
+
+### Changed
+
+- **Breaking:** REST paths use `/api/v1/*` (was `/v1.0/*`).
+- **Breaking:** Dual-token model — platform OIDC JWT + tenant JWT (`token_use=tenant`) from `POST /api/v1/auth/switch-tenant` or `POST /api/v1/auth/subscribe`.
+- **Breaking:** OIDC access tokens no longer include `tid` / `trole`; obtain tenant context via switch-tenant or subscribe.
+- TypeScript: removed `refreshAccessTokenWithTenant`; use `switchTenant` and `session.saveTenantToken`.
+- TypeScript: `createApiPaths()` no longer accepts `apiVersion`.
+- .NET: `IKyvoProductClient` auth methods take `platformAccessToken`; tenant-scoped APIs take `tenantAccessToken`.
+- .NET: `SubscribeAsync` / `SwitchTenantAsync` map `AccessToken`, `ExpiresIn`, `TokenType` on `TenantContextResult`.
+- .NET: `KyvoSessionTokens`, `GetPlatformAccessToken`, `GetTenantAccessToken` helpers on `IHttpContextAccessor`.
+- Remove `clientId` from `AuthSessionDto` (session listing no longer binds OAuth client server-side).
+- TypeScript `parseAccessTokenClaims` and .NET `IKyvoUserContext.OAuthClientId` expose the `client_id` JWT claim for application context.
+
+### Fixed
+
+- Refresh `swagger-v1.json` and `generated/schema.ts` for `/api/v1` routes and dual-token auth responses.
+
 ## [2.0.0] - 2026-07-04
 
 ### Changed

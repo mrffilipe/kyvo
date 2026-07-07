@@ -1,3 +1,4 @@
+using Kyvo.Application.Common;
 using Kyvo.Application.Exceptions;
 using Kyvo.Application.Ports.Identity;
 using Kyvo.Application.Ports.Oidc;
@@ -25,8 +26,7 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
     private readonly IPlatformRoleRepository _platformRoles;
     private readonly IIdentityProviderRepository _identityProviders;
     private readonly IApplicationRepository _applications;
-    private readonly IApplicationClientRepository _clients;
-    private readonly IOpenIddictApplicationSyncService _openIddictSync;
+    private readonly IOAuthClientManager _oauthClients;
     private readonly IPlatformBootstrapExecutor _bootstrapExecutor;
     private readonly IUnitOfWork _unitOfWork;
     private readonly BootstrapOptions _bootstrapOptions;
@@ -41,8 +41,7 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
         IPlatformRoleRepository platformRoles,
         IIdentityProviderRepository identityProviders,
         IApplicationRepository applications,
-        IApplicationClientRepository clients,
-        IOpenIddictApplicationSyncService openIddictSync,
+        IOAuthClientManager oauthClients,
         IPlatformBootstrapExecutor bootstrapExecutor,
         IUnitOfWork unitOfWork,
         IOptions<BootstrapOptions> bootstrapOptions,
@@ -56,8 +55,7 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
         _platformRoles = platformRoles;
         _identityProviders = identityProviders;
         _applications = applications;
-        _clients = clients;
-        _openIddictSync = openIddictSync;
+        _oauthClients = oauthClients;
         _bootstrapExecutor = bootstrapExecutor;
         _unitOfWork = unitOfWork;
         _bootstrapOptions = bootstrapOptions.Value;
@@ -121,7 +119,7 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
                     ApplicationErrorMessages.Auth.PLATFORM_BOOTSTRAP_APPLICATION_SLUG_ALREADY_EXISTS);
             }
 
-            if (await _clients.GetByClientIdAsync(PlatformDefaults.AdminConsole.CLIENT_ID, transactionCt) is not null)
+            if (await _oauthClients.ClientIdExistsAsync(PlatformDefaults.AdminConsole.CLIENT_ID, transactionCt))
             {
                 throw new DomainBusinessRuleException(
                     ApplicationErrorMessages.Auth.PLATFORM_BOOTSTRAP_CLIENT_ID_ALREADY_EXISTS);
@@ -138,8 +136,7 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
                 var createResult = await _userAccounts.CreateWithPasswordAsync(user, adminPassword, transactionCt);
                 if (!createResult.Succeeded)
                 {
-                    throw new DomainBusinessRuleException(
-                        string.Join(" ", createResult.Errors));
+                    throw new DomainBusinessRuleException(string.Join(" ", createResult.Errors));
                 }
             }
             else if (!await _userAccounts.HasPasswordAsync(user.Id, transactionCt))
@@ -147,8 +144,7 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
                 var addPasswordResult = await _userAccounts.AddPasswordAsync(user.Id, adminPassword, transactionCt);
                 if (!addPasswordResult.Succeeded)
                 {
-                    throw new DomainBusinessRuleException(
-                        string.Join(" ", addPasswordResult.Errors));
+                    throw new DomainBusinessRuleException(string.Join(" ", addPasswordResult.Errors));
                 }
             }
 
@@ -194,16 +190,18 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
                 isSystem: true);
             await _applications.AddAsync(application, transactionCt);
 
-            var client = new ApplicationClient(
-                application.Id,
-                PlatformDefaults.AdminConsole.CLIENT_ID,
-                ClientType.Public,
-                BuildAdminConsoleRedirectUris().ToList(),
-                PlatformDefaults.AdminConsole.AllowedScopes.ToList(),
-                accessTokenTtlSeconds: 900,
-                BuildAdminConsolePostLogoutRedirectUris().ToList(),
-                isSystem: true);
-            await _clients.AddAsync(client, transactionCt);
+            await _oauthClients.CreateAsync(new CreateOAuthClientRequest
+            {
+                ApplicationId = application.Id,
+                ClientId = PlatformDefaults.AdminConsole.CLIENT_ID,
+                ClientType = ClientType.Public,
+                RedirectUris = AdminConsoleClientDefaults.BuildRedirectUris(_jwtOptions.Issuer),
+                PostLogoutRedirectUris = AdminConsoleClientDefaults.BuildPostLogoutRedirectUris(_jwtOptions.Issuer),
+                AllowedScopes = PlatformDefaults.AdminConsole.AllowedScopes.ToList(),
+                AccessTokenTtlSeconds = 900,
+                IsSystem = true,
+                RequireExplicitConsent = false
+            }, transactionCt);
 
             if (configuration is null)
             {
@@ -211,44 +209,9 @@ public sealed class BootstrapPlatformUseCase : IBootstrapPlatformUseCase
                 await _platformConfigurations.AddAsync(configuration, transactionCt);
             }
 
-            configuration.MarkBootstrapped(user.Id, client.ClientId);
+            configuration.MarkBootstrapped(user.Id, PlatformDefaults.AdminConsole.CLIENT_ID);
 
             await _unitOfWork.SaveChangesAsync(transactionCt);
-            await _openIddictSync.SyncAsync(client, plainTextClientSecret: null, transactionCt);
         }, ct);
-    }
-
-    private IReadOnlyList<string> BuildAdminConsoleRedirectUris()
-    {
-        var uris = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var uri in PlatformDefaults.AdminConsole.DefaultRedirectUris)
-        {
-            uris.Add(uri);
-        }
-
-        var issuer = _jwtOptions.Issuer.Trim().TrimEnd('/');
-        if (!string.IsNullOrEmpty(issuer))
-        {
-            uris.Add($"{issuer}/auth/callback");
-        }
-
-        return uris.ToList();
-    }
-
-    private IReadOnlyList<string> BuildAdminConsolePostLogoutRedirectUris()
-    {
-        var uris = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var uri in PlatformDefaults.AdminConsole.DefaultPostLogoutRedirectUris)
-        {
-            uris.Add(uri);
-        }
-
-        var issuer = _jwtOptions.Issuer.Trim().TrimEnd('/');
-        if (!string.IsNullOrEmpty(issuer))
-        {
-            uris.Add($"{issuer}/login");
-        }
-
-        return uris.ToList();
     }
 }

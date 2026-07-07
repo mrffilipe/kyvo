@@ -1,4 +1,4 @@
-# Kyvo — Frontend
+﻿# Kyvo — Frontend
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -41,7 +41,6 @@ cp .env.example .env
 |----------|---------|-------------|
 | `FRONTEND_PORT` | `3000` | Host port mapped to the Vite dev server in the container |
 | `VITE_API_BASE_URL` | `http://localhost:5000` | Backend API base URL |
-| `VITE_API_VERSION` | `1.0` | API version (produces `/v1.0/...`) |
 | `VITE_API_TIMEOUT_MS` | `30000` | Axios request timeout (ms) |
 | `VITE_OAUTH_CLIENT_ID` | `platform-admin-web` | OAuth client registered in Kyvo |
 | `VITE_OAUTH_REDIRECT_URI` | `http://localhost:3000/auth/callback` | OIDC callback URI |
@@ -91,7 +90,7 @@ npm run preview
 
 ```
 1. The user opens the app (e.g., / or /login)
-2. loginLoader / requireAuthLoader call GET /v1.0/platform/status
+2. loginLoader / requireAuthLoader call GET /api/v1/platform/status
 3. If requiresBootstrap → /login shows a message to configure Bootstrap on the backend and restart the API
 4. Otherwise → LoginPage starts the OIDC flow
 ```

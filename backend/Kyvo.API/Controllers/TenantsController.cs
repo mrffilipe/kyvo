@@ -70,12 +70,13 @@ public sealed class TenantsController : V1ApiControllerBase
             },
             ct);
 
-        return CreatedAtAction(nameof(GetTenantById), new { id, version = "1.0" }, new CreatedIdResponse { Id = id });
+        return CreatedAtAction(nameof(GetTenantById), new { id }, new CreatedIdResponse { Id = id });
     }
 
     /// <summary>
     /// Sends an invitation to join the tenant.
     /// </summary>
+    [Authorize(Policy = "RequireTenantToken")]
     [HttpPost("{id:guid}/invites")]
     [ProducesResponseType(typeof(InviteMemberResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,6 +98,7 @@ public sealed class TenantsController : V1ApiControllerBase
     /// <summary>
     /// Lists invites for a tenant.
     /// </summary>
+    [Authorize(Policy = "RequireTenantToken")]
     [HttpGet("{id:guid}/invites")]
     [ProducesResponseType(typeof(PagedResult<TenantInviteDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -117,7 +119,7 @@ public sealed class TenantsController : V1ApiControllerBase
     /// <summary>
     /// Accepts a tenant invite using the token from the invitation email.
     /// </summary>
-    [HttpPost("/v{version:apiVersion}/invites/accept")]
+    [HttpPost("~/api/v1/invites/accept")]
     [ProducesResponseType(typeof(CreatedMembershipIdResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CreatedMembershipIdResponse>> AcceptInvite([FromBody] AcceptInviteRequest request, CancellationToken ct)
@@ -161,6 +163,7 @@ public sealed class TenantsController : V1ApiControllerBase
     /// <summary>
     /// Returns a tenant by identifier when the caller has access.
     /// </summary>
+    [Authorize(Policy = "RequireTenantToken")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(TenantDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -181,6 +184,7 @@ public sealed class TenantsController : V1ApiControllerBase
     /// <summary>
     /// Updates tenant metadata (name).
     /// </summary>
+    [Authorize(Policy = "RequireTenantToken")]
     [HttpPatch("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

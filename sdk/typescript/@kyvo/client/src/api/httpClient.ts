@@ -16,6 +16,7 @@ export class KyvoApiError extends Error {
 export interface HttpClientOptions {
   baseUrl: string
   getAccessToken: () => string | null
+  getPlatformAccessToken: () => string | null
   refreshTokens: (refreshToken: string) => Promise<OidcTokenResponse>
   onSessionUpdated: (tokens: OidcTokenResponse) => void
   onSessionCleared: () => void
@@ -32,12 +33,30 @@ export class HttpClient {
     path: string,
     init?: { body?: unknown; params?: Record<string, string | number | boolean | undefined> },
   ): Promise<T> {
+    return this.requestWithToken(method, path, this.options.getAccessToken, init)
+  }
+
+  /** Uses the base OIDC platform token (required for switch-tenant). */
+  async requestWithPlatformToken<T>(
+    method: string,
+    path: string,
+    init?: { body?: unknown; params?: Record<string, string | number | boolean | undefined> },
+  ): Promise<T> {
+    return this.requestWithToken(method, path, this.options.getPlatformAccessToken, init)
+  }
+
+  private async requestWithToken<T>(
+    method: string,
+    path: string,
+    getToken: () => string | null,
+    init?: { body?: unknown; params?: Record<string, string | number | boolean | undefined> },
+  ): Promise<T> {
     const url = this.buildUrl(path, init?.params)
     const headers: Record<string, string> = {
       Accept: 'application/json',
     }
 
-    const token = this.options.getAccessToken()
+    const token = getToken()
     if (token) headers.Authorization = `Bearer ${token}`
 
     let body: string | undefined
@@ -46,7 +65,7 @@ export class HttpClient {
       body = JSON.stringify(init.body)
     }
 
-    const response = await this.fetchWithRefresh(method, url, headers, body)
+    const response = await this.fetchWithRefresh(method, url, headers, body, getToken)
     if (response.status === 204) {
       return undefined as T
     }
@@ -65,6 +84,7 @@ export class HttpClient {
     url: string,
     headers: Record<string, string>,
     body?: string,
+    getToken: () => string | null = () => this.options.getAccessToken(),
     retried = false,
   ): Promise<Response> {
     const response = await fetch(url, { method, headers, body })
@@ -85,8 +105,9 @@ export class HttpClient {
       }
       const tokens = await this.refreshPromise
       this.options.onSessionUpdated(tokens)
-      headers.Authorization = `Bearer ${tokens.access_token}`
-      return this.fetchWithRefresh(method, url, headers, body, true)
+      const freshToken = getToken()
+      if (freshToken) headers.Authorization = `Bearer ${freshToken}`
+      return this.fetchWithRefresh(method, url, headers, body, getToken, true)
     } catch {
       this.options.onSessionCleared()
       return response
@@ -123,10 +144,11 @@ export function createHttpClientFromSession(
 ): HttpClient {
   return new HttpClient({
     baseUrl,
-    getAccessToken: () => session.getAccessToken(),
-    getRefreshToken: () => session.getSession()?.refreshToken,
+    getAccessToken: () => session.getAccessToken() ?? session.getPlatformAccessToken(),
+    getPlatformAccessToken: () => session.getPlatformAccessToken(),
+    getRefreshToken: () => session.getRefreshToken(),
     refreshTokens,
-    onSessionUpdated: (tokens) => session.updateAccessToken(tokens),
+    onSessionUpdated: (tokens) => session.updatePlatformTokens(tokens),
     onSessionCleared: () => session.clear(),
   })
 }

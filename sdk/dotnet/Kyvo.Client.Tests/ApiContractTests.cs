@@ -1,13 +1,16 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Kyvo.Client.Models;
 using Xunit;
 
 namespace Kyvo.Client.Tests;
 
 /// <summary>
-/// Contract paths aligned with Kyvo API v1.0 (product SDK surface).
+/// Contract paths aligned with Kyvo API v1 (<c>/api/v1/*</c>).
 /// </summary>
 public sealed class ApiContractTests
 {
-    private const string V = "/v1.0";
+    private const string V = "/api/v1";
 
     [Theory]
     [InlineData($"{V}/auth/subscribe")]
@@ -39,6 +42,38 @@ public sealed class ApiContractTests
     public void Subscribe_IsOnlyOnAuthRoute()
     {
         const string subscribe = $"{V}/auth/subscribe";
-        Assert.Equal("/v1.0/auth/subscribe", subscribe);
+        Assert.Equal("/api/v1/auth/subscribe", subscribe);
+    }
+
+    [Fact]
+    public void TenantContextResult_DeserializesAccessTokenFromSubscribeResponse()
+    {
+        const string json = """
+            {
+              "userId": "11111111-1111-1111-1111-111111111111",
+              "email": "user@example.com",
+              "tenantId": "22222222-2222-2222-2222-222222222222",
+              "membershipId": "33333333-3333-3333-3333-333333333333",
+              "tenantRoles": ["owner"],
+              "platformRoles": [],
+              "tenants": [],
+              "accessToken": "eyJhbGciOiJIUzI1NiJ9.test",
+              "expiresIn": 900,
+              "tokenType": "Bearer"
+            }
+            """;
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonStringEnumConverter() },
+        };
+
+        var result = JsonSerializer.Deserialize<TenantContextResult>(json, options);
+        Assert.NotNull(result);
+        Assert.Equal("eyJhbGciOiJIUzI1NiJ9.test", result.AccessToken);
+        Assert.Equal(900, result.ExpiresIn);
+        Assert.Equal("Bearer", result.TokenType);
     }
 }

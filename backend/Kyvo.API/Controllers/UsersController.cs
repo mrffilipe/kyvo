@@ -6,6 +6,7 @@ using Kyvo.Application.Queries.Users.SearchUsers;
 using Kyvo.Application.UseCases.Users.UpdateUserProfile;
 using Kyvo.Application.Services.UserScope;
 using Kyvo.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Kyvo.Application.Queries.Users.Dtos;
 
@@ -37,6 +38,7 @@ public sealed class UsersController : V1ApiControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "RequireTenantToken")]
     [ProducesResponseType(typeof(PagedResult<UserPickerDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PagedResult<UserPickerDto>>> SearchUsers([FromQuery] SearchUsersRequest request, CancellationToken ct)

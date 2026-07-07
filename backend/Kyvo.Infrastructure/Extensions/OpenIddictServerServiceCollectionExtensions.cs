@@ -1,9 +1,12 @@
 using Kyvo.Application.Configurations;
 using Kyvo.Infrastructure.Persistence;
+using Kyvo.Infrastructure.Persistence.Entities;
 using Kyvo.Infrastructure.Services.Certificates;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;
+using OpenIddict.EntityFrameworkCore.Models;
 
 namespace Kyvo.Infrastructure.Extensions;
 
@@ -18,14 +21,21 @@ public static class OpenIddictServerServiceCollectionExtensions
         var jwtOptions = configuration.GetSection(JwtOptions.SECTION).Get<JwtOptions>()
             ?? throw new InvalidOperationException("Jwt configuration section is missing.");
 
-        var certificate = SigningCertificateFactory.Create(jwtOptions);
+        var signingProvider = new SigningCertificateProvider(configuration);
+        services.TryAddSingleton(signingProvider);
+        var certificate = signingProvider.Certificate;
 
         services.AddOpenIddict()
             .AddCore(options =>
             {
                 options.UseEntityFrameworkCore()
                        .UseDbContext<ApplicationDbContext>()
-                       .ReplaceDefaultEntities<Guid>();
+                       .ReplaceDefaultEntities<
+                           KyvoOpenIddictApplication,
+                           KyvoOpenIddictAuthorization,
+                           OpenIddictEntityFrameworkCoreScope<Guid>,
+                           KyvoOpenIddictToken,
+                           Guid>();
             })
             .AddServer(options =>
             {
@@ -34,11 +44,14 @@ public static class OpenIddictServerServiceCollectionExtensions
                 options.SetAuthorizationEndpointUris("connect/authorize")
                        .SetTokenEndpointUris("connect/token")
                        .SetUserInfoEndpointUris("connect/userinfo")
-                       .SetEndSessionEndpointUris("connect/logout");
+                       .SetEndSessionEndpointUris("connect/logout")
+                       .SetRevocationEndpointUris("connect/revoke")
+                       .SetIntrospectionEndpointUris("connect/introspect");
 
                 options.AllowAuthorizationCodeFlow()
                        .RequireProofKeyForCodeExchange();
                 options.AllowRefreshTokenFlow();
+                // Rolling refresh tokens are enabled by default in OpenIddict 7 (each redemption issues a new refresh token).
 
                 options.RegisterScopes(
                     OpenIddictConstants.Scopes.OpenId,

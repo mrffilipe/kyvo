@@ -20,38 +20,38 @@ public interface IKyvoProductClient
 public interface IKyvoAuthApi
 {
     Task<SubscribeTenantResult> SubscribeAsync(
-        string userAccessToken,
+        string platformAccessToken,
         SubscribeTenantRequest request,
         CancellationToken cancellationToken = default);
 
     Task<TenantContextResult> SwitchTenantAsync(
-        string userAccessToken,
+        string platformAccessToken,
         Guid tenantId,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<AuthSessionDto>> ListSessionsAsync(
-        string userAccessToken,
+        string platformAccessToken,
         CancellationToken cancellationToken = default);
 
     Task RevokeSessionAsync(
-        string userAccessToken,
+        string platformAccessToken,
         Guid sessionId,
         CancellationToken cancellationToken = default);
 
-    Task DeleteAccountAsync(string userAccessToken, CancellationToken cancellationToken = default);
+    Task DeleteAccountAsync(string tenantAccessToken, CancellationToken cancellationToken = default);
 }
 
 public interface IKyvoUsersApi
 {
-    Task<UserDto> GetMeAsync(string userAccessToken, CancellationToken cancellationToken = default);
+    Task<UserDto> GetMeAsync(string platformAccessToken, CancellationToken cancellationToken = default);
 
     Task UpdateMeAsync(
-        string userAccessToken,
+        string platformAccessToken,
         UpdateUserProfileBody body,
         CancellationToken cancellationToken = default);
 
     Task<PagedResult<UserMembershipDto>> ListMyMembershipsAsync(
-        string userAccessToken,
+        string platformAccessToken,
         int page = 1,
         int pageSize = 20,
         CancellationToken cancellationToken = default);
@@ -60,48 +60,48 @@ public interface IKyvoUsersApi
 public interface IKyvoTenantsApi
 {
     Task<PagedResult<TenantDto>> ListAsync(
-        string userAccessToken,
+        string platformAccessToken,
         int page = 1,
         int pageSize = 20,
         string? search = null,
         CancellationToken cancellationToken = default);
 
     Task<TenantDto> GetByIdAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         CancellationToken cancellationToken = default);
 
     Task UpdateAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         UpdateTenantBody body,
         CancellationToken cancellationToken = default);
 
     Task<InviteMemberResult> InviteMemberAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         InviteMemberBody body,
         CancellationToken cancellationToken = default);
 
     Task<PagedResult<TenantInviteDto>> ListInvitesAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         int page = 1,
         int pageSize = 20,
         CancellationToken cancellationToken = default);
 
     Task RevokeInviteAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid inviteId,
         CancellationToken cancellationToken = default);
 
     Task<CreatedMembershipIdResponse> AcceptInviteAsync(
-        string userAccessToken,
+        string platformAccessToken,
         AcceptInviteBody body,
         CancellationToken cancellationToken = default);
 
     Task<AvailabilityDto> IsKeyAvailableAsync(
-        string userAccessToken,
+        string platformAccessToken,
         string key,
         CancellationToken cancellationToken = default);
 }
@@ -109,26 +109,26 @@ public interface IKyvoTenantsApi
 public interface IKyvoMembershipsApi
 {
     Task<CreatedIdResponse> CreateAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         CreateMembershipBody body,
         CancellationToken cancellationToken = default);
 
     Task<PagedResult<MembershipDto>> ListByTenantAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         int page = 1,
         int pageSize = 20,
         CancellationToken cancellationToken = default);
 
     Task UpdateRolesAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid membershipId,
         UpdateMembershipRolesBody body,
         CancellationToken cancellationToken = default);
 
     Task RevokeAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid membershipId,
         CancellationToken cancellationToken = default);
 }
@@ -136,7 +136,7 @@ public interface IKyvoMembershipsApi
 public interface IKyvoTenantRolesApi
 {
     Task<PagedResult<TenantRoleDto>> ListAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         bool includeInactive = false,
         int page = 1,
@@ -144,29 +144,29 @@ public interface IKyvoTenantRolesApi
         CancellationToken cancellationToken = default);
 
     Task<CreatedIdResponse> CreateAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid tenantId,
         CreateTenantRoleBody body,
         CancellationToken cancellationToken = default);
 
     Task UpdateAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         Guid roleId,
         UpdateTenantRoleBody body,
         CancellationToken cancellationToken = default);
 
-    Task DeleteAsync(string userAccessToken, Guid roleId, CancellationToken cancellationToken = default);
+    Task DeleteAsync(string tenantAccessToken, Guid roleId, CancellationToken cancellationToken = default);
 }
 
 public interface IKyvoAuditLogsApi
 {
     Task<PagedResult<AuditLogItemDto>> ListAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         ListAuditLogsQuery? query = null,
         CancellationToken cancellationToken = default);
 
     Task<PagedResult<AuditLogFilterOptionDto>> ListFilterOptionsAsync(
-        string userAccessToken,
+        string tenantAccessToken,
         ListAuditLogFilterOptionsQuery query,
         CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,6 @@
-export function createApiPaths(apiVersion: string) {
-  const versionPrefix = `/v${apiVersion}`
+/** Product REST API paths under `/api/v1/*`. */
+export function createApiPaths() {
+  const versionPrefix = '/api/v1'
   return {
     versionPrefix,
     auth: `${versionPrefix}/auth`,

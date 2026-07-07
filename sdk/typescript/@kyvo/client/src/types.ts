@@ -11,7 +11,6 @@ export interface OidcTokenResponse {
 
 export interface KyvoClientConfig {
   authority: string
-  apiVersion?: string
   oidc: {
     clientId: string
     redirectUri: string
@@ -28,9 +27,17 @@ export interface SessionStorageLike {
 }
 
 export interface AuthSession {
-  accessToken: string
-  refreshToken?: string
-  expiresAt: number
+  platform: {
+    accessToken: string
+    refreshToken?: string
+    expiresAt: number
+  }
+  tenant?: {
+    accessToken: string
+    expiresAt: number
+    tenantId?: string
+    membershipId?: string
+  }
 }
 
 export interface ProblemDetails {

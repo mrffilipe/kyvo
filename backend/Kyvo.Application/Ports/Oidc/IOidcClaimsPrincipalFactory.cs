@@ -4,11 +4,9 @@ using Kyvo.Domain.Entities;
 namespace Kyvo.Application.Ports.Oidc;
 
 /// <summary>
-/// Builds the claims principal signed into OpenIddict access/id tokens: subject, tenant context
-/// (<c>tid</c>/<c>mid</c>/<c>trole</c>), platform roles (<c>prole</c>) and the technical claims
-/// (<c>uid</c>/<c>sid</c>) consumed by <c>IUserScope</c>/TenancyKit.
+/// Builds a pure OIDC claims principal (platform context only — no tenant claims).
 /// </summary>
-public interface IKyvoClaimsPrincipalFactory
+public interface IOidcClaimsPrincipalFactory
 {
     Task<ClaimsPrincipal> CreateAsync(
         User user,

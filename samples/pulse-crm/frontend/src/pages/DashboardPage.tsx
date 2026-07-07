@@ -69,7 +69,7 @@ export function DashboardPage() {
       </SectionCard>
 
       {kyvoUser ? (
-        <SectionCard title="Kyvo Users/me" subtitle="GET /v1.0/Users/me via @kyvo-client/client">
+        <SectionCard title="Kyvo Users/me" subtitle="GET /api/v1/Users/me via @kyvo-client/client">
           <Stack spacing={1}>
             <Typography variant="body2">
               <strong>Display name:</strong> {kyvoUser.displayName}

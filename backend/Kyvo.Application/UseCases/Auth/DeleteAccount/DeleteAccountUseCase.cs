@@ -1,5 +1,6 @@
 using Kyvo.Application.Exceptions;
 using Kyvo.Application.Policies;
+using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Application.Services.UserScope;
 using Kyvo.Application.UseCases.Auth.DeleteAccount;
@@ -14,7 +15,7 @@ public sealed class DeleteAccountUseCase : IDeleteAccountUseCase
 {
     private readonly ITenantMembershipRepository _memberships;
     private readonly IAuthSessionRepository _sessions;
-    private readonly IApplicationClientRepository _clients;
+    private readonly IOAuthClientManager _oauthClients;
     private readonly IUserRepository _users;
     private readonly ITenantAccountEligibilityPolicy _accountEligibility;
     private readonly IDeleteTenantUseCase _deleteTenantUseCase;
@@ -24,7 +25,7 @@ public sealed class DeleteAccountUseCase : IDeleteAccountUseCase
     public DeleteAccountUseCase(
         ITenantMembershipRepository memberships,
         IAuthSessionRepository sessions,
-        IApplicationClientRepository clients,
+        IOAuthClientManager oauthClients,
         IUserRepository users,
         ITenantAccountEligibilityPolicy accountEligibility,
         IDeleteTenantUseCase deleteTenantUseCase,
@@ -33,7 +34,7 @@ public sealed class DeleteAccountUseCase : IDeleteAccountUseCase
     {
         _memberships = memberships;
         _sessions = sessions;
-        _clients = clients;
+        _oauthClients = oauthClients;
         _users = users;
         _accountEligibility = accountEligibility;
         _deleteTenantUseCase = deleteTenantUseCase;
@@ -53,15 +54,20 @@ public sealed class DeleteAccountUseCase : IDeleteAccountUseCase
             throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.ACTIVE_TENANT_CONTEXT_REQUIRED);
         }
 
-        var session = await _sessions.GetForUpdateAsync(_userScope.SessionId.Value, ct)
-            ?? throw new UnauthorizedApplicationException(ApplicationErrorMessages.Auth.SESSION_NOT_FOUND);
-
-        if (!session.ClientId.HasValue)
+        if (string.IsNullOrWhiteSpace(_userScope.OAuthClientId))
         {
             throw new InvalidClientException(ApplicationErrorMessages.Auth.SESSION_HAS_NO_OAUTH_CLIENT);
         }
 
-        var client = await _clients.GetByIdAsync(session.ClientId.Value, ct)
+        var session = await _sessions.GetForUpdateAsync(_userScope.SessionId.Value, ct)
+            ?? throw new UnauthorizedApplicationException(ApplicationErrorMessages.Auth.SESSION_NOT_FOUND);
+
+        if (session.UserId != _userScope.UserId)
+        {
+            throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.CANNOT_REVOKE_ANOTHER_USER_SESSION);
+        }
+
+        var client = await _oauthClients.GetByClientIdAsync(_userScope.OAuthClientId, ct)
             ?? throw new InvalidClientException(ApplicationErrorMessages.OAuthClient.CLIENT_ID_INVALID);
 
         var tenantId = _userScope.TenantId.Value;

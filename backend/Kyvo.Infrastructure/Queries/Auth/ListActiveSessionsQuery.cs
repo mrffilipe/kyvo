@@ -19,7 +19,6 @@ public sealed class ListActiveSessionsQuery : IListActiveSessionsQuery
                 SessionId = session.Id,
                 TenantId = session.TenantId,
                 MembershipId = session.MembershipId,
-                ClientId = session.ClientId,
                 Status = session.Status,
                 UserAgent = session.UserAgent,
                 IpAddress = session.IpAddress,

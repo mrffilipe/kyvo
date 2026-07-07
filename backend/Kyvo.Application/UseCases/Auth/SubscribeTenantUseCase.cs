@@ -1,4 +1,5 @@
 using Kyvo.Application.Exceptions;
+using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Application.Services.UserScope;
 using Kyvo.Application.Shared;
@@ -15,35 +16,38 @@ public sealed class SubscribeTenantUseCase : ISubscribeTenantUseCase
     private readonly IUserRepository _users;
     private readonly ITenantMembershipRepository _memberships;
     private readonly IAuthSessionRepository _sessions;
-    private readonly IApplicationClientRepository _clients;
+    private readonly IOAuthClientManager _oauthClients;
     private readonly IApplicationRepository _applications;
     private readonly IApplicationTenantRepository _applicationTenants;
     private readonly IUserPlatformRoleRepository _userPlatformRoles;
     private readonly IUserScope _userScope;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ITenantAccessTokenIssuer _tenantTokenIssuer;
 
     public SubscribeTenantUseCase(
         ITenantProvisioner tenantProvisioner,
         IUserRepository users,
         ITenantMembershipRepository memberships,
         IAuthSessionRepository sessions,
-        IApplicationClientRepository clients,
+        IOAuthClientManager oauthClients,
         IApplicationRepository applications,
         IApplicationTenantRepository applicationTenants,
         IUserPlatformRoleRepository userPlatformRoles,
         IUserScope userScope,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ITenantAccessTokenIssuer tenantTokenIssuer)
     {
         _tenantProvisioner = tenantProvisioner;
         _users = users;
         _memberships = memberships;
         _sessions = sessions;
-        _clients = clients;
+        _oauthClients = oauthClients;
         _applications = applications;
         _applicationTenants = applicationTenants;
         _userPlatformRoles = userPlatformRoles;
         _userScope = userScope;
         _unitOfWork = unitOfWork;
+        _tenantTokenIssuer = tenantTokenIssuer;
     }
 
     public async Task<TenantContextResult> ExecuteAsync(SubscribeTenantRequest request, CancellationToken ct = default)
@@ -51,6 +55,11 @@ public sealed class SubscribeTenantUseCase : ISubscribeTenantUseCase
         if (!_userScope.IsAuthenticated || _userScope.UserId == Guid.Empty || !_userScope.SessionId.HasValue)
         {
             throw new UnauthorizedApplicationException(ApplicationErrorMessages.Auth.AUTHENTICATED_SESSION_REQUIRED);
+        }
+
+        if (string.IsNullOrWhiteSpace(_userScope.OAuthClientId))
+        {
+            throw new InvalidClientException(ApplicationErrorMessages.Auth.SESSION_HAS_NO_OAUTH_CLIENT);
         }
 
         var session = await _sessions.GetForUpdateAsync(_userScope.SessionId.Value, ct)
@@ -61,12 +70,7 @@ public sealed class SubscribeTenantUseCase : ISubscribeTenantUseCase
             throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.CANNOT_REVOKE_ANOTHER_USER_SESSION);
         }
 
-        if (!session.ClientId.HasValue)
-        {
-            throw new InvalidClientException(ApplicationErrorMessages.Auth.SESSION_HAS_NO_OAUTH_CLIENT);
-        }
-
-        var client = await _clients.GetByIdAsync(session.ClientId.Value, ct)
+        var client = await _oauthClients.GetByClientIdAsync(_userScope.OAuthClientId, ct)
             ?? throw new InvalidClientException(ApplicationErrorMessages.OAuthClient.CLIENT_ID_INVALID);
 
         var application = await _applications.GetByIdAsync(client.ApplicationId, ct)
@@ -102,7 +106,14 @@ public sealed class SubscribeTenantUseCase : ISubscribeTenantUseCase
 
         var memberships = await _memberships.ListByUserIdWithTenantAndRolesAsync(user.Id, ct);
         var platformRoles = await ResolvePlatformRolesAsync(user.Id, ct);
-        return TenantContextBuilder.Build(user, session, memberships, platformRoles);
+        var result = TenantContextBuilder.Build(user, session, memberships, platformRoles);
+        var accessToken = _tenantTokenIssuer.IssueToken(session, platformRoles, result.TenantRoles);
+        return result with
+        {
+            AccessToken = accessToken,
+            ExpiresIn = 900,
+            TokenType = "Bearer"
+        };
     }
 
     private async Task<IReadOnlyList<string>> ResolvePlatformRolesAsync(Guid userId, CancellationToken ct)

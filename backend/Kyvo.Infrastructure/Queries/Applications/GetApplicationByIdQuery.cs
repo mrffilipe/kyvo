@@ -1,5 +1,5 @@
+using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Queries.Applications.GetApplicationById;
-using Kyvo.Domain.Repositories;
 using Kyvo.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Kyvo.Application.Queries.Applications.Dtos;
@@ -8,12 +8,12 @@ namespace Kyvo.Infrastructure.Queries.Applications;
 
 public sealed class GetApplicationByIdQuery : IGetApplicationByIdQuery
 {
-    private readonly IApplicationClientRepository _clients;
+    private readonly IOAuthClientManager _oauthClients;
     private readonly ApplicationDbContext _context;
 
-    public GetApplicationByIdQuery(IApplicationClientRepository clients, ApplicationDbContext context)
+    public GetApplicationByIdQuery(IOAuthClientManager oauthClients, ApplicationDbContext context)
     {
-        _clients = clients;
+        _oauthClients = oauthClients;
         _context = context;
     }
 
@@ -30,7 +30,7 @@ public sealed class GetApplicationByIdQuery : IGetApplicationByIdQuery
             return null;
         }
 
-        var clients = await _clients.ListByApplicationIdAsync(request.ApplicationId, ct);
+        var clients = await _oauthClients.ListByApplicationIdAsync(request.ApplicationId, ct);
         return application with
         {
             Clients = clients.Select(ApplicationDtoMapper.MapClientSummary).ToList()

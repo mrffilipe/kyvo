@@ -5,8 +5,8 @@ using Kyvo.Application.UseCases.Auth;
 using Kyvo.Application.UseCases.Auth.ExternalLogin;
 using Kyvo.Domain.Entities;
 using Kyvo.Domain.Exceptions;
-using Kyvo.Domain.Repositories;
 using Kyvo.Domain.ValueObjects;
+using Kyvo.Domain.Repositories;
 using Kyvo.Infrastructure.Identity;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -30,26 +30,23 @@ public sealed class AccountController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IUserAccountService _userAccounts;
-    private readonly ITenantMembershipRepository _memberships;
-    private readonly IUserPlatformRoleRepository _userPlatformRoles;
     private readonly IAccountSignInService _accountSignInService;
+    private readonly IExternalLoginUseCase _externalLoginUseCase;
     private readonly IAntiforgery _antiforgery;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IUserAccountService userAccounts,
-        ITenantMembershipRepository memberships,
-        IUserPlatformRoleRepository userPlatformRoles,
         IAccountSignInService accountSignInService,
+        IExternalLoginUseCase externalLoginUseCase,
         IAntiforgery antiforgery)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _userAccounts = userAccounts;
-        _memberships = memberships;
-        _userPlatformRoles = userPlatformRoles;
         _accountSignInService = accountSignInService;
+        _externalLoginUseCase = externalLoginUseCase;
         _antiforgery = antiforgery;
     }
 
@@ -62,6 +59,7 @@ public sealed class AccountController : ControllerBase
     /// </remarks>
     [HttpPost("/account/signin")]
     [IgnoreAntiforgeryToken]
+    [EnableRateLimiting("account_signin")]
     [Consumes("application/x-www-form-urlencoded")]
     [ProducesResponseType(StatusCodes.Status302Found)]
     public async Task<IActionResult> Login([FromForm] AccountLoginForm form, CancellationToken ct)
@@ -94,7 +92,7 @@ public sealed class AccountController : ControllerBase
             return RedirectToLogin(form.ReturnUrl, "invalid_credentials");
         }
 
-        var login = await BuildExternalLoginResultAsync(UserMapper.ToDomain(appUser), ct);
+        var login = await _externalLoginUseCase.BuildResultForUserAsync(UserMapper.ToDomain(appUser), ct);
         return await CompleteLoginAsync(login, form.ReturnUrl, ct);
     }
 
@@ -148,7 +146,7 @@ public sealed class AccountController : ControllerBase
             return RedirectToRegister(form.ReturnUrl, code, string.Join(" ", createResult.Errors));
         }
 
-        var login = await BuildExternalLoginResultAsync(user, ct);
+        var login = await _externalLoginUseCase.BuildResultForUserAsync(user, ct);
         return await CompleteLoginAsync(login, form.ReturnUrl, ct);
     }
 
@@ -168,28 +166,6 @@ public sealed class AccountController : ControllerBase
 
         await _signInManager.SignOutAsync();
         return Redirect("/");
-    }
-
-    private async Task<ExternalLoginResult> BuildExternalLoginResultAsync(User user, CancellationToken ct)
-    {
-        var memberships = await _memberships.ListByUserIdWithTenantAndRolesAsync(user.Id, ct);
-        var platformRoleAssignments = await _userPlatformRoles.ListByUserIdAsync(user.Id, ct);
-
-        return new ExternalLoginResult
-        {
-            UserId = user.Id,
-            Email = user.Email,
-            DisplayName = user.DisplayName,
-            PlatformRoles = platformRoleAssignments.Select(x => x.Role.Key).ToList(),
-            TenantMemberships = memberships
-                .Select(m => new ExternalLoginTenantMembership
-                {
-                    TenantId = m.TenantId,
-                    MembershipId = m.Id,
-                    Roles = m.Roles.Select(r => r.Role.Key.Value).ToList()
-                })
-                .ToList()
-        };
     }
 
     private async Task<IActionResult?> TryRedirectOnAntiforgeryFailureAsync(string? returnUrl, CancellationToken ct, bool register = false)

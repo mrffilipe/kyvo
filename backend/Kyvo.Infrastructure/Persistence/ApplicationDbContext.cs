@@ -27,7 +27,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TenantMembership> TenantMemberships { get; private set; } = null!;
     public DbSet<TenantMembershipRole> TenantMembershipRoles { get; private set; } = null!;
     public DbSet<Domain.Entities.Application> Applications { get; private set; } = null!;
-    public DbSet<ApplicationClient> ApplicationClients { get; private set; } = null!;
     public DbSet<ApplicationTenant> ApplicationTenants { get; private set; } = null!;
     public DbSet<AuthSession> AuthSessions { get; private set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; private set; } = null!;

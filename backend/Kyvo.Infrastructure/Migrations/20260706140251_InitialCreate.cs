@@ -69,16 +69,19 @@ namespace Kyvo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OpenIddictApplications",
+                name: "KyvoOpenIddictApplication",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ApplicationType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ClientId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    application_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    is_system = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    access_token_ttl_seconds = table.Column<int>(type: "integer", nullable: false, defaultValue: 900),
+                    ApplicationType = table.Column<string>(type: "text", nullable: true),
+                    ClientId = table.Column<string>(type: "text", nullable: true),
                     ClientSecret = table.Column<string>(type: "text", nullable: true),
-                    ClientType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ConcurrencyToken = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ConsentType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ClientType = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyToken = table.Column<string>(type: "text", nullable: true),
+                    ConsentType = table.Column<string>(type: "text", nullable: true),
                     DisplayName = table.Column<string>(type: "text", nullable: true),
                     DisplayNames = table.Column<string>(type: "text", nullable: true),
                     JsonWebKeySet = table.Column<string>(type: "text", nullable: true),
@@ -91,26 +94,7 @@ namespace Kyvo.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OpenIddictApplications", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OpenIddictScopes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConcurrencyToken = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    Descriptions = table.Column<string>(type: "text", nullable: true),
-                    DisplayName = table.Column<string>(type: "text", nullable: true),
-                    DisplayNames = table.Column<string>(type: "text", nullable: true),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Properties = table.Column<string>(type: "text", nullable: true),
-                    Resources = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OpenIddictScopes", x => x.Id);
+                    table.PrimaryKey("PK_KyvoOpenIddictApplication", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -193,33 +177,6 @@ namespace Kyvo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "application_clients",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    application_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    client_id = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    client_type = table.Column<int>(type: "integer", nullable: false),
-                    redirect_uris = table.Column<string>(type: "json", nullable: false),
-                    post_logout_redirect_uris = table.Column<string>(type: "json", nullable: false),
-                    allowed_scopes = table.Column<string>(type: "json", nullable: false),
-                    access_token_ttl_seconds = table.Column<int>(type: "integer", nullable: false),
-                    is_system = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_application_clients", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_application_clients_applications_application_id",
-                        column: x => x.application_id,
-                        principalTable: "applications",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -241,26 +198,26 @@ namespace Kyvo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OpenIddictAuthorizations",
+                name: "KyvoOpenIddictAuthorization",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ApplicationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ConcurrencyToken = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ConcurrencyToken = table.Column<string>(type: "text", nullable: true),
                     CreationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Properties = table.Column<string>(type: "text", nullable: true),
                     Scopes = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Subject = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
+                    Status = table.Column<string>(type: "text", nullable: true),
+                    Subject = table.Column<string>(type: "text", nullable: true),
+                    Type = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OpenIddictAuthorizations", x => x.Id);
+                    table.PrimaryKey("PK_KyvoOpenIddictAuthorization", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OpenIddictAuthorizations_OpenIddictApplications_Application~",
+                        name: "FK_KyvoOpenIddictAuthorization_KyvoOpenIddictApplication_Appli~",
                         column: x => x.ApplicationId,
-                        principalTable: "OpenIddictApplications",
+                        principalTable: "KyvoOpenIddictApplication",
                         principalColumn: "Id");
                 });
 
@@ -488,35 +445,35 @@ namespace Kyvo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OpenIddictTokens",
+                name: "KyvoOpenIddictToken",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ApplicationId = table.Column<Guid>(type: "uuid", nullable: true),
                     AuthorizationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ConcurrencyToken = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ConcurrencyToken = table.Column<string>(type: "text", nullable: true),
                     CreationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ExpirationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Payload = table.Column<string>(type: "text", nullable: true),
                     Properties = table.Column<string>(type: "text", nullable: true),
                     RedemptionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ReferenceId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Subject = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    Type = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true)
+                    ReferenceId = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<string>(type: "text", nullable: true),
+                    Subject = table.Column<string>(type: "text", nullable: true),
+                    Type = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OpenIddictTokens", x => x.Id);
+                    table.PrimaryKey("PK_KyvoOpenIddictToken", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OpenIddictTokens_OpenIddictApplications_ApplicationId",
+                        name: "FK_KyvoOpenIddictToken_KyvoOpenIddictApplication_ApplicationId",
                         column: x => x.ApplicationId,
-                        principalTable: "OpenIddictApplications",
+                        principalTable: "KyvoOpenIddictApplication",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_OpenIddictTokens_OpenIddictAuthorizations_AuthorizationId",
+                        name: "FK_KyvoOpenIddictToken_KyvoOpenIddictAuthorization_Authorizati~",
                         column: x => x.AuthorizationId,
-                        principalTable: "OpenIddictAuthorizations",
+                        principalTable: "KyvoOpenIddictAuthorization",
                         principalColumn: "Id");
                 });
 
@@ -587,7 +544,6 @@ namespace Kyvo.Infrastructure.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    client_id = table.Column<Guid>(type: "uuid", nullable: true),
                     tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     membership_id = table.Column<Guid>(type: "uuid", nullable: true),
                     status = table.Column<int>(type: "integer", nullable: false),
@@ -601,12 +557,6 @@ namespace Kyvo.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_auth_sessions", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_auth_sessions_application_clients_client_id",
-                        column: x => x.client_id,
-                        principalTable: "application_clients",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_auth_sessions_tenant_memberships_membership_id",
                         column: x => x.membership_id,
@@ -654,17 +604,6 @@ namespace Kyvo.Infrastructure.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_application_clients_application_id",
-                table: "application_clients",
-                column: "application_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_application_clients_client_id",
-                table: "application_clients",
-                column: "client_id",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_application_tenants_application_id_tenant_id",
@@ -725,11 +664,6 @@ namespace Kyvo.Infrastructure.Migrations
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_auth_sessions_client_id",
-                table: "auth_sessions",
-                column: "client_id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_auth_sessions_membership_id",
                 table: "auth_sessions",
                 column: "membership_id");
@@ -751,37 +685,24 @@ namespace Kyvo.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictApplications_ClientId",
-                table: "OpenIddictApplications",
-                column: "ClientId",
-                unique: true);
+                name: "IX_KyvoOpenIddictApplication_application_id",
+                table: "KyvoOpenIddictApplication",
+                column: "application_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictAuthorizations_ApplicationId_Status_Subject_Type",
-                table: "OpenIddictAuthorizations",
-                columns: new[] { "ApplicationId", "Status", "Subject", "Type" });
+                name: "IX_KyvoOpenIddictAuthorization_ApplicationId",
+                table: "KyvoOpenIddictAuthorization",
+                column: "ApplicationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictScopes_Name",
-                table: "OpenIddictScopes",
-                column: "Name",
-                unique: true);
+                name: "IX_KyvoOpenIddictToken_ApplicationId",
+                table: "KyvoOpenIddictToken",
+                column: "ApplicationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictTokens_ApplicationId_Status_Subject_Type",
-                table: "OpenIddictTokens",
-                columns: new[] { "ApplicationId", "Status", "Subject", "Type" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictTokens_AuthorizationId",
-                table: "OpenIddictTokens",
+                name: "IX_KyvoOpenIddictToken_AuthorizationId",
+                table: "KyvoOpenIddictToken",
                 column: "AuthorizationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictTokens_ReferenceId",
-                table: "OpenIddictTokens",
-                column: "ReferenceId",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_platform_roles_key",
@@ -906,10 +827,7 @@ namespace Kyvo.Infrastructure.Migrations
                 name: "identity_providers");
 
             migrationBuilder.DropTable(
-                name: "OpenIddictScopes");
-
-            migrationBuilder.DropTable(
-                name: "OpenIddictTokens");
+                name: "KyvoOpenIddictToken");
 
             migrationBuilder.DropTable(
                 name: "platform_configurations");
@@ -924,13 +842,13 @@ namespace Kyvo.Infrastructure.Migrations
                 name: "user_platform_roles");
 
             migrationBuilder.DropTable(
+                name: "applications");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "application_clients");
-
-            migrationBuilder.DropTable(
-                name: "OpenIddictAuthorizations");
+                name: "KyvoOpenIddictAuthorization");
 
             migrationBuilder.DropTable(
                 name: "tenant_invites");
@@ -945,10 +863,7 @@ namespace Kyvo.Infrastructure.Migrations
                 name: "platform_roles");
 
             migrationBuilder.DropTable(
-                name: "applications");
-
-            migrationBuilder.DropTable(
-                name: "OpenIddictApplications");
+                name: "KyvoOpenIddictApplication");
 
             migrationBuilder.DropTable(
                 name: "users");

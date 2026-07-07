@@ -8,7 +8,7 @@ namespace Kyvo.API.Controllers;
 /// <summary>
 /// Tenant invite lifecycle operations.
 /// </summary>
-public sealed class InvitesController : V1ApiControllerBase
+public sealed class InvitesController : TenantV1ApiControllerBase
 {
     private readonly IUserScope _userScope;
     private readonly IRevokeInviteUseCase _revokeInviteUseCase;

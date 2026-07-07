@@ -1,4 +1,4 @@
-# Kyvo TypeScript SDK workspace
+﻿# Kyvo TypeScript SDK workspace
 
 npm workspace for **`@kyvo-client/client`** (sources under `@kyvo/client/`) — browser SDK for product SPAs (e.g. [Pulse CRM](../../samples/pulse-crm/frontend/)).
 
@@ -16,12 +16,19 @@ Overview and endpoint matrix: [../README.md](../README.md).
 │   └── schema.ts       full v1 OpenAPI types (regenerate via npm run generate:types)
 ├── oidc/               PKCE + authorize/token/logout/userinfo
 ├── session/            SessionManager
-├── claims/             JWT helpers (tid, trole, prole)
+├── claims/             JWT helpers (tid, mid, clientId, trole, prole)
 ├── api/                HTTP client + paths
 └── resources/          auth (+ deleteAccount), users, tenants (+ key availability, list/revoke invites), memberships, tenantRoles (+ delete), auditLogs (+ filter-options)
 ```
 
-`auth/subscribe` is omitted by design (server / `Kyvo.Client` only).
+## Two-step authentication
+
+1. **OIDC login** (`/connect/*`) → platform access token with `sub`, `email`, `sid` — **no `tid`**
+2. **`switchTenant(tenantId)`** → tenant JWT with `tid`, `mid`, `trole`, `token_use=tenant`
+
+`SessionManager` stores `platform` and `tenant` tokens separately. `getAccessToken()` returns the tenant token when active.
+
+See [../README.md](../README.md#typescript-kyvo-clientclient).
 
 ## Commands
 
@@ -34,4 +41,4 @@ npm run generate:types   # requires ../swagger-v1.json (see parent README)
 
 ## Local consumers
 
-[Pulse CRM](../../samples/pulse-crm/frontend/) consumes `@kyvo-client/client` from npm (`^2.0.0`). For monorepo SDK development, temporarily use `file:` in the sample or link with `npm pack`.
+[Pulse CRM](../../samples/pulse-crm/frontend/) consumes `@kyvo-client/client` from npm (`^3.0.0`). For monorepo SDK development, temporarily use `file:` in the sample or link with `npm pack`.

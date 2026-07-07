@@ -44,8 +44,8 @@ public sealed class AuthController : V1ApiControllerBase
     /// Creates a tenant for the current OAuth application session (SaaS onboarding).
     /// </summary>
     /// <remarks>
-    /// Callers that need refreshed <c>tid</c>/<c>trole</c> claims afterwards should redeem their existing
-    /// refresh token against <c>/connect/token</c> (same pattern used after <c>switch-tenant</c>).
+    /// Returns a tenant-scoped JWT in <c>accessToken</c> (<c>token_use=tenant</c>) for immediate API calls.
+    /// The OIDC platform token is unchanged and does not receive <c>tid</c>/<c>trole</c> claims.
     /// </remarks>
     [HttpPost("subscribe")]
     [ProducesResponseType(typeof(SubscribeTenantResponse), StatusCodes.Status200OK)]
@@ -61,13 +61,19 @@ public sealed class AuthController : V1ApiControllerBase
             MembershipId = result.MembershipId,
             TenantRoles = result.TenantRoles,
             PlatformRoles = result.PlatformRoles,
-            Tenants = result.Tenants
+            Tenants = result.Tenants,
+            AccessToken = result.AccessToken,
+            ExpiresIn = result.ExpiresIn,
+            TokenType = result.TokenType
         });
     }
 
     /// <summary>
     /// Switches the active tenant for the current user session.
     /// </summary>
+    /// <remarks>
+    /// Returns a tenant-scoped JWT in <c>accessToken</c> for tenant API calls. Use the platform OIDC token as Bearer for this endpoint.
+    /// </remarks>
     [HttpPost("switch-tenant")]
     [ProducesResponseType(typeof(TenantContextResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

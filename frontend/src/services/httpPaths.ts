@@ -1,8 +1,6 @@
-import { env } from '../config/env'
+const versionPrefix = '/api/v1'
 
-const versionPrefix = `/v${env.apiVersion}`
-
-/** Paths versionados e well-known alinhados a `frontend/swagger.json`. */
+/** Paths aligned with Kyvo REST API `/api/v1/*`. */
 export const apiPaths = {
   versionPrefix,
   auth: `${versionPrefix}/auth`,
@@ -16,7 +14,6 @@ export const apiPaths = {
   identityProviders: `${versionPrefix}/IdentityProviders`,
   invites: `${versionPrefix}/invites`,
   wellKnown: '/.well-known',
-  /** OIDC (sem versão no path) */
   connectAuthorize: '/connect/authorize',
   connectToken: '/connect/token',
   connectLogout: '/connect/logout',

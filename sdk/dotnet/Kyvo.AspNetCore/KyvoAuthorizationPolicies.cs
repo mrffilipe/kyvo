@@ -6,12 +6,21 @@ public static class KyvoAuthorizationPolicies
 {
     public const string RequireTenant = "Kyvo.RequireTenant";
 
+    public const string RequireTenantToken = "Kyvo.RequireTenantToken";
+
     public const string RequireTenantAdmin = "Kyvo.RequireTenantAdmin";
 
     public static void AddKyvoPolicies(this AuthorizationOptions options)
     {
         options.AddPolicy(RequireTenant, policy =>
             policy.RequireAssertion(ctx => HasClaim(ctx.User, "tid")));
+
+        options.AddPolicy(RequireTenantToken, policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim("token_use", "tenant");
+            policy.RequireAssertion(ctx => HasClaim(ctx.User, "tid"));
+        });
 
         options.AddPolicy(RequireTenantAdmin, policy =>
             policy.RequireAssertion(ctx =>

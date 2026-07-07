@@ -6,7 +6,7 @@ import { FeedbackAlerts, FormSection, PageHeader, SectionCard } from '../compone
 import { kyvoClient } from '../config/kyvoClient'
 import { completeOnboarding } from '../services/crmApi'
 import { crmApiErrorMessage } from '../utils/crmErrors'
-import { clearOnboardingDraft, getOnboardingDraft, updateTokens } from '../utils/kyvoSession'
+import { clearOnboardingDraft, getOnboardingDraft } from '../utils/kyvoSession'
 import { PLANS } from '../types/crm'
 
 export function PaymentPage() {
@@ -38,10 +38,16 @@ export function PaymentPage() {
         paymentReference: `pay_mock_${Date.now()}`,
       })
 
-      if (result.tokens?.access_token) {
-        updateTokens(result.tokens)
-      } else if (result.requiresTokenRefresh) {
-        await kyvoClient.refreshAccessTokenWithTenant()
+      const ctx = result.idpTenantContext
+      if (ctx.accessToken) {
+        kyvoClient.session.saveTenantToken(
+          ctx.accessToken,
+          ctx.expiresIn ?? 900,
+          ctx.tenantId ?? undefined,
+          ctx.membershipId ?? undefined,
+        )
+      } else if (ctx.tenantId) {
+        await kyvoClient.switchTenant(ctx.tenantId)
       }
 
       clearOnboardingDraft()
@@ -70,7 +76,7 @@ export function PaymentPage() {
                 <strong>Plano:</strong> {plan?.name ?? draft.planCode} — {plan?.price}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                O BFF chama <code>Kyvo.Client.Auth.SubscribeAsync</code> e devolve tokens OIDC quando disponíveis.
+                O BFF chama <code>Kyvo.Client.Auth.SubscribeAsync</code> e devolve o tenant JWT (<code>accessToken</code>).
               </Typography>
             </Stack>
           </FormSection>

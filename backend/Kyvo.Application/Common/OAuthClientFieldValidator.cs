@@ -5,7 +5,7 @@ using Kyvo.Domain.Exceptions;
 
 namespace Kyvo.Application.Common;
 
-public static class ApplicationClientListFields
+public static class OAuthClientFieldValidator
 {
     public static List<string> ParseAndValidateRedirectUris(string raw)
     {

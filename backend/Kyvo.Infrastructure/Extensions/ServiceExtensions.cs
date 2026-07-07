@@ -10,7 +10,8 @@ using Kyvo.Infrastructure.Services.Invite;
 using Kyvo.Application.Ports.Identity;
 using Kyvo.Application.Ports.Oidc;
 using Kyvo.Infrastructure.Services.Identity;
-using Kyvo.Infrastructure.Services.Oidc;
+using Kyvo.Infrastructure.Oidc;
+using Kyvo.Infrastructure.Services.Certificates;
 using Kyvo.Infrastructure.Services.Security;
 using Kyvo.Infrastructure.Services.TenantResolutionCache;
 using Kyvo.Infrastructure.Services.TenantRoles;
@@ -35,7 +36,9 @@ public static class ServiceExtensions
         services.AddScoped<IEmailService, AwsSesEmailService>();
         services.AddSingleton<IInviteTokenProtector, InviteTokenProtector>();
         services.AddScoped<IInvitePolicy, InvitePolicy>();
-        services.AddScoped<IKyvoClaimsPrincipalFactory, KyvoClaimsPrincipalFactory>();
+        services.AddScoped<IOidcClaimsPrincipalFactory, OidcClaimsPrincipalFactory>();
+        services.AddScoped<ITenantAccessTokenIssuer, TenantAccessTokenIssuer>();
+        services.AddSingleton<SigningCertificateProvider>();
         services.AddScoped<IUserAccountService, UserAccountService>();
 
         return services;

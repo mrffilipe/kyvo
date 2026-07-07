@@ -1,4 +1,4 @@
-{
+﻿{
   "openapi": "3.0.1",
   "info": {
     "title": "Kyvo REST API",
@@ -6,7 +6,7 @@
     "version": "v1"
   },
   "paths": {
-    "/v{version}/Applications": {
+    "/api/v1/Applications": {
       "post": {
         "tags": [
           "Applications"
@@ -219,7 +219,7 @@
         }
       }
     },
-    "/v{version}/Applications/{applicationId}/clients": {
+    "/api/v1/Applications/{applicationId}/clients": {
       "post": {
         "tags": [
           "Applications"
@@ -337,7 +337,7 @@
         }
       }
     },
-    "/v{version}/Applications/{applicationId}/tenants/provision": {
+    "/api/v1/Applications/{applicationId}/tenants/provision": {
       "post": {
         "tags": [
           "Applications"
@@ -455,7 +455,7 @@
         }
       }
     },
-    "/v{version}/Applications/slugs/{slug}/availability": {
+    "/api/v1/Applications/slugs/{slug}/availability": {
       "get": {
         "tags": [
           "Applications"
@@ -553,7 +553,7 @@
         }
       }
     },
-    "/v{version}/Applications/{id}": {
+    "/api/v1/Applications/{id}": {
       "get": {
         "tags": [
           "Applications"
@@ -652,7 +652,7 @@
         }
       }
     },
-    "/v{version}/Applications/{id}/branding": {
+    "/api/v1/Applications/{id}/branding": {
       "get": {
         "tags": [
           "Applications"
@@ -860,7 +860,7 @@
         }
       }
     },
-    "/v{version}/Applications/{id}/branding/logo": {
+    "/api/v1/Applications/{id}/branding/logo": {
       "post": {
         "tags": [
           "Applications"
@@ -1069,7 +1069,7 @@
         }
       }
     },
-    "/v{version}/AuditLogs": {
+    "/api/v1/AuditLogs": {
       "get": {
         "tags": [
           "AuditLogs"
@@ -1213,7 +1213,7 @@
         }
       }
     },
-    "/v{version}/AuditLogs/filter-options": {
+    "/api/v1/AuditLogs/filter-options": {
       "get": {
         "tags": [
           "AuditLogs"
@@ -1334,7 +1334,7 @@
         }
       }
     },
-    "/v{version}/Auth/subscribe": {
+    "/api/v1/Auth/subscribe": {
       "post": {
         "tags": [
           "Auth"
@@ -1444,7 +1444,7 @@
         }
       }
     },
-    "/v{version}/Auth/switch-tenant": {
+    "/api/v1/Auth/switch-tenant": {
       "post": {
         "tags": [
           "Auth"
@@ -1553,7 +1553,7 @@
         }
       }
     },
-    "/v{version}/Auth/sessions": {
+    "/api/v1/Auth/sessions": {
       "get": {
         "tags": [
           "Auth"
@@ -1646,7 +1646,7 @@
         }
       }
     },
-    "/v{version}/Auth/account": {
+    "/api/v1/Auth/account": {
       "delete": {
         "tags": [
           "Auth"
@@ -1679,7 +1679,7 @@
         }
       }
     },
-    "/v{version}/Auth/sessions/{sessionId}": {
+    "/api/v1/Auth/sessions/{sessionId}": {
       "delete": {
         "tags": [
           "Auth"
@@ -1771,7 +1771,7 @@
         }
       }
     },
-    "/v{version}/IdentityProviders": {
+    "/api/v1/IdentityProviders": {
       "post": {
         "tags": [
           "IdentityProviders"
@@ -1971,7 +1971,7 @@
         }
       }
     },
-    "/v{version}/IdentityProviders/aliases/{alias}/availability": {
+    "/api/v1/IdentityProviders/aliases/{alias}/availability": {
       "get": {
         "tags": [
           "IdentityProviders"
@@ -2069,7 +2069,7 @@
         }
       }
     },
-    "/v{version}/IdentityProviders/{id}": {
+    "/api/v1/IdentityProviders/{id}": {
       "get": {
         "tags": [
           "IdentityProviders"
@@ -2277,7 +2277,7 @@
         }
       }
     },
-    "/v{version}/IdentityProviders/{id}/enable": {
+    "/api/v1/IdentityProviders/{id}/enable": {
       "post": {
         "tags": [
           "IdentityProviders"
@@ -2369,7 +2369,7 @@
         }
       }
     },
-    "/v{version}/IdentityProviders/{id}/disable": {
+    "/api/v1/IdentityProviders/{id}/disable": {
       "post": {
         "tags": [
           "IdentityProviders"
@@ -2461,7 +2461,7 @@
         }
       }
     },
-    "/v{version}/tenants/{tenantId}/memberships": {
+    "/api/v1/tenants/{tenantId}/memberships": {
       "post": {
         "tags": [
           "Memberships"
@@ -2700,7 +2700,7 @@
         }
       }
     },
-    "/v{version}/Memberships/{id}": {
+    "/api/v1/Memberships/{id}": {
       "patch": {
         "tags": [
           "Memberships"
@@ -2901,7 +2901,7 @@
         }
       }
     },
-    "/v{version}/Platform/status": {
+    "/api/v1/Platform/status": {
       "get": {
         "tags": [
           "Platform"
@@ -2991,7 +2991,7 @@
         }
       }
     },
-    "/v{version}/tenants/{tenantId}/roles": {
+    "/api/v1/tenants/{tenantId}/roles": {
       "post": {
         "tags": [
           "TenantRoles"
@@ -3237,7 +3237,7 @@
         }
       }
     },
-    "/v{version}/TenantRoles/{id}": {
+    "/api/v1/TenantRoles/{id}": {
       "patch": {
         "tags": [
           "TenantRoles"
@@ -3348,7 +3348,7 @@
         }
       }
     },
-    "/v{version}/Tenants": {
+    "/api/v1/Tenants": {
       "post": {
         "tags": [
           "Tenants"
@@ -3586,7 +3586,7 @@
         }
       }
     },
-    "/v{version}/Tenants/{id}/invites": {
+    "/api/v1/Tenants/{id}/invites": {
       "post": {
         "tags": [
           "Tenants"
@@ -3769,7 +3769,7 @@
         }
       }
     },
-    "/v{version}/Invites/{id}": {
+    "/api/v1/Invites/{id}": {
       "delete": {
         "tags": [
           "Invites"
@@ -3811,7 +3811,7 @@
         }
       }
     },
-    "/v{version}/invites/accept": {
+    "/api/v1/invites/accept": {
       "post": {
         "tags": [
           "Tenants"
@@ -3920,7 +3920,7 @@
         }
       }
     },
-    "/v{version}/Tenants/keys/{key}/availability": {
+    "/api/v1/Tenants/keys/{key}/availability": {
       "get": {
         "tags": [
           "Tenants"
@@ -4018,7 +4018,7 @@
         }
       }
     },
-    "/v{version}/Tenants/{id}": {
+    "/api/v1/Tenants/{id}": {
       "get": {
         "tags": [
           "Tenants"
@@ -4226,7 +4226,7 @@
         }
       }
     },
-    "/v{version}/Users": {
+    "/api/v1/Users": {
       "get": {
         "tags": [
           "Users"
@@ -4340,7 +4340,7 @@
         }
       }
     },
-    "/v{version}/Users/me": {
+    "/api/v1/Users/me": {
       "get": {
         "tags": [
           "Users"
@@ -4530,7 +4530,7 @@
         }
       }
     },
-    "/v{version}/Users/me/memberships": {
+    "/api/v1/Users/me/memberships": {
       "get": {
         "tags": [
           "Users"
@@ -5001,11 +5001,6 @@
             "nullable": true
           },
           "membershipId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "clientId": {
             "type": "string",
             "format": "uuid",
             "nullable": true

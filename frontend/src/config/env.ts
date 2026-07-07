@@ -6,7 +6,6 @@
 // in the browser the SPA uses window.location.origin (same public host as the API via external proxy).
 const ENV_DEFAULTS = {
   VITE_API_BASE_URL: 'http://localhost:5000',
-  VITE_API_VERSION: '1.0',
   VITE_API_TIMEOUT_MS: '30000',
   VITE_OAUTH_CLIENT_ID: 'platform-admin-web',
   VITE_OAUTH_REDIRECT_URI: 'http://localhost:3000/auth/callback',
@@ -71,7 +70,6 @@ function getPositiveNumberFromEnv(name: 'VITE_API_TIMEOUT_MS'): number {
 
 export const env = {
   apiBaseUrl: resolveApiBaseUrl(),
-  apiVersion: getEnvWithDefault('VITE_API_VERSION'),
   apiTimeoutMs: getPositiveNumberFromEnv('VITE_API_TIMEOUT_MS'),
   oauthClientId: getEnvWithDefault('VITE_OAUTH_CLIENT_ID'),
   oauthRedirectUri: resolveOAuthRedirectUri(),

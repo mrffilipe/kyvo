@@ -3,6 +3,10 @@ export interface KyvoAccessTokenClaims {
   tid?: string
   mid?: string
   email?: string
+  /** OAuth client_id issued with the access token. */
+  clientId?: string
+  /** `tenant` for tenant-scoped JWTs issued by switch-tenant. */
+  tokenUse?: string
   trole: string[]
   prole: string[]
 }
@@ -29,6 +33,8 @@ export function parseAccessTokenClaims(accessToken: string): KyvoAccessTokenClai
       tid: typeof payload.tid === 'string' ? payload.tid : undefined,
       mid: typeof payload.mid === 'string' ? payload.mid : undefined,
       email: typeof payload.email === 'string' ? payload.email : undefined,
+      clientId: typeof payload.client_id === 'string' ? payload.client_id : undefined,
+      tokenUse: typeof payload.token_use === 'string' ? payload.token_use : undefined,
       trole,
       prole,
     }
@@ -44,7 +50,8 @@ function normalizeRoleClaim(value: unknown): string[] {
 }
 
 export function hasTenant(accessToken: string): boolean {
-  return Boolean(parseAccessTokenClaims(accessToken).tid)
+  const claims = parseAccessTokenClaims(accessToken)
+  return Boolean(claims.tid) || claims.tokenUse === 'tenant'
 }
 
 export function requiresOnboarding(accessToken: string): boolean {

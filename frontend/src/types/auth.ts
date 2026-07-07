@@ -18,7 +18,6 @@ export interface AuthSession {
   sessionId: string
   tenantId?: string | null
   membershipId?: string | null
-  clientId?: string | null
   status: SessionStatus
   userAgent?: string | null
   ipAddress?: string | null

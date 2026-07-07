@@ -1,4 +1,4 @@
-# Kyvo — Backend
+﻿# Kyvo — Backend
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -42,13 +42,23 @@ POST /account/signin (email + senha)
   → Cookie de aplicação do ASP.NET Core Identity + linha AuthSession (claim sid)
 
 GET /connect/authorize (PKCE)
-  → OpenIddict valida o cookie Identity, carrega AuthSession, monta claims via IKyvoClaimsPrincipalFactory e emite authorization_code
+  → Cookie Identity + AuthSession; consentimento explícito quando necessário (/connect/consent)
+  → OpenIddict emite authorization_code
 
 POST /connect/token (code + verifier)
   → JWT RS256 (access_token + id_token + refresh_token)
 
 Bearer JWT → controllers v1 protegidos
 ```
+
+**Divisão de responsabilidades:**
+
+| Camada | Responsabilidade |
+|--------|------------------|
+| ASP.NET Identity (`ApplicationUser`) | Senhas, lockout, logins externos, cookie do navegador |
+| `AuthSession` | Contexto de tenant ativo (`tid`/`mid`), listagem/revogação de sessões, claim `sid` |
+| OpenIddict (`OpenIddictApplications` via `IOAuthClientManager`) | Clients OAuth, tokens, PKCE, autorizações de consentimento |
+| `Application` / `Tenant` | Produto SaaS e isolamento por organização (não duplicam o OpenIddict) |
 
 O `User` de domínio (perfil/ciclo de vida) é separado do `ApplicationUser` na Infrastructure (`IdentityUser<Guid>`, mesma tabela `users`). A Application usa `IUserAccountService` para senha/logins; o host da API usa `UserManager<ApplicationUser>` / `SignInManager<ApplicationUser>` para sign-in por cookie.
 
@@ -183,7 +193,7 @@ Imagem de produção: [`Dockerfile`](./Dockerfile) → `mrffilipe/kyvo-api`. **D
 | Chave JWT (produção) | `Jwt__SigningKeyPemBase64` — PEM em Base64 (sem montar arquivo) |
 | Chave JWT (dev local) | `Jwt__SigningKeyPath` — caminho do PEM (ver abaixo); não commitado no appsettings |
 | Data Protection | Volume em `/app/keys/data-protection` |
-| Health | `GET /v1.0/platform/status` na porta `8080` |
+| Health | `GET /api/v1/platform/status` na porta `8080` |
 | HTTPS | Forwarded Headers para TLS no proxy reverso externo |
 
 ### Chave RSA para OIDC
@@ -275,7 +285,7 @@ Configure as credenciais antes de iniciar a API (`Bootstrap__*` em `backend/.env
 Verifique o status:
 
 ```bash
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 # { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
@@ -288,7 +298,7 @@ curl http://localhost:5000/v1.0/platform/status
 ### Platform
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/v1.0/platform/status` | Público | Status e se requer bootstrap |
+| GET | `/api/v1/platform/status` | Público | Status e se requer bootstrap |
 
 ### Account / OIDC
 | Método | Path | Auth | Descrição |
@@ -310,50 +320,50 @@ curl http://localhost:5000/v1.0/platform/status
 ### Auth (JWT)
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| POST | `/v1.0/auth/subscribe` | JWT | Onboarding SaaS (criar tenant via app OAuth) |
-| POST | `/v1.0/auth/switch-tenant` | JWT | Mudar tenant ativo na sessão |
-| GET | `/v1.0/auth/sessions` | JWT | Listar sessões ativas |
-| DELETE | `/v1.0/auth/sessions/{id}` | JWT | Revogar sessão |
-| DELETE | `/v1.0/auth/account` | JWT + contexto de tenant | Excluir conta no tenant da aplicação atual (owner faz hard delete do tenant; demais usuários apenas revogam membership) |
+| POST | `/api/v1/auth/subscribe` | JWT | Onboarding SaaS (criar tenant via app OAuth) |
+| POST | `/api/v1/auth/switch-tenant` | JWT | Mudar tenant ativo na sessão |
+| GET | `/api/v1/auth/sessions` | JWT | Listar sessões ativas |
+| DELETE | `/api/v1/auth/sessions/{id}` | JWT | Revogar sessão |
+| DELETE | `/api/v1/auth/account` | JWT + contexto de tenant | Excluir conta no tenant da aplicação atual (owner faz hard delete do tenant; demais usuários apenas revogam membership) |
 
-**Metadados do tenant:** use `PATCH /v1.0/Tenants/{id}` para atualizar o nome após `POST /v1.0/auth/subscribe` (`tenantKey` é imutável).
+**Metadados do tenant:** use `PATCH /api/v1/Tenants/{id}` para atualizar o nome após `POST /api/v1/auth/subscribe` (`tenantKey` é imutável).
 
 ### Users
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/v1.0/Users` | JWT + admin do tenant ou plat_admin | Buscar usuários por email ou nome (picker) |
-| GET | `/v1.0/Users/me` | JWT | Perfil do usuário atual |
-| PATCH | `/v1.0/Users/me` | JWT | Atualizar perfil |
-| GET | `/v1.0/Users/me/memberships` | JWT | Memberships do usuário |
+| GET | `/api/v1/Users` | JWT + admin do tenant ou plat_admin | Buscar usuários por email ou nome (picker) |
+| GET | `/api/v1/Users/me` | JWT | Perfil do usuário atual |
+| PATCH | `/api/v1/Users/me` | JWT | Atualizar perfil |
+| GET | `/api/v1/Users/me/memberships` | JWT | Memberships do usuário |
 
 ### Identity Providers
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/v1.0/IdentityProviders` | JWT + plat_admin | Listar IdPs |
-| GET | `/v1.0/IdentityProviders/{id}` | JWT + plat_admin | Obter IdP por id |
-| GET | `/v1.0/IdentityProviders/aliases/{alias}/availability` | JWT + plat_admin | Verificar disponibilidade do alias |
-| POST | `/v1.0/IdentityProviders` | JWT + plat_admin | Adicionar IdP (campos sensíveis do ConfigJson são cifrados ao salvar) |
-| PATCH | `/v1.0/IdentityProviders/{id}` | JWT + plat_admin | Atualizar IdP |
-| POST | `/v1.0/IdentityProviders/{id}/enable` | JWT + plat_admin | Habilitar |
-| POST | `/v1.0/IdentityProviders/{id}/disable` | JWT + plat_admin | Desabilitar |
+| GET | `/api/v1/IdentityProviders` | JWT + plat_admin | Listar IdPs |
+| GET | `/api/v1/IdentityProviders/{id}` | JWT + plat_admin | Obter IdP por id |
+| GET | `/api/v1/IdentityProviders/aliases/{alias}/availability` | JWT + plat_admin | Verificar disponibilidade do alias |
+| POST | `/api/v1/IdentityProviders` | JWT + plat_admin | Adicionar IdP (campos sensíveis do ConfigJson são cifrados ao salvar) |
+| PATCH | `/api/v1/IdentityProviders/{id}` | JWT + plat_admin | Atualizar IdP |
+| POST | `/api/v1/IdentityProviders/{id}/enable` | JWT + plat_admin | Habilitar |
+| POST | `/api/v1/IdentityProviders/{id}/disable` | JWT + plat_admin | Desabilitar |
 
 ### Applications (admin de plataforma)
 
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/v1.0/Applications` | JWT + plat_admin | Listar applications |
-| GET | `/v1.0/Applications/slugs/{slug}/availability` | JWT + plat_admin | Verificar disponibilidade do slug |
-| GET | `/v1.0/Applications/{id}/branding` | JWT + plat_admin | Branding da tela de login |
-| PATCH | `/v1.0/Applications/{id}/branding` | JWT + plat_admin | Atualizar cores e textos do hero |
-| POST | `/v1.0/Applications/{id}/branding/logo` | JWT + plat_admin | Enviar logo de login |
-| DELETE | `/v1.0/Applications/{id}/branding/logo` | JWT + plat_admin | Remover logo de login |
+| GET | `/api/v1/Applications` | JWT + plat_admin | Listar applications |
+| GET | `/api/v1/Applications/slugs/{slug}/availability` | JWT + plat_admin | Verificar disponibilidade do slug |
+| GET | `/api/v1/Applications/{id}/branding` | JWT + plat_admin | Branding da tela de login |
+| PATCH | `/api/v1/Applications/{id}/branding` | JWT + plat_admin | Atualizar cores e textos do hero |
+| POST | `/api/v1/Applications/{id}/branding/logo` | JWT + plat_admin | Enviar logo de login |
+| DELETE | `/api/v1/Applications/{id}/branding/logo` | JWT + plat_admin | Remover logo de login |
 
 ### Audit logs
 
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/v1.0/AuditLogs` | JWT + contexto de tenant | Listar audit logs (filtrado) |
-| GET | `/v1.0/AuditLogs/filter-options` | JWT + contexto de tenant | Ações/usuários distintos para filtros |
+| GET | `/api/v1/AuditLogs` | JWT + contexto de tenant | Listar audit logs (filtrado) |
+| GET | `/api/v1/AuditLogs/filter-options` | JWT + contexto de tenant | Ações/usuários distintos para filtros |
 
 #### Identity Providers federados
 
@@ -377,11 +387,11 @@ Registre redirect URIs no provedor upstream como `https://<host-kyvo>/callback/l
 
 | Método | Path | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/v1.0/Tenants/keys/{key}/availability` | JWT | Verificar disponibilidade da tenant key |
-| POST | `/v1.0/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Enviar convite; persiste só após SES ok; retorna `id` + `acceptPath` |
-| GET | `/v1.0/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Listar convites (`acceptPath` em pendentes com token cifrado) |
-| DELETE | `/v1.0/Invites/{id}` | JWT (owner/admin/plat_admin) | Revogar convite pendente |
-| POST | `/v1.0/invites/accept` | JWT | Aceitar convite por token |
+| GET | `/api/v1/Tenants/keys/{key}/availability` | JWT | Verificar disponibilidade da tenant key |
+| POST | `/api/v1/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Enviar convite; persiste só após SES ok; retorna `id` + `acceptPath` |
+| GET | `/api/v1/Tenants/{id}/invites` | JWT (owner/admin/plat_admin) | Listar convites (`acceptPath` em pendentes com token cifrado) |
+| DELETE | `/api/v1/Invites/{id}` | JWT (owner/admin/plat_admin) | Revogar convite pendente |
+| POST | `/api/v1/invites/accept` | JWT | Aceitar convite por token |
 
 Tokens são armazenados com hash (`token_hash`) e cifrados em repouso (`encrypted_token` via Data Protection) para permitir copiar links de convites pendentes. Convites legados sem `encrypted_token` listam com `acceptPath: null`.
 
@@ -409,10 +419,10 @@ Memberships e demais CRUD de applications: ver `frontend/swagger.json`.
 | `Tenant` | `tenants` | Organização / espaço isolado |
 | `TenantRole` | `tenant_roles` | Papéis configuráveis por tenant |
 | `TenantMembership` | `tenant_memberships` | Vínculo usuário ↔ tenant |
-| `Application` | `applications` | Aplicação OAuth registrada |
-| `ApplicationClient` | `application_clients` | Client OAuth (public/confidential) |
+| `Application` | `applications` | Aplicação SaaS registrada (branding, slug) |
+| `KyvoOpenIddictApplication` | `OpenIddictApplications` | Client OAuth (fonte única; gerenciado via `IOAuthClientManager`) |
 | `ApplicationTenant` | `application_tenants` | Vínculo app ↔ tenant (provisioning) |
-| `AuthSession` | `auth_sessions` | Sessão ativa (vincula cookie a JWT) |
+| `AuthSession` | `auth_sessions` | Sessão de login com contexto de tenant (`sid`/`tid`/`mid`) |
 | `AuditLog` | `audit_logs` | Registro de eventos por tenant |
 | `TenantInvite` | `tenant_invites` | Convite de membro para tenant |
 

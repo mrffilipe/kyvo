@@ -12,7 +12,7 @@ namespace Kyvo.API.Controllers;
 /// <summary>
 /// Tenant-scoped audit log queries (tenant owners and administrators).
 /// </summary>
-public sealed class AuditLogsController : V1ApiControllerBase
+public sealed class AuditLogsController : TenantV1ApiControllerBase
 {
     private readonly IUserScope _userScope;
     private readonly IListAuditLogsQuery _listAuditLogsQuery;

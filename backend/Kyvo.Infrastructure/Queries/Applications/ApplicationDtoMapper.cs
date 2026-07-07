@@ -1,3 +1,4 @@
+using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Queries.Applications.Dtos;
 using Kyvo.Application.Queries.Applications.GetApplicationBranding;
 
@@ -5,15 +6,15 @@ namespace Kyvo.Infrastructure.Queries.Applications;
 
 internal static class ApplicationDtoMapper
 {
-    public static ApplicationClientSummaryDto MapClientSummary(Domain.Entities.ApplicationClient client) =>
+    public static ApplicationClientSummaryDto MapClientSummary(OAuthClientInfo client) =>
         new()
         {
             Id = client.Id,
             ClientId = client.ClientId,
             ClientType = client.ClientType,
-            RedirectUris = (IReadOnlyList<string>)client.RedirectUris,
-            PostLogoutRedirectUris = (IReadOnlyList<string>)client.PostLogoutRedirectUris,
-            AllowedScopes = (IReadOnlyList<string>)client.AllowedScopes,
+            RedirectUris = client.RedirectUris,
+            PostLogoutRedirectUris = client.PostLogoutRedirectUris,
+            AllowedScopes = client.AllowedScopes,
             AccessTokenTtlSeconds = client.AccessTokenTtlSeconds,
             IsSystem = client.IsSystem
         };

@@ -14,7 +14,7 @@ namespace Kyvo.API.Controllers;
 /// <summary>
 /// Custom tenant role definitions (RBAC keys within a tenant).
 /// </summary>
-public sealed class TenantRolesController : V1ApiControllerBase
+public sealed class TenantRolesController : TenantV1ApiControllerBase
 {
     private readonly ICreateTenantRoleUseCase _createTenantRoleUseCase;
     private readonly IListTenantRolesQuery _listTenantRolesQuery;

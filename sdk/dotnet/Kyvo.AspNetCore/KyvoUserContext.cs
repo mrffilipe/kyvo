@@ -35,6 +35,15 @@ public sealed class KyvoUserContext : IKyvoUserContext
         User?.FindAll("prole").Select(c => c.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
         ?? [];
 
+    public string? OAuthClientId =>
+        User?.FindFirst("client_id")?.Value;
+
+    public string? TokenUse =>
+        User?.FindFirst("token_use")?.Value;
+
+    public bool IsTenantToken =>
+        string.Equals(TokenUse, "tenant", StringComparison.OrdinalIgnoreCase);
+
     public bool HasTenantRole(params string[] roles) =>
         roles.Length == 0 || roles.Any(r => TenantRoles.Contains(r, StringComparer.OrdinalIgnoreCase));
 

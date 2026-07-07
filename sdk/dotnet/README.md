@@ -1,4 +1,4 @@
-# Kyvo .NET SDK
+﻿# Kyvo .NET SDK
 
 The Kyvo .NET SDK helps you build **product APIs** (BFFs and backend services) that authenticate users via Kyvo OIDC and call the Kyvo REST API v1. It is not intended for the Kyvo admin console.
 
@@ -28,10 +28,10 @@ Browser SPA (OIDC PKCE)
 ## Install
 
 ```bash
-dotnet add package Kyvo.AspNetCore --version 2.0.0
-dotnet add package Kyvo.Client --version 2.0.0
+dotnet add package Kyvo.AspNetCore --version 3.0.0
+dotnet add package Kyvo.Client --version 3.0.0
 # optional EF multi-tenant:
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 2.0.0
+dotnet add package Kyvo.AspNetCore.TenancyKit --version 3.0.0
 ```
 
 ## Kyvo.AspNetCore
@@ -58,6 +58,8 @@ app.UseAuthorization();
 
 `IKyvoUserContext` exposes the authenticated user id, tenant id (`tid`), membership id (`mid`), tenant roles (`trole`), and platform roles (`prole`) from the access token.
 
+Use `[Authorize(Policy = KyvoAuthorizationPolicies.RequireTenantToken)]` on endpoints that require a tenant JWT (`token_use=tenant`). Platform OIDC tokens are valid for user profile and tenant listing; tenant-scoped APIs (audit logs, invites, memberships) need a tenant token from switch-tenant or subscribe.
+
 Configuration (`appsettings.json`):
 
 ```json
@@ -74,13 +76,17 @@ Register the typed client and call Kyvo from your BFF with the user's access tok
 
 ```csharp
 builder.Services.AddKyvoClient(builder.Configuration);
-// Kyvo:Authority, optional Kyvo:ApiVersion (default 1.0)
+// Kyvo:Authority — REST paths use /api/v1
 
 // In a controller or minimal API handler:
-var token = KyvoClientServiceCollectionExtensions.GetUserAccessToken(httpContextAccessor);
+var platformToken = httpContextAccessor.GetPlatformAccessToken();
 var result = await kyvo.Auth.SubscribeAsync(
-    token!,
+    platformToken!,
     new SubscribeTenantRequest("Acme", "acme"));
+// result.Context.AccessToken is the tenant JWT for tenant-scoped APIs
+
+var tenantToken = httpContextAccessor.GetTenantAccessToken();
+var logs = await kyvo.AuditLogs.ListAsync(tenantToken!, cancellationToken);
 ```
 
 `POST /auth/subscribe` is intentionally **server-only** — browsers should not call it directly. Use `Kyvo.Client` from your BFF.

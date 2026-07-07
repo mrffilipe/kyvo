@@ -43,7 +43,6 @@ public sealed class AccountSignInService : IAccountSignInService
 
         var session = new AuthSession(
             login.UserId,
-            clientId: null,
             activeMembership?.TenantId,
             activeMembership?.MembershipId,
             DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenDays),

@@ -3,24 +3,18 @@ using Kyvo.Application.Exceptions;
 using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Domain.Constants;
-using Kyvo.Domain.Entities;
 using Kyvo.Domain.Repositories;
 
 namespace Kyvo.Application.UseCases.Applications.CreateApplicationClient;
 
 public sealed class CreateApplicationClientUseCase : ICreateApplicationClientUseCase
 {
-    private readonly IApplicationClientRepository _clients;
-    private readonly IOpenIddictApplicationSyncService _openIddictSync;
+    private readonly IOAuthClientManager _oauthClients;
     private readonly IUnitOfWork _unitOfWork;
 
-    public CreateApplicationClientUseCase(
-        IApplicationClientRepository clients,
-        IOpenIddictApplicationSyncService openIddictSync,
-        IUnitOfWork unitOfWork)
+    public CreateApplicationClientUseCase(IOAuthClientManager oauthClients, IUnitOfWork unitOfWork)
     {
-        _clients = clients;
-        _openIddictSync = openIddictSync;
+        _oauthClients = oauthClients;
         _unitOfWork = unitOfWork;
     }
 
@@ -31,19 +25,21 @@ public sealed class CreateApplicationClientUseCase : ICreateApplicationClientUse
             throw new ForbiddenApplicationException(ApplicationErrorMessages.Auth.USER_HAS_NO_TENANT_ACCESS);
         }
 
-        var client = new ApplicationClient(
-            request.ApplicationId,
-            request.ClientId,
-            request.ClientType,
-            ApplicationClientListFields.ParseAndValidateRedirectUris(request.RedirectUris),
-            ApplicationClientListFields.ParseAndValidateAllowedScopes(request.AllowedScopes, request.AllowedScopesList),
-            request.AccessTokenTtlSeconds,
-            ApplicationClientListFields.ParseAndValidatePostLogoutRedirectUris(request.PostLogoutRedirectUris));
+        var id = await _oauthClients.CreateAsync(new CreateOAuthClientRequest
+        {
+            ApplicationId = request.ApplicationId,
+            ClientId = request.ClientId,
+            ClientType = request.ClientType,
+            RedirectUris = OAuthClientFieldValidator.ParseAndValidateRedirectUris(request.RedirectUris),
+            PostLogoutRedirectUris = OAuthClientFieldValidator.ParseAndValidatePostLogoutRedirectUris(request.PostLogoutRedirectUris),
+            AllowedScopes = OAuthClientFieldValidator.ParseAndValidateAllowedScopes(request.AllowedScopes, request.AllowedScopesList),
+            AccessTokenTtlSeconds = request.AccessTokenTtlSeconds,
+            ClientSecret = request.ClientSecret,
+            IsSystem = false,
+            RequireExplicitConsent = true
+        }, ct);
 
-        await _clients.AddAsync(client, ct);
         await _unitOfWork.SaveChangesAsync(ct);
-
-        await _openIddictSync.SyncAsync(client, request.ClientSecret, ct);
-        return client.Id;
+        return id;
     }
 }

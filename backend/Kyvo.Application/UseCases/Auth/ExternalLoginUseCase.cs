@@ -58,6 +58,11 @@ public sealed class ExternalLoginUseCase : IExternalLoginUseCase
             throw new DomainBusinessRuleException(DomainErrorMessages.User.USER_NOT_FOUND);
         }
 
+        return await BuildResultForUserAsync(user, ct);
+    }
+
+    public async Task<ExternalLoginResult> BuildResultForUserAsync(User user, CancellationToken ct = default)
+    {
         var memberships = await _memberships.ListByUserIdWithTenantAndRolesAsync(user.Id, ct);
         var platformRoleAssignments = await _userPlatformRoles.ListByUserIdAsync(user.Id, ct);
         var platformRoles = platformRoleAssignments.Select(x => x.Role.Key).ToList();

@@ -58,7 +58,7 @@ public sealed class OnboardingController : ControllerBase
             return Conflict(new { message = "User already completed onboarding.", subscription = existing });
         }
 
-        var accessToken = _httpContextAccessor.GetUserAccessToken();
+        var accessToken = _httpContextAccessor.GetPlatformAccessToken();
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             return Unauthorized(new { message = "Bearer access token required." });
@@ -114,8 +114,8 @@ public sealed class OnboardingController : ControllerBase
             subscription,
             idpContext,
             Tokens: null,
-            RequiresTokenRefresh: true,
-            Message: "Onboarding complete. Refresh OIDC tokens to receive tid/mid claims."));
+            RequiresTokenRefresh: false,
+            Message: "Onboarding complete. Use the returned tenant access token for tenant-scoped API calls."));
     }
 
     public sealed record CompleteOnboardingBody(

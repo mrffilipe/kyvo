@@ -1,4 +1,4 @@
-# Publicar SDKs Kyvo — mantenedores
+﻿# Publicar SDKs Kyvo — mantenedores
 
 [English](./SDK_PUBLISH.md) | [Português](./SDK_PUBLISH.pt-BR.md)
 
@@ -118,7 +118,7 @@ cd sdk/typescript && npm ci && npm test
 ### 2. NuGet
 
 ```bash
-VERSION=2.0.0
+VERSION=3.0.0
 OUT=./artifacts/nupkgs
 mkdir -p "$OUT"
 
@@ -138,7 +138,7 @@ Empacote **Kyvo.AspNetCore** primeiro; `Kyvo.Client` e `Kyvo.AspNetCore.TenancyK
 
 ```bash
 cd sdk/typescript/@kyvo/client
-npm version 2.0.0 --no-git-tag-version --allow-same-version
+npm version 3.0.0 --no-git-tag-version --allow-same-version
 npm run build
 npm publish --access public
 ```
@@ -158,9 +158,9 @@ npm install @kyvo-client/client@2.0.0
 ### .NET
 
 ```bash
-dotnet add package Kyvo.Client --version 2.0.0
-dotnet add package Kyvo.AspNetCore --version 2.0.0
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 2.0.0
+dotnet add package Kyvo.Client --version 3.0.0
+dotnet add package Kyvo.AspNetCore --version 3.0.0
+dotnet add package Kyvo.AspNetCore.TenancyKit --version 3.0.0
 ```
 
 ---

@@ -10,10 +10,10 @@ import { createTenantRolesResource } from './resources/tenantRolesResource.js'
 import { createAuditLogsResource } from './resources/auditLogsResource.js'
 import { SessionManager } from './session/sessionManager.js'
 import { createMemoryStorage } from './session/memoryStorage.js'
-import { hasTenant } from './claims/parseClaims.js'
-import type { KyvoClientConfig, OidcTokenResponse } from './types.js'
+import type { KyvoClientConfig } from './types.js'
+import type { TenantContextResult } from './types/api.js'
 
-const DEFAULT_SCOPES = 'openid profile email offline_access'
+const DEFAULT_SCOPES = 'openid profile email offline_access kyvo_api'
 
 export interface KyvoClient {
   oidc: OidcClient
@@ -26,16 +26,19 @@ export interface KyvoClient {
   tenantRoles: ReturnType<typeof createTenantRolesResource>
   auditLogs: ReturnType<typeof createAuditLogsResource>
 
+  /** Tenant access token when active; otherwise platform OIDC token. */
   getAccessToken(): string | null
 
-  /** Refresh until JWT contains tid (post-subscribe / switch-tenant). */
-  refreshAccessTokenWithTenant(): Promise<OidcTokenResponse>
+  /**
+   * Two-step auth: exchange base OIDC token for a tenant-scoped JWT.
+   * Saves the tenant token in session automatically.
+   */
+  switchTenant(tenantId: string): Promise<TenantContextResult>
 }
 
 export function createKyvoClient(config: KyvoClientConfig): KyvoClient {
-  const apiVersion = config.apiVersion ?? '1.0'
   const authority = config.authority.replace(/\/$/, '')
-  const paths = createApiPaths(apiVersion)
+  const paths = createApiPaths()
 
   const sessionStorage = config.oidc.storage ?? (
     typeof globalThis !== 'undefined' && 'localStorage' in globalThis
@@ -59,31 +62,20 @@ export function createKyvoClient(config: KyvoClientConfig): KyvoClient {
   })
 
   const http = createHttpClientFromSession(authority, session, (rt) => oidc.refresh(rt))
+  const auth = createAuthResource(http, paths, session)
 
   const client: KyvoClient = {
     oidc,
     session,
     claims,
-    auth: createAuthResource(http, paths),
+    auth,
     users: createUsersResource(http, paths),
     tenants: createTenantsResource(http, paths),
     memberships: createMembershipsResource(http, paths),
     tenantRoles: createTenantRolesResource(http, paths),
     auditLogs: createAuditLogsResource(http, paths),
-    getAccessToken: () => session.getAccessToken(),
-
-    async refreshAccessTokenWithTenant() {
-      const current = session.getSession()
-      if (!current?.refreshToken) {
-        throw new Error('Refresh token missing. Ensure offline_access scope and sign in again.')
-      }
-      const tokens = await oidc.refresh(current.refreshToken)
-      session.updateAccessToken(tokens)
-      if (!hasTenant(tokens.access_token)) {
-        throw new Error('Token still missing tid. Complete onboarding or sign in again.')
-      }
-      return tokens
-    },
+    getAccessToken: () => session.getAccessToken() ?? session.getPlatformAccessToken(),
+    switchTenant: (tenantId) => auth.switchTenant(tenantId),
   }
 
   return client

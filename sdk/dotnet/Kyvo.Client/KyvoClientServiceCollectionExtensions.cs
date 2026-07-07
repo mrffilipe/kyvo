@@ -38,9 +38,43 @@ public static class KyvoClientServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Forwards the Bearer token from the current HTTP request to Kyvo API calls.
+    /// Bearer token from the current request (platform or tenant).
     /// </summary>
-    public static string? GetUserAccessToken(this IHttpContextAccessor accessor)
+    public static string? GetUserAccessToken(this IHttpContextAccessor accessor) =>
+        accessor.GetBearerToken();
+
+    /// <summary>
+    /// Platform OIDC access token from the Authorization header.
+    /// </summary>
+    public static string? GetPlatformAccessToken(this IHttpContextAccessor accessor)
+    {
+        var token = accessor.GetBearerToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
+        var tokenUse = KyvoTokenParser.TryGetTokenUse(token);
+        return string.Equals(tokenUse, "tenant", StringComparison.OrdinalIgnoreCase) ? null : token;
+    }
+
+    /// <summary>
+    /// Tenant-scoped JWT (<c>token_use=tenant</c>) from the Authorization header.
+    /// </summary>
+    public static string? GetTenantAccessToken(this IHttpContextAccessor accessor)
+    {
+        var token = accessor.GetBearerToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
+        return string.Equals(KyvoTokenParser.TryGetTokenUse(token), "tenant", StringComparison.OrdinalIgnoreCase)
+            ? token
+            : null;
+    }
+
+    private static string? GetBearerToken(this IHttpContextAccessor accessor)
     {
         var header = accessor.HttpContext?.Request.Headers.Authorization.ToString();
         if (string.IsNullOrWhiteSpace(header)

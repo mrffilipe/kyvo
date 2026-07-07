@@ -1,6 +1,6 @@
 {
   "name": "@kyvo-client/client",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Kyvo product SDK — OIDC (PKCE), session, JWT claims, REST v1 for browser SPAs",
   "license": "MIT",
   "author": "Kyvo",

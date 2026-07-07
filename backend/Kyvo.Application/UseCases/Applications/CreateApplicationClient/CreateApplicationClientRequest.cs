@@ -8,9 +8,8 @@ public sealed record CreateApplicationClientRequest
     public required string ClientId { get; init; }
 
     /// <summary>
-    /// Plaintext secret for confidential clients (null for public/PKCE clients). Hashed and stored by
-    /// OpenIddict itself (<c>OpenIddictApplications</c>) via <c>IOpenIddictApplicationSyncService</c>;
-    /// Kyvo's own <c>ApplicationClient</c> row no longer stores any secret material.
+    /// Plaintext secret for confidential clients (null for public/PKCE clients). Stored by OpenIddict in
+    /// <c>OpenIddictApplications</c>.
     /// </summary>
     public string? ClientSecret { get; init; }
 

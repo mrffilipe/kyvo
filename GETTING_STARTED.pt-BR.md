@@ -1,4 +1,4 @@
-# Getting Started — Kyvo
+﻿# Getting Started — Kyvo
 
 [English](./GETTING_STARTED.md) | [Português](./GETTING_STARTED.pt-BR.md)
 
@@ -198,7 +198,7 @@ A API fica em `http://localhost:5000` (`API_PORT` padrão). Swagger: `http://loc
 Confirme que está saudável:
 
 ```bash
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 # Esperado: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
@@ -261,7 +261,7 @@ Se `Bootstrap__*` não estiver configurado, `/login` pede para configurar `backe
 Verifique o status:
 
 ```bash
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 # { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
@@ -284,8 +284,8 @@ Para usuários que ainda NÃO têm conta na plataforma (cenário comum SaaS):
 3. O usuário preenche email, senha (respeitando `PasswordPolicy`) e nome. O endpoint é rate-limited pela policy `account_register`.
 4. Após o sucesso a plataforma cria um usuário Identity e autentica via cookie — NÃO cria tenant nem membership ainda.
 5. O usuário é redirecionado de volta para `/connect/authorize`; o app cliente recebe o `code` OIDC.
-6. O app detecta ausência de `tid` no access token e dispara seu fluxo de onboarding, chamando `POST /v1.0/auth/subscribe` com tenant + plano para vincular o usuário a um tenant. Após o refresh do token, o novo access token traz `tid` / `mid`.
-7. Para atualizar metadados do tenant depois, use `PATCH /v1.0/Tenants/{id}` (somente nome; `tenantKey` é imutável). Para sair de uma aplicação, chame `DELETE /v1.0/auth/account` no contexto da sessão OAuth — owners fazem hard delete do tenant quando não há pendências; o usuário global só é removido quando não restam memberships ativas.
+6. O app detecta ausência de contexto de tenant no access token OIDC e dispara o fluxo de onboarding. O BFF chama `POST /api/v1/auth/subscribe` com tenant + plano; a resposta inclui um **tenant JWT** (`accessToken`, `token_use=tenant`). Armazene via `switchTenant` / `session.saveTenantToken` — não dependa de refresh OIDC para `tid`.
+7. Para atualizar metadados do tenant depois, use `PATCH /api/v1/Tenants/{id}` (somente nome; `tenantKey` é imutável). Para sair de uma aplicação, chame `DELETE /api/v1/auth/account` no contexto da sessão OAuth — owners fazem hard delete do tenant quando não há pendências; o usuário global só é removido quando não restam memberships ativas.
 
 Esse modelo central significa que apps cliente NUNCA implementam tela própria de cadastro; a coleta de senha acontece apenas no domínio do IdP.
 
@@ -388,13 +388,13 @@ Com `Jwt__Issuer=https://auth.exemplo.com` e TLS nesse host, usuários e o SPA u
 |--------------------------|-----|---------|
 | Painel admin (SPA) | `https://auth.exemplo.com/` | `kyvo-frontend` (nginx :80) |
 | Callback OAuth | `https://auth.exemplo.com/auth/callback` | `kyvo-frontend` |
-| API (JSON, OIDC, login) | `https://auth.exemplo.com/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...`, `/js/...` | `kyvo-api` (:8080) |
+| API (JSON, OIDC, login) | `https://auth.exemplo.com/api/v1/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...`, `/js/...` | `kyvo-api` (:8080) |
 
 Defina **`Jwt__Issuer`** exatamente como a URL do navegador (esquema + host, sem barra no final). A imagem do frontend é buildada com `VITE_*` vazios para usar `window.location.origin` em runtime.
 
 **Prefixos de path da API** (não devem ir para o container do SPA):
 
-- `/v1.0/`, `/connect/`, `/account/`, `/.well-known/`, `/swagger`, `/css/`, `/js/`, `/brand/` (ex.: `account-theme.js`, `firebase-google-signin.js`)
+- `/api/v1/`, `/connect/`, `/account/`, `/.well-known/`, `/swagger`, `/css/`, `/js/`, `/brand/` (ex.: `account-theme.js`, `firebase-google-signin.js`)
 
 ### Diretório de deploy sugerido
 
@@ -514,7 +514,7 @@ Salve como `.env` ao lado de `docker-compose.yml`:
 
 ```env
 # Imagens publicadas (Docker Hub)
-IMAGE_TAG=2.0.0
+IMAGE_TAG=3.0.0
 API_PORT=8080
 FRONTEND_PORT=8081
 
@@ -664,7 +664,7 @@ cd frontend && docker compose up
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out backend/keys/oidc-signing.pem
 
 # Status da plataforma (após subir a API)
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 ```
 
 ---

@@ -1,4 +1,4 @@
-# Kyvo
+﻿# Kyvo
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -23,8 +23,8 @@ Inspirado no modelo Keycloak-like: um IdP gerenciado, multi-tenant, com painel a
 ## Estrutura do repositório
 
 ```
-backend/    API ASP.NET Core 8 (produto 2.0.0) — Clean Architecture (Domain / Application / Infrastructure / API)
-frontend/   Painel admin SPA 2.0.0 — React 19 + MUI + React Router 7 + Vite
+backend/    API ASP.NET Core 8 (produto 3.0.0) — Clean Architecture (Domain / Application / Infrastructure / API)
+frontend/   Painel admin SPA 3.0.0 — React 19 + MUI + React Router 7 + Vite
 samples/    Aplicações consumidoras de referência (ex.: pulse-crm — CRM SaaS + OIDC)
 docker/     Entrypoint da API (Dockerfiles em backend/ e frontend/)
 docs/       Guias para mantenedores (ex.: publicação Docker)

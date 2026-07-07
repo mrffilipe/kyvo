@@ -1,8 +1,8 @@
-# PulseCRM API — autenticação e autorização (Kyvo)
+﻿# PulseCRM API — autenticação e autorização (Kyvo)
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
-API de exemplo que valida JWTs emitidos pela Kyvo e chama `POST /v1.0/auth/subscribe` para vincular tenant + plano (`ApplicationTenant`).
+API de exemplo que valida JWTs emitidos pela Kyvo e chama `POST /api/v1/auth/subscribe` para vincular tenant + plano (`ApplicationTenant`).
 
 ## 1. Registrar Application e Client no painel
 
@@ -32,7 +32,7 @@ API de exemplo que valida JWTs emitidos pela Kyvo e chama `POST /v1.0/auth/subsc
 4. SPA → POST {Authority}/connect/token (authorization_code + code_verifier)
 5. SPA armazena access_token + refresh_token
 6. SPA → POST PulseCRM /api/onboarding/complete (Bearer access_token)
-7. PulseCRM → POST {Authority}/v1.0/auth/subscribe (repassa o mesmo Bearer)
+7. PulseCRM → POST {Authority}/api/v1/auth/subscribe (repassa o mesmo Bearer)
 8. SPA → POST /connect/token (refresh_token) para obter JWT com claims tid e mid
 ```
 
@@ -55,7 +55,7 @@ Claims úteis no access token:
 
 Sem `tid` após login: o usuário ainda não fez subscribe ou não renovou o token.
 
-## 4. Pacotes SDK Kyvo (NuGet `2.0.0`)
+## 4. Pacotes SDK Kyvo (NuGet `3.0.0`)
 
 | Pacote | Papel nesta API |
 |--------|-----------------|
@@ -70,7 +70,7 @@ Referenciados como `PackageReference` em `PulseCrm.Api.csproj`.
 `POST /api/onboarding/complete` chama a plataforma:
 
 ```http
-POST /v1.0/auth/subscribe
+POST /api/v1/auth/subscribe
 Authorization: Bearer {access_token}
 Content-Type: application/json
 

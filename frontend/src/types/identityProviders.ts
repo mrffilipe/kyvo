@@ -50,7 +50,7 @@ export interface UpdateIdentityProviderBody {
   configJson?: string | null
 }
 
-/** Result returned by POST /v1.0/IdentityProviders. */
+/** Result returned by POST /api/v1/IdentityProviders. */
 export interface AddIdentityProviderResult {
   id: string
   warnings: string[]

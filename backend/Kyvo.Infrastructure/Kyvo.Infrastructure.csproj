@@ -24,6 +24,7 @@
     <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.5.0" />
     <PackageReference Include="OpenIddict.Client.WebIntegration" Version="7.5.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     <PackageReference Include="TenancyKit" Version="1.0.4" />
   </ItemGroup>
 

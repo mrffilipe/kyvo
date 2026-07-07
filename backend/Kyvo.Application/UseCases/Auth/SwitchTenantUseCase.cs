@@ -1,4 +1,5 @@
 using Kyvo.Application.Exceptions;
+using Kyvo.Application.Ports.Oidc;
 using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Application.Services.UserScope;
 using Kyvo.Application.Shared;
@@ -13,6 +14,7 @@ public sealed class SwitchTenantUseCase : ISwitchTenantUseCase
     private readonly ITenantMembershipRepository _memberships;
     private readonly IAuthSessionRepository _sessions;
     private readonly IUserPlatformRoleRepository _userPlatformRoles;
+    private readonly ITenantAccessTokenIssuer _tenantTokenIssuer;
     private readonly IUserScope _userScope;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -22,7 +24,8 @@ public sealed class SwitchTenantUseCase : ISwitchTenantUseCase
         IAuthSessionRepository sessions,
         IUserPlatformRoleRepository userPlatformRoles,
         IUserScope userScope,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ITenantAccessTokenIssuer tenantTokenIssuer)
     {
         _users = users;
         _memberships = memberships;
@@ -30,6 +33,7 @@ public sealed class SwitchTenantUseCase : ISwitchTenantUseCase
         _userPlatformRoles = userPlatformRoles;
         _userScope = userScope;
         _unitOfWork = unitOfWork;
+        _tenantTokenIssuer = tenantTokenIssuer;
     }
 
     public async Task<TenantContextResult> ExecuteAsync(SwitchTenantRequest request, CancellationToken ct = default)
@@ -60,7 +64,14 @@ public sealed class SwitchTenantUseCase : ISwitchTenantUseCase
 
         var memberships = await _memberships.ListByUserIdWithTenantAndRolesAsync(user.Id, ct);
         var platformRoles = await ResolvePlatformRolesAsync(user.Id, ct);
-        return TenantContextBuilder.Build(user, session, memberships, platformRoles);
+        var result = TenantContextBuilder.Build(user, session, memberships, platformRoles);
+        var accessToken = _tenantTokenIssuer.IssueToken(session, platformRoles, result.TenantRoles);
+        return result with
+        {
+            AccessToken = accessToken,
+            ExpiresIn = 900,
+            TokenType = "Bearer"
+        };
     }
 
     private async Task<IReadOnlyList<string>> ResolvePlatformRolesAsync(Guid userId, CancellationToken ct)

@@ -1,8 +1,8 @@
-# PulseCRM — sample consumidor Kyvo
+﻿# PulseCRM — sample consumidor Kyvo
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
-SPA + API que simulam um CRM SaaS integrado à plataforma: login OIDC, escolha de plano, pagamento mock e vínculo **application ↔ tenant** via `POST /v1.0/auth/subscribe`.
+SPA + API que simulam um CRM SaaS integrado à plataforma: login OIDC, escolha de plano, pagamento mock e vínculo **application ↔ tenant** via `POST /api/v1/auth/subscribe`.
 
 ## Pré-requisitos
 
@@ -70,8 +70,8 @@ Abra http://localhost:5173
 
 | App | Pacotes | Instalação |
 |-----|---------|------------|
-| SPA | `@kyvo-client/client@^2.0.0` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
-| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `2.0.0` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
+| SPA | `@kyvo-client/client@^3.0.0` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
+| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `3.0.0` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
 
 Para desenvolver contra os fontes do SDK no monorepo, volte a `file:` / `ProjectReference` — ver [sdk/README.md](../../sdk/README.md).
 

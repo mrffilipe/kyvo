@@ -125,7 +125,7 @@ public static class UseCaseExtensions
 
         services.AddScoped<IApplicationBrandingStorage, ApplicationBrandingStorage>();
         services.AddScoped<IAccountBrandingResolver, AccountBrandingResolver>();
-        services.AddScoped<IOpenIddictApplicationSyncService, OpenIddictApplicationSyncService>();
+        services.AddScoped<IOAuthClientManager, OAuthClientManager>();
 
         return services;
     }

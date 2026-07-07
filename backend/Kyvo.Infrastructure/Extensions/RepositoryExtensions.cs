@@ -16,7 +16,6 @@ public static class RepositoryExtensions
         services.AddScoped<ITenantRoleRepository, TenantRoleRepository>();
         services.AddScoped<ITenantMembershipRepository, TenantMembershipRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
-        services.AddScoped<IApplicationClientRepository, ApplicationClientRepository>();
         services.AddScoped<IApplicationTenantRepository, ApplicationTenantRepository>();
         services.AddScoped<IAuthSessionRepository, AuthSessionRepository>();
         services.AddScoped<ITenantInviteRepository, TenantInviteRepository>();

@@ -4077,8 +4077,6 @@ export interface components {
             tenantId?: string | null;
             /** Format: uuid */
             membershipId?: string | null;
-            /** Format: uuid */
-            clientId?: string | null;
             status: components["schemas"]["SessionStatus"];
             userAgent?: string | null;
             ipAddress?: string | null;

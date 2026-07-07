@@ -1,9 +1,8 @@
 <Solution>
-  <Project Path="docker-compose.dcproj">
-    <Build />
-  </Project>
   <Project Path="Kyvo.API/Kyvo.API.csproj" />
+  <Project Path="Kyvo.API.Tests/Kyvo.API.Tests.csproj" />
   <Project Path="Kyvo.Application/Kyvo.Application.csproj" />
+  <Project Path="Kyvo.Application.Tests/Kyvo.Application.Tests.csproj" />
   <Project Path="Kyvo.Domain/Kyvo.Domain.csproj" />
   <Project Path="Kyvo.Infrastructure/Kyvo.Infrastructure.csproj" />
 </Solution>

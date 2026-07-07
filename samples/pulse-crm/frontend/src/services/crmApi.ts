@@ -19,7 +19,7 @@ crmApi.interceptors.request.use((config) => {
 })
 
 let refreshPromise: ReturnType<typeof kyvoClient.oidc.refresh> | null = null
-let tenantRefreshPromise: ReturnType<typeof kyvoClient.refreshAccessTokenWithTenant> | null = null
+let tenantSwitchPromise: ReturnType<typeof kyvoClient.switchTenant> | null = null
 
 function isMissingTenantError(error: AxiosError): boolean {
   const message = (error.response?.data as { message?: string } | undefined)?.message
@@ -28,6 +28,19 @@ function isMissingTenantError(error: AxiosError): boolean {
     typeof message === 'string' &&
     message.toLowerCase().includes('tenant')
   )
+}
+
+async function switchToSubscriptionTenant(): Promise<void> {
+  const me = await crmApi.get<MeResponse>('/api/me').then((r) => r.data)
+  const tenantId = me.subscription?.tenantId
+  if (!tenantId) {
+    throw new Error('Assinatura sem tenant. Conclua o onboarding.')
+  }
+
+  if (!tenantSwitchPromise) {
+    tenantSwitchPromise = kyvoClient.switchTenant(tenantId)
+  }
+  await tenantSwitchPromise
 }
 
 crmApi.interceptors.response.use(
@@ -44,14 +57,16 @@ crmApi.interceptors.response.use(
     if (isMissingTenantError(error) && !original._tenantRetry) {
       original._tenantRetry = true
       try {
-        if (!tenantRefreshPromise) tenantRefreshPromise = kyvoClient.refreshAccessTokenWithTenant()
-        const tokens = await tenantRefreshPromise
-        original.headers.Authorization = `Bearer ${tokens.access_token}`
+        await switchToSubscriptionTenant()
+        const token = kyvoClient.getAccessToken()
+        if (token) {
+          original.headers.Authorization = `Bearer ${token}`
+        }
         return crmApi.request(original)
       } catch {
         return Promise.reject(error)
       } finally {
-        tenantRefreshPromise = null
+        tenantSwitchPromise = null
       }
     }
 
@@ -60,11 +75,11 @@ crmApi.interceptors.response.use(
     }
 
     const session = kyvoClient.session.getSession()
-    if (!session?.refreshToken) return Promise.reject(error)
+    if (!session?.platform.refreshToken) return Promise.reject(error)
 
     original._retry = true
     try {
-      if (!refreshPromise) refreshPromise = kyvoClient.oidc.refresh(session.refreshToken)
+      if (!refreshPromise) refreshPromise = kyvoClient.oidc.refresh(session.platform.refreshToken)
       const tokens = await refreshPromise
       updateTokens(tokens)
       original.headers.Authorization = `Bearer ${tokens.access_token}`
@@ -80,14 +95,11 @@ export async function ensureTenantAccessToken(): Promise<void> {
   if (!token) {
     throw new Error('Sessão ausente. Faça login novamente.')
   }
-  if (hasTenant(token)) {
+  if (hasTenant(token) || kyvoClient.session.hasActiveTenantToken()) {
     return
   }
-  try {
-    await kyvoClient.refreshAccessTokenWithTenant()
-  } catch {
-    /* CRM resolves tenantId from subscription when JWT lacks tid */
-  }
+
+  await switchToSubscriptionTenant()
 }
 
 export async function getMe(): Promise<MeResponse> {

@@ -1,0 +1,104 @@
+@page "/connect/consent"
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.Authorization
+@using OpenIddict.Abstractions
+@attribute [Authorize(AuthenticationSchemes = "Identity.Application")]
+@inject IOpenIddictApplicationManager ApplicationManager
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<HeadContent>
+    <title>Autorizar aplicação - Kyvo</title>
+</HeadContent>
+
+<div class="account-page">
+    <header class="account-header">
+        <AccountBrandLogo CssClass="account-header-brand" />
+        <h1>Autorizar acesso</h1>
+        <p class="account-subtitle">
+            @if (!string.IsNullOrWhiteSpace(_applicationName))
+            {
+                <span><strong>@_applicationName</strong> deseja acessar sua conta Kyvo.</span>
+            }
+            else
+            {
+                <span>Uma aplicação deseja acessar sua conta Kyvo.</span>
+            }
+        </p>
+    </header>
+
+    @if (_scopes.Count > 0)
+    {
+        <ul class="account-consent-scopes" aria-label="Permissões solicitadas">
+            @foreach (var scope in _scopes)
+            {
+                <li>@FormatScope(scope)</li>
+            }
+        </ul>
+    }
+
+    <form method="post" action="/connect/authorize" class="account-form account-consent-actions">
+        <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+        @foreach (var parameter in _authorizeParameters)
+        {
+            <input type="hidden" name="@parameter.Key" value="@parameter.Value" />
+        }
+
+        <button type="submit" name="submit.Accept" value="Yes" class="account-btn account-btn-primary">
+            Permitir
+        </button>
+        <button type="submit" name="submit.Deny" value="No" class="account-btn account-btn-secondary">
+            Cancelar
+        </button>
+    </form>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "client_id")]
+    public string? ClientId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "scope")]
+    public string? Scope { get; set; }
+
+    private string? _applicationName;
+    private IReadOnlyList<string> _scopes = [];
+    private Dictionary<string, string> _authorizeParameters = new(StringComparer.Ordinal);
+    private string _antiforgeryToken = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available.");
+
+        _antiforgeryToken = Antiforgery.GetAndStoreTokens(httpContext).RequestToken ?? string.Empty;
+
+        _authorizeParameters = httpContext.Request.Query
+            .ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value.ToString(),
+                StringComparer.Ordinal);
+
+        _scopes = string.IsNullOrWhiteSpace(Scope)
+            ? []
+            : Scope.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+        if (!string.IsNullOrWhiteSpace(ClientId))
+        {
+            var application = await ApplicationManager.FindByClientIdAsync(ClientId);
+            if (application is not null)
+            {
+                _applicationName = await ApplicationManager.GetDisplayNameAsync(application)
+                    ?? ClientId;
+            }
+        }
+    }
+
+    private static string FormatScope(string scope) => scope switch
+    {
+        OpenIddictConstants.Scopes.OpenId => "Identificar você (OpenID)",
+        OpenIddictConstants.Scopes.Profile => "Ver seu perfil básico",
+        OpenIddictConstants.Scopes.Email => "Ver seu endereço de e-mail",
+        OpenIddictConstants.Scopes.OfflineAccess => "Manter você conectado (refresh token)",
+        _ => scope
+    };
+}

@@ -1,4 +1,4 @@
-# Publishing Docker images — maintainers
+﻿# Publishing Docker images — maintainers
 
 [English](./DOCKER_PUBLISH.md) | [Português](./DOCKER_PUBLISH.pt-BR.md)
 
@@ -44,7 +44,7 @@ Workflow: [.github/workflows/docker-publish.yml](../.github/workflows/docker-pub
 
 | Setting | Value |
 |---------|-------|
-| **Triggers** | Git tag push matching `docker-v*` (e.g. `docker-v2.0.0`); manual `workflow_dispatch` |
+| **Triggers** | Git tag push matching `docker-v*` (e.g. `docker-v3.0.0`); manual `workflow_dispatch` |
 | **Jobs** | `build-api`, `build-frontend` (parallel) |
 | **Registry** | Docker Hub |
 | **Images** | `mrffilipe/kyvo-api`, `mrffilipe/kyvo-frontend` |
@@ -87,8 +87,8 @@ GitHub → **Actions** → **Docker publish** → **Run workflow**.
 ### Release with a version tag
 
 ```bash
-git tag docker-v2.0.0
-git push origin docker-v2.0.0
+git tag docker-v3.0.0
+git push origin docker-v3.0.0
 ```
 
 ---

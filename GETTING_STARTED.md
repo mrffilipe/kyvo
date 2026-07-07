@@ -1,4 +1,4 @@
-# Getting Started — Kyvo
+﻿# Getting Started — Kyvo
 
 [English](./GETTING_STARTED.md) | [Português](./GETTING_STARTED.pt-BR.md)
 
@@ -198,7 +198,7 @@ The API is available at `http://localhost:5000` (default `API_PORT`). Swagger: `
 Confirm it is healthy:
 
 ```bash
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 # Expected: { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
@@ -261,7 +261,7 @@ If `Bootstrap__*` is not configured, `/login` shows a message asking you to conf
 Check the status:
 
 ```bash
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 # { "isConfigured": true, "requiresBootstrap": false, "oauthClientId": "platform-admin-web" }
 ```
 
@@ -284,8 +284,8 @@ For end users who do NOT yet have an account in the platform (typical SaaS onboa
 3. The user fills email, password (matching `PasswordPolicy` requirements) and display name. The endpoint is rate-limited by the `account_register` policy.
 4. After successful registration the platform creates an Identity user and signs the user in via the cookie scheme — NO tenant or membership is created at this point.
 5. The user is redirected back to `/connect/authorize`; the consumer app receives the OIDC `code`.
-6. The consumer app detects the missing `tid` claim in the access token and triggers its onboarding flow, calling `POST /v1.0/auth/subscribe` with tenant + plan to attach the user to a tenant. After a refresh token, the new access token includes `tid` / `mid`.
-7. To update tenant metadata later, use `PATCH /v1.0/Tenants/{id}` (name only; `tenantKey` is immutable). To leave an application, call `DELETE /v1.0/auth/account` in the OAuth session context — owners hard-delete the tenant when there are no blocking issues; the global user record is removed only when no active memberships remain.
+6. The consumer app detects the missing tenant context in the OIDC access token and triggers its onboarding flow. The BFF calls `POST /api/v1/auth/subscribe` with tenant + plan; the response includes a **tenant JWT** (`accessToken`, `token_use=tenant`). Store it via `switchTenant` / `session.saveTenantToken` — do not rely on OIDC refresh for `tid`.
+7. To update tenant metadata later, use `PATCH /api/v1/Tenants/{id}` (name only; `tenantKey` is immutable). To leave an application, call `DELETE /api/v1/auth/account` in the OAuth session context — owners hard-delete the tenant when there are no blocking issues; the global user record is removed only when no active memberships remain.
 
 This central signup model means client apps NEVER implement their own "create account" pages; password collection only happens on the IdP domain.
 
@@ -388,13 +388,13 @@ With `Jwt__Issuer=https://auth.example.com` and TLS on that host, users and the 
 |----------------------|-----|-----------|
 | Admin console (SPA) | `https://auth.example.com/` | `kyvo-frontend` (nginx :80) |
 | OAuth callback | `https://auth.example.com/auth/callback` | `kyvo-frontend` |
-| API (JSON, OIDC, login pages) | `https://auth.example.com/v1.0/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...`, `/js/...` | `kyvo-api` (:8080) |
+| API (JSON, OIDC, login pages) | `https://auth.example.com/api/v1/...`, `/connect/...`, `/account/...`, `/.well-known/...`, `/swagger`, `/css/...`, `/js/...` | `kyvo-api` (:8080) |
 
 Set **`Jwt__Issuer`** to exactly the URL browsers use (scheme + host, no trailing slash). The frontend image is built with empty `VITE_*` URLs so the SPA uses `window.location.origin` at runtime.
 
 **Proxy path prefixes for the API** (must not be served by the SPA container):
 
-- `/v1.0/`
+- `/api/v1/`
 - `/connect/`
 - `/account/`
 - `/.well-known/`
@@ -520,7 +520,7 @@ Save as `.env` next to `docker-compose.yml`:
 
 ```env
 # --- Published images (Docker Hub) ---
-IMAGE_TAG=2.0.0
+IMAGE_TAG=3.0.0
 API_PORT=8080
 FRONTEND_PORT=8081
 
@@ -680,7 +680,7 @@ cd frontend && docker compose up
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out backend/keys/oidc-signing.pem
 
 # Platform status (after starting the API)
-curl http://localhost:5000/v1.0/platform/status
+curl http://localhost:5000/api/v1/platform/status
 ```
 
 ---

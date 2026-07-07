@@ -233,7 +233,6 @@ export function normalizeAuthSession(raw: unknown): AuthSession {
     sessionId: readString(record, 'sessionId', 'SessionId'),
     tenantId: (record.tenantId ?? record.TenantId ?? null) as string | null | undefined,
     membershipId: (record.membershipId ?? record.MembershipId ?? null) as string | null | undefined,
-    clientId: (record.clientId ?? record.ClientId ?? null) as string | null | undefined,
     status: readSessionStatus(record),
     userAgent: (record.userAgent ?? record.UserAgent ?? null) as string | null | undefined,
     ipAddress: (record.ipAddress ?? record.IpAddress ?? null) as string | null | undefined,

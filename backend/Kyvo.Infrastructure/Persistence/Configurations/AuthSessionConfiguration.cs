@@ -18,9 +18,6 @@ public sealed class AuthSessionConfiguration : BaseEntityConfiguration<AuthSessi
             .HasColumnName("user_id")
             .IsRequired();
 
-        builder.Property(x => x.ClientId)
-            .HasColumnName("client_id");
-
         builder.Property(x => x.TenantId)
             .HasColumnName("tenant_id");
 
@@ -52,11 +49,6 @@ public sealed class AuthSessionConfiguration : BaseEntityConfiguration<AuthSessi
         builder.HasOne<ApplicationUser>()
             .WithMany()
             .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(x => x.ApplicationClient)
-            .WithMany()
-            .HasForeignKey(x => x.ClientId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.Tenant)

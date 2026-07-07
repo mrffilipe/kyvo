@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/mrffilipe/kyvo/main/sdk/icon.png" alt="Kyvo" width="96" />
 </p>
 
-Browser SDK for **Kyvo product applications** — OIDC (authorization code + PKCE), session management, JWT claim helpers, and typed REST v1 resources.
+Browser SDK for **Kyvo product applications** — OIDC (authorization code + PKCE), dual-token session management, JWT claim helpers, and typed REST resources under `/api/v1/*`.
 
 > **Pronunciation:** *Kyvo* is pronounced like **"Key"vo** — rhymes with English *key* plus *vo*.
 
@@ -18,41 +18,44 @@ npm install @kyvo-client/client
 
 | Area | Capabilities |
 | --- | --- |
-| OIDC | Authorization code + PKCE, token refresh, logout, userinfo |
-| Session | Token storage, session manager |
-| Claims | Parse `tid`, `trole`, `prole`; `hasTenant`, `requiresOnboarding` |
+| OIDC | Authorization code + PKCE, token refresh, logout, userinfo (platform JWT) |
+| Session | Platform + tenant token storage (`session.saveTenantToken`) |
+| Claims | Parse `token_use`, `tid`, `trole`, `prole`; `hasTenant`, `requiresOnboarding` |
 | REST v1 | Users, tenants, memberships, tenant roles, audit logs |
 
-`POST /auth/subscribe` is **not** included — that endpoint is for BFF / server use only ([`Kyvo.Client`](https://www.nuget.org/packages/Kyvo.Client) on NuGet).
+`POST /api/v1/auth/subscribe` is **not** included — that endpoint is for BFF / server use only ([`Kyvo.Client`](https://www.nuget.org/packages/Kyvo.Client) on NuGet).
 
-## Quick start
+## Dual-token flow (3.0)
+
+1. Sign in via OIDC → platform access token (no `tid` in OIDC JWT).
+2. Call `switchTenant(tenantId)` or receive `accessToken` from your BFF after subscribe.
+3. Tenant-scoped APIs use the tenant JWT (`token_use=tenant`) automatically when active.
 
 ```ts
 import { createKyvoClient, hasTenant } from '@kyvo-client/client'
 
 const kyvo = createKyvoClient({
   authority: 'http://localhost:5000',
-  apiVersion: '1.0',
   oidc: {
     clientId: 'pulse-crm-web',
     redirectUri: 'http://localhost:5173/auth/callback',
-    scopes: 'openid profile email offline_access',
+    scopes: 'openid profile email offline_access kyvo_api',
   },
 })
 
 await kyvo.oidc.signInRedirect()
 // On /auth/callback:
 const tokens = await kyvo.oidc.handleCallback(code, state)
-kyvo.session.saveFromTokens(tokens)
+kyvo.session.savePlatformTokens(tokens)
 
 if (!hasTenant(kyvo.getAccessToken()!)) {
-  await kyvo.refreshAccessTokenWithTenant()
+  await kyvo.switchTenant(tenantIdFromYourApp)
 }
 
 const me = await kyvo.users.getMe()
 ```
 
-## API surface (v1.0)
+## API surface (`/api/v1`)
 
 | Resource | Methods |
 | --- | --- |
@@ -64,8 +67,6 @@ const me = await kyvo.users.getMe()
 | Audit logs | list, filter-options |
 
 Admin-only endpoints (applications, platform bootstrap, user search) are **not** in this SDK.
-
-Paths use prefix `/v1.0/` (configurable via `apiVersion`).
 
 ## Exports
 

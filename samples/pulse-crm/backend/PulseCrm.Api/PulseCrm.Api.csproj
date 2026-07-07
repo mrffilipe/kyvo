@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>PulseCrm.Api</RootNamespace>
-    <Version>2.0.0</Version>
+    <Version>3.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Kyvo.AspNetCore" Version="2.0.0" />
-    <PackageReference Include="Kyvo.AspNetCore.TenancyKit" Version="2.0.0" />
-    <PackageReference Include="Kyvo.Client" Version="2.0.0" />
+    <ProjectReference Include="..\..\..\..\sdk\dotnet\Kyvo.AspNetCore\Kyvo.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\..\..\sdk\dotnet\Kyvo.AspNetCore.TenancyKit\Kyvo.AspNetCore.TenancyKit.csproj" />
+    <ProjectReference Include="..\..\..\..\sdk\dotnet\Kyvo.Client\Kyvo.Client.csproj" />
   </ItemGroup>
 
 </Project>
