@@ -1,19 +1,13 @@
+using Kyvo.API.Tests.Fixtures;
 using Xunit;
 
 namespace Kyvo.API.Tests;
 
 public sealed class PlatformStatusIntegrationTests
 {
-    private static bool HasTestDatabase =>
-        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("KYVO_TEST_DB"));
-
-    [Fact]
+    [RequiresDatabaseFact]
     public async Task GetPlatformStatus_ReturnsOk_WhenDatabaseConfigured()
     {
-        if (!HasTestDatabase)
-        {
-            return;
-        }
 
         await using var factory = new KyvoWebApplicationFactory();
         var client = factory.CreateClient();

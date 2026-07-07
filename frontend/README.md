@@ -115,6 +115,14 @@ The refresh token is rotated automatically via an Axios interceptor when a reque
 
 Logout clears `localStorage` and redirects to `GET /connect/logout`.
 
+### Dual-token (3.0)
+
+The admin SPA stores a **platform OIDC access token** after login. Most screens call Kyvo with that token.
+
+Tenant-scoped APIs (audit logs, tenant invites, membership management under a tenant context, etc.) require a **tenant JWT** (`token_use=tenant`). Call `switchTenant(tenantId)` from [`authService.ts`](src/services/authService.ts) before those requests — [`TenantsPage.tsx`](src/pages/TenantsPage.tsx) already does this when you pick a tenant.
+
+Do not expect `tid` on the OIDC access token; obtain tenant context via switch-tenant (or subscribe on the BFF in product apps).
+
 ---
 
 ## Pages and routes
@@ -225,4 +233,8 @@ TypeScript types mirror the schemas in `src/types/identityProviders.ts` (`Federa
 
 ## Swagger / OpenAPI
 
-The `swagger.json` file at the root of the project contains the OpenAPI specification of the current API. It serves as a reference contract for the TypeScript types under `src/types/`.
+The `swagger.json` file at the project root (gitignored) is a local OpenAPI snapshot for TypeScript types under `src/types/`. Regenerate when the API changes:
+
+```bash
+curl http://localhost:5000/swagger/v1/swagger.json -o swagger.json
+```

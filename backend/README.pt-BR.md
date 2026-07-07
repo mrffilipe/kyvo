@@ -31,7 +31,7 @@ Workflows de negócio são expostos como **use cases** (`I{Action}UseCase.Execut
 | **Queries/** | `IGetTenantByIdQuery`, `IListApplicationsQuery`, `IListAuditLogsQuery` |
 | **Policies/** | `ITenantAuthorizationPolicy`, `ITenantAccountEligibilityPolicy` |
 | **Shared/** | `ITenantProvisioner`, `TenantContextBuilder` |
-| **Ports/** | `IUserAccountService`, `IEmailService`, `IApplicationBrandingStorage`, `IKyvoClaimsPrincipalFactory`, `IPlatformBootstrapExecutor` |
+| **Ports/** | `IUserAccountService`, `IEmailService`, `IApplicationBrandingStorage`, `IOidcClaimsPrincipalFactory`, `IPlatformBootstrapExecutor` |
 
 DTOs de leitura ficam em `Queries/{Area}/Dtos/`; requests de comando e tipos `*Result` ficam junto ao use case ou query.
 

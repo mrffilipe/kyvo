@@ -1,0 +1,57 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kyvo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kyvo_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      KYVO_TEST_DB: Host=localhost;Port=5432;Database=kyvo_test;Username=postgres;Password=postgres
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore backend solution
+        working-directory: backend
+        run: dotnet restore Kyvo.slnx
+
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef --version 8.0.16
+
+      - name: Apply database migrations
+        working-directory: backend
+        run: dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
+
+      - name: Test backend solution
+        working-directory: backend
+        run: dotnet test Kyvo.slnx --configuration Release --no-restore

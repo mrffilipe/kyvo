@@ -33,7 +33,7 @@ export interface SubscribeTenantBody {
   externalCustomerId?: string | null
 }
 
-/** `SwitchTenantBody` — POST /v{version}/auth/switch-tenant */
+/** `SwitchTenantBody` — POST /api/v1/auth/switch-tenant */
 export interface SwitchTenantBody {
   tenantId: string
 }

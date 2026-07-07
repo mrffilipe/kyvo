@@ -111,6 +111,14 @@ O refresh token é trocado automaticamente via interceptor Axios em respostas 40
 
 O logout limpa o `localStorage` e redireciona para `GET /connect/logout`.
 
+### Dual-token (3.0)
+
+O painel guarda um **access token OIDC de plataforma** após o login. A maioria das telas usa esse token nas chamadas à API.
+
+APIs com escopo de tenant (audit logs, convites, memberships no contexto do tenant, etc.) exigem um **tenant JWT** (`token_use=tenant`). Chame `switchTenant(tenantId)` em [`authService.ts`](src/services/authService.ts) antes dessas requisições — [`TenantsPage.tsx`](src/pages/TenantsPage.tsx) já faz isso ao selecionar um tenant.
+
+O access token OIDC **não** traz `tid`; obtenha o contexto de tenant via switch-tenant.
+
 ---
 
 ## Páginas e rotas
@@ -203,4 +211,8 @@ Tipos TypeScript espelhando os schemas: `src/types/identityProviders.ts` (`Feder
 
 ## Swagger / OpenAPI
 
-O arquivo `swagger.json` na raiz do projeto contém a especificação OpenAPI da API atual. Serve como contrato de referência para os tipos TypeScript em `src/types/`.
+O arquivo `swagger.json` na raiz do projeto (gitignored) é um snapshot OpenAPI local para os tipos em `src/types/`. Regenerar quando a API mudar:
+
+```bash
+curl http://localhost:5000/swagger/v1/swagger.json -o swagger.json
+```

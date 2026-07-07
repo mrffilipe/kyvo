@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/v{version}/Applications": {
+    "/api/v1/Applications": {
         parameters: {
             query?: never;
             header?: never;
@@ -181,7 +181,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Applications/{applicationId}/clients": {
+    "/api/v1/Applications/{applicationId}/clients": {
         parameters: {
             query?: never;
             header?: never;
@@ -280,7 +280,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Applications/{applicationId}/tenants/provision": {
+    "/api/v1/Applications/{applicationId}/tenants/provision": {
         parameters: {
             query?: never;
             header?: never;
@@ -379,7 +379,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Applications/slugs/{slug}/availability": {
+    "/api/v1/Applications/slugs/{slug}/availability": {
         parameters: {
             query?: never;
             header?: never;
@@ -472,7 +472,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Applications/{id}": {
+    "/api/v1/Applications/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -565,7 +565,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Applications/{id}/branding": {
+    "/api/v1/Applications/{id}/branding": {
         parameters: {
             query?: never;
             header?: never;
@@ -739,7 +739,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/v{version}/Applications/{id}/branding/logo": {
+    "/api/v1/Applications/{id}/branding/logo": {
         parameters: {
             query?: never;
             header?: never;
@@ -914,7 +914,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/AuditLogs": {
+    "/api/v1/AuditLogs": {
         parameters: {
             query?: never;
             header?: never;
@@ -1014,7 +1014,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/AuditLogs/filter-options": {
+    "/api/v1/AuditLogs/filter-options": {
         parameters: {
             query?: never;
             header?: never;
@@ -1111,7 +1111,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Auth/subscribe": {
+    "/api/v1/Auth/subscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -1212,7 +1212,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Auth/switch-tenant": {
+    "/api/v1/Auth/switch-tenant": {
         parameters: {
             query?: never;
             header?: never;
@@ -1310,7 +1310,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Auth/sessions": {
+    "/api/v1/Auth/sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -1402,7 +1402,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Auth/account": {
+    "/api/v1/Auth/account": {
         parameters: {
             query?: never;
             header?: never;
@@ -1447,7 +1447,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Auth/sessions/{sessionId}": {
+    "/api/v1/Auth/sessions/{sessionId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1538,7 +1538,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/IdentityProviders": {
+    "/api/v1/IdentityProviders": {
         parameters: {
             query?: never;
             header?: never;
@@ -1712,7 +1712,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/IdentityProviders/aliases/{alias}/availability": {
+    "/api/v1/IdentityProviders/aliases/{alias}/availability": {
         parameters: {
             query?: never;
             header?: never;
@@ -1805,7 +1805,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/IdentityProviders/{id}": {
+    "/api/v1/IdentityProviders/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1979,7 +1979,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/v{version}/IdentityProviders/{id}/enable": {
+    "/api/v1/IdentityProviders/{id}/enable": {
         parameters: {
             query?: never;
             header?: never;
@@ -2070,7 +2070,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/IdentityProviders/{id}/disable": {
+    "/api/v1/IdentityProviders/{id}/disable": {
         parameters: {
             query?: never;
             header?: never;
@@ -2161,7 +2161,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/tenants/{tenantId}/memberships": {
+    "/api/v1/tenants/{tenantId}/memberships": {
         parameters: {
             query?: never;
             header?: never;
@@ -2341,7 +2341,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Memberships/{id}": {
+    "/api/v1/Memberships/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2513,7 +2513,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/v{version}/Platform/status": {
+    "/api/v1/Platform/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -2605,7 +2605,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/tenants/{tenantId}/roles": {
+    "/api/v1/tenants/{tenantId}/roles": {
         parameters: {
             query?: never;
             header?: never;
@@ -2786,7 +2786,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/TenantRoles/{id}": {
+    "/api/v1/TenantRoles/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2883,7 +2883,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/v{version}/Tenants": {
+    "/api/v1/Tenants": {
         parameters: {
             query?: never;
             header?: never;
@@ -3063,7 +3063,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Tenants/{id}/invites": {
+    "/api/v1/Tenants/{id}/invites": {
         parameters: {
             query?: never;
             header?: never;
@@ -3197,7 +3197,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Invites/{id}": {
+    "/api/v1/Invites/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3243,7 +3243,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/invites/accept": {
+    "/api/v1/invites/accept": {
         parameters: {
             query?: never;
             header?: never;
@@ -3341,7 +3341,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Tenants/keys/{key}/availability": {
+    "/api/v1/Tenants/keys/{key}/availability": {
         parameters: {
             query?: never;
             header?: never;
@@ -3434,7 +3434,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Tenants/{id}": {
+    "/api/v1/Tenants/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3608,7 +3608,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/v{version}/Users": {
+    "/api/v1/Users": {
         parameters: {
             query?: never;
             header?: never;
@@ -3704,7 +3704,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v{version}/Users/me": {
+    "/api/v1/Users/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -3876,7 +3876,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/v{version}/Users/me/memberships": {
+    "/api/v1/Users/me/memberships": {
         parameters: {
             query?: never;
             header?: never;
