@@ -65,7 +65,31 @@ function persist(session: AuthSessionStorage): AuthSessionStorage {
 }
 
 function readClaimsFromOidcTokens(tokens: OidcTokenResponse): AccessTokenClaims | null {
-  return tryParseJwtPayload<AccessTokenClaims>(tokens.id_token ?? tokens.access_token)
+  const accessClaims = tokens.access_token
+    ? tryParseJwtPayload<AccessTokenClaims>(tokens.access_token)
+    : null
+  const idClaims = tokens.id_token
+    ? tryParseJwtPayload<AccessTokenClaims>(tokens.id_token)
+    : null
+
+  if (!accessClaims && !idClaims) {
+    return null
+  }
+
+  const accessPlatformRoles = normalizeRoles(accessClaims?.prole)
+  const idPlatformRoles = normalizeRoles(idClaims?.prole)
+
+  return {
+    ...idClaims,
+    ...accessClaims,
+    prole: accessPlatformRoles.length > 0 ? accessClaims?.prole : idClaims?.prole,
+    trole: normalizeRoles(accessClaims?.trole).length > 0 ? accessClaims?.trole : idClaims?.trole,
+    email: accessClaims?.email ?? idClaims?.email,
+    sub: accessClaims?.sub ?? idClaims?.sub,
+    uid: accessClaims?.uid ?? idClaims?.uid,
+    tid: accessClaims?.tid ?? idClaims?.tid,
+    mid: accessClaims?.mid ?? idClaims?.mid,
+  }
 }
 
 export function saveSessionFromOidcTokens(

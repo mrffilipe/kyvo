@@ -17,7 +17,7 @@ public sealed class ValidateAuthSessionHandler : IOpenIddictServerHandler<Proces
     public static OpenIddictServerHandlerDescriptor Descriptor { get; } =
         OpenIddictServerHandlerDescriptor.CreateBuilder<ProcessSignInContext>()
             .UseScopedHandler<ValidateAuthSessionHandler>()
-            .SetOrder(int.MinValue + 100_000)
+            .SetOrder(10_000)
             .SetType(OpenIddictServerHandlerType.Custom)
             .Build();
 
@@ -58,35 +58,56 @@ public sealed class ValidateAdminConsoleAccessHandler : IOpenIddictServerHandler
     public static OpenIddictServerHandlerDescriptor Descriptor { get; } =
         OpenIddictServerHandlerDescriptor.CreateBuilder<ProcessSignInContext>()
             .UseScopedHandler<ValidateAdminConsoleAccessHandler>()
-            .SetOrder(int.MinValue + 110_000)
+            .SetOrder(10_100)
             .SetType(OpenIddictServerHandlerType.Custom)
             .Build();
 
-    public ValueTask HandleAsync(ProcessSignInContext context)
+    private readonly IUserPlatformRoleRepository _userPlatformRoles;
+
+    public ValidateAdminConsoleAccessHandler(IUserPlatformRoleRepository userPlatformRoles)
+    {
+        _userPlatformRoles = userPlatformRoles;
+    }
+
+    public async ValueTask HandleAsync(ProcessSignInContext context)
     {
         if (context.EndpointType != OpenIddictServerEndpointType.Authorization || context.Principal is null)
         {
-            return ValueTask.CompletedTask;
+            return;
         }
 
         var clientId = context.Request?.ClientId;
         if (!string.Equals(clientId, PlatformDefaults.AdminConsole.CLIENT_ID, StringComparison.Ordinal))
         {
-            return ValueTask.CompletedTask;
+            return;
         }
 
-        var hasPlatformAdmin = context.Principal.FindAll(PlatformRoleDefaults.CLAIM_TYPE)
-            .Any(claim => string.Equals(claim.Value, PlatformRoleDefaults.PLATFORM_ADMINISTRATOR, StringComparison.OrdinalIgnoreCase));
-
-        if (!hasPlatformAdmin)
+        if (HasPlatformAdminClaim(context.Principal))
         {
-            context.Reject(
-                error: OpenIddictConstants.Errors.AccessDenied,
-                description: ApplicationErrorMessages.OAuthClient.PLATFORM_ADMIN_CONSOLE_ACCESS_DENIED);
+            return;
         }
 
-        return ValueTask.CompletedTask;
+        var userIdValue = context.Principal.FindFirst(OpenIddictConstants.Claims.Subject)?.Value;
+        if (Guid.TryParse(userIdValue, out var userId))
+        {
+            var assignments = await _userPlatformRoles.ListByUserIdAsync(userId, context.CancellationToken);
+            if (assignments.Any(x => string.Equals(
+                    x.Role.Key,
+                    PlatformRoleDefaults.PLATFORM_ADMINISTRATOR,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+        }
+
+        context.Reject(
+            error: OpenIddictConstants.Errors.AccessDenied,
+            description: ApplicationErrorMessages.OAuthClient.PLATFORM_ADMIN_CONSOLE_ACCESS_DENIED);
     }
+
+    private static bool HasPlatformAdminClaim(ClaimsPrincipal principal) =>
+        principal.FindAll(PlatformRoleDefaults.CLAIM_TYPE)
+            .Any(claim => string.Equals(claim.Value, PlatformRoleDefaults.PLATFORM_ADMINISTRATOR, StringComparison.OrdinalIgnoreCase));
 }
 
 public sealed class ApplyClientAccessTokenLifetimeHandler : IOpenIddictServerHandler<ProcessSignInContext>

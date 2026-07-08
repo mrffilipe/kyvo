@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Kyvo.Application.Configurations;
 using Kyvo.Application.Services.UnitOfWork;
 using Kyvo.Application.UseCases.Auth.ExternalLogin;
+using Kyvo.Domain.Constants;
 using Kyvo.Domain.Entities;
 using Kyvo.Domain.Repositories;
 using Kyvo.Infrastructure.Identity;
@@ -55,10 +56,23 @@ public sealed class AccountSignInService : IAccountSignInService
         var user = await _userManager.FindByIdAsync(login.UserId.ToString("D"))
             ?? throw new InvalidOperationException($"User '{login.UserId}' not found right after sign-in.");
 
+        var additionalClaims = new List<Claim>
+        {
+            new("sid", session.Id.ToString("D"))
+        };
+
+        foreach (var role in login.PlatformRoles
+                     .Select(x => x.Trim().ToLowerInvariant())
+                     .Where(x => x.Length > 0)
+                     .Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            additionalClaims.Add(new Claim(PlatformRoleDefaults.CLAIM_TYPE, role));
+        }
+
         await _signInManager.SignInWithClaimsAsync(
             user,
             isPersistent: true,
-            additionalClaims: [new Claim("sid", session.Id.ToString("D"))]);
+            additionalClaims: additionalClaims);
 
         return session;
     }

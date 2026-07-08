@@ -27,20 +27,17 @@ public sealed class AuthorizationController : ControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IOpenIddictApplicationManager _applicationManager;
     private readonly IOpenIddictAuthorizationManager _authorizationManager;
-    private readonly IOpenIddictScopeManager _scopeManager;
 
     public AuthorizationController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IOpenIddictApplicationManager applicationManager,
-        IOpenIddictAuthorizationManager authorizationManager,
-        IOpenIddictScopeManager scopeManager)
+        IOpenIddictAuthorizationManager authorizationManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _applicationManager = applicationManager;
         _authorizationManager = authorizationManager;
-        _scopeManager = scopeManager;
     }
 
     [HttpGet("~/connect/authorize")]
@@ -109,8 +106,7 @@ public sealed class AuthorizationController : ControllerBase
             user,
             authenticateResult.Principal,
             request.ClientId!,
-            scopes,
-            ct);
+            scopes);
 
         if (isConsentSubmission)
         {
@@ -161,8 +157,7 @@ public sealed class AuthorizationController : ControllerBase
             user,
             authenticateResult.Principal,
             request.ClientId!,
-            scopes,
-            ct);
+            scopes);
 
         var authorizationId = authenticateResult.Principal.GetAuthorizationId();
         if (!string.IsNullOrEmpty(authorizationId))
@@ -206,8 +201,7 @@ public sealed class AuthorizationController : ControllerBase
         ApplicationUser user,
         ClaimsPrincipal sourcePrincipal,
         string clientId,
-        ImmutableArray<string> scopes,
-        CancellationToken ct)
+        ImmutableArray<string> scopes)
     {
         var principal = await _signInManager.CreateUserPrincipalAsync(user);
 
@@ -215,14 +209,6 @@ public sealed class AuthorizationController : ControllerBase
         principal.SetClaim("client_id", clientId);
 
         principal.SetScopes(scopes);
-
-        var resources = new List<string>();
-        await foreach (var resource in _scopeManager.ListResourcesAsync(scopes, ct))
-        {
-            resources.Add(resource);
-        }
-
-        principal.SetResources(resources);
         SetClaimDestinations(principal);
 
         return principal;
@@ -260,8 +246,13 @@ public sealed class AuthorizationController : ControllerBase
                 OpenIddictConstants.Destinations.AccessToken,
                 OpenIddictConstants.Destinations.IdentityToken
             ],
-            "sid" or PlatformRoleDefaults.CLAIM_TYPE or "client_id" =>
+            "sid" or "client_id" =>
             [OpenIddictConstants.Destinations.AccessToken],
+            PlatformRoleDefaults.CLAIM_TYPE =>
+            [
+                OpenIddictConstants.Destinations.AccessToken,
+                OpenIddictConstants.Destinations.IdentityToken
+            ],
             _ => [OpenIddictConstants.Destinations.AccessToken]
         });
     }
