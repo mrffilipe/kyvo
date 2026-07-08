@@ -36,7 +36,6 @@ public static class ServiceExtensions
         services.AddScoped<IEmailService, AwsSesEmailService>();
         services.AddSingleton<IInviteTokenProtector, InviteTokenProtector>();
         services.AddScoped<IInvitePolicy, InvitePolicy>();
-        services.AddScoped<IOidcClaimsPrincipalFactory, OidcClaimsPrincipalFactory>();
         services.AddScoped<ITenantAccessTokenIssuer, TenantAccessTokenIssuer>();
         services.AddSingleton<SigningCertificateProvider>();
         services.AddScoped<IUserAccountService, UserAccountService>();

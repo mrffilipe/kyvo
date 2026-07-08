@@ -31,7 +31,7 @@ Workflows de negócio são expostos como **use cases** (`I{Action}UseCase.Execut
 | **Queries/** | `IGetTenantByIdQuery`, `IListApplicationsQuery`, `IListAuditLogsQuery` |
 | **Policies/** | `ITenantAuthorizationPolicy`, `ITenantAccountEligibilityPolicy` |
 | **Shared/** | `ITenantProvisioner`, `TenantContextBuilder` |
-| **Ports/** | `IUserAccountService`, `IEmailService`, `IApplicationBrandingStorage`, `IOidcClaimsPrincipalFactory`, `IPlatformBootstrapExecutor` |
+| **Ports/** | `IUserAccountService`, `IEmailService`, `IApplicationBrandingStorage`, `ITenantAccessTokenIssuer`, `IPlatformBootstrapExecutor` |
 
 DTOs de leitura ficam em `Queries/{Area}/Dtos/`; requests de comando e tipos `*Result` ficam junto ao use case ou query.
 
@@ -42,11 +42,16 @@ POST /account/signin (email + senha)
   → Cookie de aplicação do ASP.NET Core Identity + linha AuthSession (claim sid)
 
 GET /connect/authorize (PKCE)
-  → Cookie Identity + AuthSession; consentimento explícito quando necessário (/connect/consent)
-  → OpenIddict emite authorization_code
+  → Cookie Identity → SignInManager.CreateUserPrincipalAsync → OpenIddict emite authorization_code
+  → Consentimento explícito quando necessário (/connect/consent)
+  → Validações transversais (sessão ativa, admin console, TTL por client) via handlers OpenIddict
 
 POST /connect/token (code + verifier)
-  → JWT RS256 (access_token + id_token + refresh_token)
+  → JWT RS256 de plataforma (access_token + id_token + refresh_token)
+  → Claims: sub, email, name, sid, prole, client_id — sem contexto de tenant
+
+POST /api/v1/auth/switch-tenant
+  → JWT tenant-scoped (token_use=tenant, tid, trole) para APIs de tenant
 
 Bearer JWT → controllers v1 protegidos
 ```
@@ -55,8 +60,11 @@ Bearer JWT → controllers v1 protegidos
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| ASP.NET Identity (`ApplicationUser`) | Senhas, lockout, logins externos, cookie do navegador |
+| ASP.NET Identity (`ApplicationUser`, `KyvoUserClaimsPrincipalFactory`) | Senhas, lockout, logins externos, cookie do navegador, claims `prole` |
+| `AuthorizationController` | Fluxo puro Identity + OpenIddict (authorize, token, userinfo, logout) |
+| Handlers OpenIddict (`KyvoOpenIddictServerHandlers`) | Validação de `AuthSession`, TTL por client, guard do admin console |
 | `AuthSession` | Contexto de tenant ativo (`tid`/`mid`), listagem/revogação de sessões, claim `sid` |
+| `SwitchTenant` / `SubscribeTenant` | Emissão de JWT tenant-scoped via `ITenantAccessTokenIssuer` |
 | OpenIddict (`OpenIddictApplications` via `IOAuthClientManager`) | Clients OAuth, tokens, PKCE, autorizações de consentimento |
 | `Application` / `Tenant` | Produto SaaS e isolamento por organização (não duplicam o OpenIddict) |
 

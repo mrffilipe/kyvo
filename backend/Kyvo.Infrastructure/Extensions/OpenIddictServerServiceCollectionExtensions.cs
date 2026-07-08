@@ -1,4 +1,5 @@
 using Kyvo.Application.Configurations;
+using Kyvo.Infrastructure.Oidc;
 using Kyvo.Infrastructure.Persistence;
 using Kyvo.Infrastructure.Persistence.Entities;
 using Kyvo.Infrastructure.Services.Certificates;
@@ -73,6 +74,11 @@ public static class OpenIddictServerServiceCollectionExtensions
                        .EnableEndSessionEndpointPassthrough()
                        .EnableStatusCodePagesIntegration()
                        .DisableTransportSecurityRequirement();
+
+                options.AddEventHandler(ValidateAuthSessionHandler.Descriptor)
+                       .AddEventHandler(ValidateAdminConsoleAccessHandler.Descriptor)
+                       .AddEventHandler(ApplyClientAccessTokenLifetimeHandler.Descriptor)
+                       .AddEventHandler(TouchAuthSessionHandler.Descriptor);
             })
             .AddValidation(options =>
             {

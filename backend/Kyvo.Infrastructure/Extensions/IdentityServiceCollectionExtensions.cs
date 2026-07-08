@@ -43,6 +43,7 @@ public static class IdentityServiceCollectionExtensions
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddPasswordValidator<KyvoPasswordValidator>()
             .AddSignInManager()
+            .AddClaimsPrincipalFactory<KyvoUserClaimsPrincipalFactory>()
             .AddDefaultTokenProviders();
 
         services.AddAuthentication(IdentityConstants.ApplicationScheme)

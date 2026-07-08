@@ -1,11 +1,5 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
-using Kyvo.Application.Exceptions;
-using Kyvo.Application.Ports.Oidc;
-using Kyvo.Application.Services.UnitOfWork;
-using Kyvo.Domain.Entities;
-using Kyvo.Domain.Enums;
-using Kyvo.Domain.Repositories;
 using Kyvo.Infrastructure.Identity;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
@@ -17,6 +11,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenIddict.Validation.AspNetCore;
 using Kyvo.API.Models.Oidc;
+using Kyvo.Domain.Constants;
 
 namespace Kyvo.API.Controllers;
 
@@ -29,29 +24,23 @@ namespace Kyvo.API.Controllers;
 public sealed class AuthorizationController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IOidcClaimsPrincipalFactory _claimsFactory;
-    private readonly IAuthSessionRepository _sessions;
-    private readonly IOAuthClientManager _oauthClients;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IOpenIddictApplicationManager _applicationManager;
     private readonly IOpenIddictAuthorizationManager _authorizationManager;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IOpenIddictScopeManager _scopeManager;
 
     public AuthorizationController(
         UserManager<ApplicationUser> userManager,
-        IOidcClaimsPrincipalFactory claimsFactory,
-        IAuthSessionRepository sessions,
-        IOAuthClientManager oauthClients,
+        SignInManager<ApplicationUser> signInManager,
         IOpenIddictApplicationManager applicationManager,
         IOpenIddictAuthorizationManager authorizationManager,
-        IUnitOfWork unitOfWork)
+        IOpenIddictScopeManager scopeManager)
     {
         _userManager = userManager;
-        _claimsFactory = claimsFactory;
-        _sessions = sessions;
-        _oauthClients = oauthClients;
+        _signInManager = signInManager;
         _applicationManager = applicationManager;
         _authorizationManager = authorizationManager;
-        _unitOfWork = unitOfWork;
+        _scopeManager = scopeManager;
     }
 
     [HttpGet("~/connect/authorize")]
@@ -78,25 +67,8 @@ public sealed class AuthorizationController : ControllerBase
                 });
         }
 
-        var appUser = await ResolveApplicationUserAsync(authenticateResult.Principal)
+        var user = await _userManager.GetUserAsync(authenticateResult.Principal)
             ?? throw new InvalidOperationException("The authenticated user could not be resolved.");
-
-        if (!Guid.TryParse(authenticateResult.Principal.FindFirst("sid")?.Value, out var sessionId))
-        {
-            return ForbidWithError(OpenIddictConstants.Errors.LoginRequired, "Missing login session.");
-        }
-
-        var session = await _sessions.GetForUpdateAsync(sessionId, ct);
-        if (session is null || session.Status != SessionStatus.Active)
-        {
-            return ForbidWithError(OpenIddictConstants.Errors.LoginRequired, "Session is no longer active.");
-        }
-
-        var client = await _oauthClients.GetByClientIdAsync(request.ClientId!, ct);
-        if (client is null)
-        {
-            return ForbidWithError(OpenIddictConstants.Errors.InvalidClient, "Unknown client_id.");
-        }
 
         var application = await _applicationManager.FindByClientIdAsync(request.ClientId!, ct);
         if (application is null)
@@ -115,7 +87,7 @@ public sealed class AuthorizationController : ControllerBase
             {
                 var hasPermanentAuthorization = false;
                 await foreach (var _ in _authorizationManager.FindAsync(
-                    subject: appUser.Id.ToString("D"),
+                    subject: user.Id.ToString("D"),
                     client: await _applicationManager.GetIdAsync(application, ct),
                     status: OpenIddictConstants.Statuses.Valid,
                     type: OpenIddictConstants.AuthorizationTypes.Permanent,
@@ -132,40 +104,31 @@ public sealed class AuthorizationController : ControllerBase
             }
         }
 
-        try
+        var scopes = request.GetScopes();
+        var principal = await CreateOpenIddictPrincipalAsync(
+            user,
+            authenticateResult.Principal,
+            request.ClientId!,
+            scopes,
+            ct);
+
+        if (isConsentSubmission)
         {
-            var principal = await _claimsFactory.CreateAsync(
-                UserMapper.ToDomain(appUser),
-                session,
-                request.ClientId!,
-                request.GetScopes(),
+            var clientId = await _applicationManager.GetIdAsync(application, ct)
+                ?? throw new InvalidOperationException("OpenIddict client id is missing.");
+
+            var authorization = await _authorizationManager.CreateAsync(
+                principal: principal,
+                subject: user.Id.ToString("D"),
+                client: clientId,
+                type: OpenIddictConstants.AuthorizationTypes.Permanent,
+                scopes: principal.GetScopes(),
                 ct);
 
-            ApplyAccessTokenLifetime(principal, client.AccessTokenTtlSeconds);
-
-            if (isConsentSubmission)
-            {
-                var clientId = await _applicationManager.GetIdAsync(application, ct)
-                    ?? throw new InvalidOperationException("OpenIddict client id is missing.");
-
-                var authorization = await _authorizationManager.CreateAsync(
-                    principal: principal,
-                    subject: appUser.Id.ToString("D"),
-                    client: clientId,
-                    type: OpenIddictConstants.AuthorizationTypes.Permanent,
-                    scopes: principal.GetScopes(),
-                    ct);
-
-                principal.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization, ct));
-            }
-
-            await _unitOfWork.SaveChangesAsync(ct);
-            return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            principal.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization, ct));
         }
-        catch (ForbiddenApplicationException ex)
-        {
-            return ForbidWithError(OpenIddictConstants.Errors.AccessDenied, ex.Message);
-        }
+
+        return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     [HttpPost("~/connect/token")]
@@ -187,48 +150,27 @@ public sealed class AuthorizationController : ControllerBase
             return ForbidWithError(OpenIddictConstants.Errors.InvalidGrant, "The token is no longer valid.");
         }
 
-        var appUser = await ResolveApplicationUserAsync(authenticateResult.Principal);
-        if (appUser is null)
+        var user = await _userManager.GetUserAsync(authenticateResult.Principal);
+        if (user is null)
         {
             return ForbidWithError(OpenIddictConstants.Errors.InvalidGrant, "The authenticated user could not be resolved.");
         }
 
-        if (!Guid.TryParse(authenticateResult.Principal.FindFirst("sid")?.Value, out var sessionId))
+        var scopes = authenticateResult.Principal.GetScopes();
+        var principal = await CreateOpenIddictPrincipalAsync(
+            user,
+            authenticateResult.Principal,
+            request.ClientId!,
+            scopes,
+            ct);
+
+        var authorizationId = authenticateResult.Principal.GetAuthorizationId();
+        if (!string.IsNullOrEmpty(authorizationId))
         {
-            return ForbidWithError(OpenIddictConstants.Errors.InvalidGrant, "Missing login session.");
+            principal.SetAuthorizationId(authorizationId);
         }
 
-        var session = await _sessions.GetForUpdateAsync(sessionId, ct);
-        if (session is null || session.Status != SessionStatus.Active)
-        {
-            return ForbidWithError(OpenIddictConstants.Errors.InvalidGrant, "Session is no longer active.");
-        }
-
-        session.Touch();
-
-        var client = await _oauthClients.GetByClientIdAsync(request.ClientId!, ct);
-
-        try
-        {
-            var principal = await _claimsFactory.CreateAsync(
-                UserMapper.ToDomain(appUser),
-                session,
-                request.ClientId!,
-                authenticateResult.Principal.GetScopes(),
-                ct);
-
-            if (client is not null)
-            {
-                ApplyAccessTokenLifetime(principal, client.AccessTokenTtlSeconds);
-            }
-
-            await _unitOfWork.SaveChangesAsync(ct);
-            return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-        }
-        catch (ForbiddenApplicationException ex)
-        {
-            return ForbidWithError(OpenIddictConstants.Errors.AccessDenied, ex.Message);
-        }
+        return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     [Authorize(AuthenticationSchemes = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)]
@@ -242,9 +184,7 @@ public sealed class AuthorizationController : ControllerBase
         {
             Sub = User.FindFirst(OpenIddictConstants.Claims.Subject)?.Value,
             Email = User.FindFirst(OpenIddictConstants.Claims.Email)?.Value,
-            Name = User.FindFirst(OpenIddictConstants.Claims.Name)?.Value,
-            Sid = User.FindFirst("sid")?.Value,
-            Prole = User.FindAll(Kyvo.Domain.Constants.PlatformRoleDefaults.CLAIM_TYPE).Select(c => c.Value).ToArray()
+            Name = User.FindFirst(OpenIddictConstants.Claims.Name)?.Value
         });
     }
 
@@ -262,28 +202,68 @@ public sealed class AuthorizationController : ControllerBase
             });
     }
 
-    private static void ApplyAccessTokenLifetime(ClaimsPrincipal principal, int accessTokenTtlSeconds)
+    private async Task<ClaimsPrincipal> CreateOpenIddictPrincipalAsync(
+        ApplicationUser user,
+        ClaimsPrincipal sourcePrincipal,
+        string clientId,
+        ImmutableArray<string> scopes,
+        CancellationToken ct)
     {
-        if (accessTokenTtlSeconds > 0)
+        var principal = await _signInManager.CreateUserPrincipalAsync(user);
+
+        CopyClaim(sourcePrincipal, principal, "sid");
+        principal.SetClaim("client_id", clientId);
+
+        principal.SetScopes(scopes);
+
+        var resources = new List<string>();
+        await foreach (var resource in _scopeManager.ListResourcesAsync(scopes, ct))
         {
-            principal.SetAccessTokenLifetime(TimeSpan.FromSeconds(accessTokenTtlSeconds));
+            resources.Add(resource);
+        }
+
+        principal.SetResources(resources);
+        SetClaimDestinations(principal);
+
+        return principal;
+    }
+
+    private static void CopyClaim(ClaimsPrincipal source, ClaimsPrincipal target, string claimType)
+    {
+        var claim = source.FindFirst(claimType);
+        if (claim is not null)
+        {
+            target.SetClaim(claimType, claim.Value);
         }
     }
 
-    private async Task<ApplicationUser?> ResolveApplicationUserAsync(ClaimsPrincipal principal)
+    private static void SetClaimDestinations(ClaimsPrincipal principal)
     {
-        var fromIdentity = await _userManager.GetUserAsync(principal);
-        if (fromIdentity is not null)
+        principal.SetDestinations(static claim => claim.Type switch
         {
-            return fromIdentity;
-        }
-
-        var userIdValue = principal.FindFirst("uid")?.Value
-            ?? principal.FindFirst(OpenIddictConstants.Claims.Subject)?.Value;
-
-        return Guid.TryParse(userIdValue, out var userId)
-            ? await _userManager.FindByIdAsync(userId.ToString())
-            : null;
+            OpenIddictConstants.Claims.Name when claim.Subject.HasScope(OpenIddictConstants.Scopes.Profile) =>
+            [
+                OpenIddictConstants.Destinations.AccessToken,
+                OpenIddictConstants.Destinations.IdentityToken
+            ],
+            OpenIddictConstants.Claims.Email when claim.Subject.HasScope(OpenIddictConstants.Scopes.Email) =>
+            [
+                OpenIddictConstants.Destinations.AccessToken,
+                OpenIddictConstants.Destinations.IdentityToken
+            ],
+            OpenIddictConstants.Claims.Name =>
+            [OpenIddictConstants.Destinations.IdentityToken],
+            OpenIddictConstants.Claims.Email =>
+            [OpenIddictConstants.Destinations.IdentityToken],
+            OpenIddictConstants.Claims.Subject =>
+            [
+                OpenIddictConstants.Destinations.AccessToken,
+                OpenIddictConstants.Destinations.IdentityToken
+            ],
+            "sid" or PlatformRoleDefaults.CLAIM_TYPE or "client_id" =>
+            [OpenIddictConstants.Destinations.AccessToken],
+            _ => [OpenIddictConstants.Destinations.AccessToken]
+        });
     }
 
     private ForbidResult ForbidWithError(string error, string description)
