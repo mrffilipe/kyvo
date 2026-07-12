@@ -1,6 +1,7 @@
-<Solution>
-  <Project Path="Kyvo.API/Kyvo.API.csproj" />
-  <Project Path="Kyvo.Application/Kyvo.Application.csproj" />
+﻿<Solution>
   <Project Path="Kyvo.Domain/Kyvo.Domain.csproj" />
+  <Project Path="Kyvo.Application/Kyvo.Application.csproj" />
   <Project Path="Kyvo.Infrastructure/Kyvo.Infrastructure.csproj" />
+  <Project Path="Kyvo.API/Kyvo.API.csproj" />
+  <Project Path="Kyvo.Tests/Kyvo.Tests.csproj" />
 </Solution>

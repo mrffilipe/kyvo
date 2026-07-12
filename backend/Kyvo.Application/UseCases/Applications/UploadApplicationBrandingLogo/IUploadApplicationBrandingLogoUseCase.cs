@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Applications.UploadApplicationBrandingLogo;
+namespace Kyvo.Application.UseCases.Applications.UploadApplicationBrandingLogo;
 
 public interface IUploadApplicationBrandingLogoUseCase
 {

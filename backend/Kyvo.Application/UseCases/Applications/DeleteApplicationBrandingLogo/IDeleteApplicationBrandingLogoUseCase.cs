@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Applications.DeleteApplicationBrandingLogo;
+namespace Kyvo.Application.UseCases.Applications.DeleteApplicationBrandingLogo;
 
 public interface IDeleteApplicationBrandingLogoUseCase
 {

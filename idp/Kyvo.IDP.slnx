@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="Kyvo.IDP.API/Kyvo.IDP.API.csproj" />
-  <Project Path="Kyvo.IDP.Application/Kyvo.IDP.Application.csproj" />
-  <Project Path="Kyvo.IDP.Domain/Kyvo.IDP.Domain.csproj" />
-  <Project Path="Kyvo.IDP.Infrastructure/Kyvo.IDP.Infrastructure.csproj" />
-</Solution>

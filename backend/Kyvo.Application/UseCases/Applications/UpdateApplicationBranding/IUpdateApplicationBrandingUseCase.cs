@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Applications.UpdateApplicationBranding;
+namespace Kyvo.Application.UseCases.Applications.UpdateApplicationBranding;
 
 public interface IUpdateApplicationBrandingUseCase
 {

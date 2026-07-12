@@ -31,6 +31,27 @@ jobs:
 
     env:
       KYVO_TEST_DB: Host=localhost;Port=5432;Database=kyvo_test;Username=postgres;Password=postgres
+      Database__ConnectionString: Host=localhost;Port=5432;Database=kyvo_test;Username=postgres;Password=postgres
+      ConnectionStrings__Default: Host=localhost;Port=5432;Database=kyvo_test;Username=postgres;Password=postgres
+      Jwt__Issuer: http://localhost:5000
+      Jwt__Audience: kyvo-api
+      Jwt__RefreshTokenDays: "30"
+      Jwt__KeyId: default
+      Bootstrap__AdminEmail: admin@test.local
+      Bootstrap__AdminPassword: ChangeMe!123
+      Bootstrap__AdminDisplayName: Test Admin
+      SecretProtection__KeyDirectoryPath: keys/data-protection
+      SecretProtection__ApplicationName: Kyvo
+      PasswordPolicy__MinLength: "8"
+      PasswordPolicy__RequireDigit: "true"
+      PasswordPolicy__RequireLetter: "true"
+      RateLimit__AccountRegisterPermitLimit: "5"
+      RateLimit__AccountRegisterWindowMinutes: "15"
+      Invite__ExpirationHours: "72"
+      Email__FromAddress: noreply@example.com
+      Email__Region: us-east-1
+      Redis__InstanceName: "kyvo:"
+      Redis__TenantIdentifierCacheMinutes: "5"
 
     steps:
       - name: Checkout source

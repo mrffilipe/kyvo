@@ -2,12 +2,13 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SimpleEmailV2;
 using Kyvo.Application.Services.IdentityProvider;
-using Kyvo.Infrastructure.Services.IdentityProvider;
 using Kyvo.Application.Services.Security;
+using Kyvo.Application.Services.Tenancy;
 using Kyvo.Application.Configurations;
 using Kyvo.Infrastructure.Configurations;
 using Kyvo.Infrastructure.Persistence;
 using Kyvo.Infrastructure.Persistence.Interceptors;
+using Kyvo.Infrastructure.Services.IdentityProvider;
 using Kyvo.Infrastructure.Services.Security;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -97,7 +98,7 @@ public static class ServiceCollectionExtensions
             return new AmazonSimpleEmailServiceV2Client(region);
         });
 
-        services.AddScoped<TenantStore>();
+        services.AddScoped<ITenantContext, TenantContext>();
         services.AddDbContext(configuration);
         services.AddRepositories();
         services.AddServices();

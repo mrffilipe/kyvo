@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Auth.DeleteAccount;
+namespace Kyvo.Application.UseCases.Auth.DeleteAccount;
 
 public interface IDeleteAccountUseCase
 {

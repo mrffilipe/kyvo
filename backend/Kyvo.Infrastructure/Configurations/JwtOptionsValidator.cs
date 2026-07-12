@@ -35,11 +35,8 @@ public sealed class JwtOptionsValidator : IValidateOptions<JwtOptions>
         var hasPem = !string.IsNullOrWhiteSpace(options.SigningKeyPem);
         var hasPemBase64 = !string.IsNullOrWhiteSpace(options.SigningKeyPemBase64);
         var sourceCount = (hasPath ? 1 : 0) + (hasPem ? 1 : 0) + (hasPemBase64 ? 1 : 0);
-        if (sourceCount == 0)
-        {
-            errors.Add(InfrastructureErrorMessages.Jwt.SIGNING_KEY_SOURCE_REQUIRED);
-        }
-        else if (sourceCount > 1)
+        // sourceCount == 0 → SigningCertificateProvider issues a development self-signed certificate.
+        if (sourceCount > 1)
         {
             errors.Add(InfrastructureErrorMessages.Jwt.SIGNING_KEY_SOURCE_MUST_BE_EXCLUSIVE);
         }

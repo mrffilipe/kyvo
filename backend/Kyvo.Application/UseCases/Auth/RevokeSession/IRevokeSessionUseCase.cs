@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Auth.RevokeSession;
+namespace Kyvo.Application.UseCases.Auth.RevokeSession;
 
 public interface IRevokeSessionUseCase
 {

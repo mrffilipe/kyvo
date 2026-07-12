@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Auth.DeleteTenant;
+namespace Kyvo.Application.UseCases.Auth.DeleteTenant;
 
 public interface IDeleteTenantUseCase
 {

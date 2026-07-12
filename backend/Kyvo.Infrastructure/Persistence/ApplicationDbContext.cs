@@ -1,23 +1,19 @@
+using Kyvo.Application.Services.Tenancy;
 using Kyvo.Domain.Common;
 using Kyvo.Domain.Entities;
+using Kyvo.Domain.Interfaces;
 using Kyvo.Infrastructure.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TenancyKit.Abstractions;
-using TenancyKit.Core;
-using TenancyKit.EntityFrameworkCore;
 
 namespace Kyvo.Infrastructure.Persistence;
 
 /// <summary>
-/// Extends <see cref="IdentityDbContext{TUser,TRole,TKey}"/> so ASP.NET Core Identity's tables share the same
-/// context/migrations as the Kyvo domain and OpenIddict entities.
+/// Shared Identity + domain + OpenIddict context with native tenant query filters (no TenancyKit).
 /// </summary>
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
 {
-    private readonly TenancyKitOptions<TenantInfoAdapter> _tenancyOptions;
-    private readonly ITenantContextAccessor<TenantInfoAdapter> _tenantContextAccessor;
+    private readonly ITenantContext _tenantContext;
 
     public DbSet<UserPlatformRole> UserPlatformRoles { get; private set; } = null!;
     public DbSet<PlatformRole> PlatformRoles { get; private set; } = null!;
@@ -36,18 +32,39 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options,
-        TenancyKitOptions<TenantInfoAdapter> tenancyOptions,
-        ITenantContextAccessor<TenantInfoAdapter> tenantContextAccessor) : base(options)
+        ITenantContext tenantContext) : base(options)
     {
-        _tenancyOptions = tenancyOptions;
-        _tenantContextAccessor = tenantContextAccessor;
+        _tenantContext = tenantContext;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
-        modelBuilder.ApplyMultiTenancy(_tenancyOptions, _tenantContextAccessor);
+        ApplyNativeTenantFilters(modelBuilder);
+    }
+
+    private void ApplyNativeTenantFilters(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (!typeof(ITenantScoped).IsAssignableFrom(entityType.ClrType))
+            {
+                continue;
+            }
+
+            var method = typeof(ApplicationDbContext)
+                .GetMethod(nameof(SetTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .MakeGenericMethod(entityType.ClrType);
+            method.Invoke(this, [modelBuilder]);
+        }
+    }
+
+    private void SetTenantFilter<TEntity>(ModelBuilder modelBuilder)
+        where TEntity : class, ITenantScoped
+    {
+        modelBuilder.Entity<TEntity>().HasQueryFilter(e =>
+            _tenantContext.TenantId == null || e.TenantId == _tenantContext.TenantId);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)

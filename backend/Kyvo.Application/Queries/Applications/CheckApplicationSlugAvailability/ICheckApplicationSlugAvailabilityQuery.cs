@@ -1,4 +1,4 @@
-﻿using Kyvo.Application.Common;
+using Kyvo.Application.Common;
 
 namespace Kyvo.Application.Queries.Applications.CheckApplicationSlugAvailability;
 

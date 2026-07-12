@@ -8,15 +8,16 @@ using OpenIddict.Abstractions;
 namespace Kyvo.Infrastructure.Identity;
 
 /// <summary>
-/// Standard ASP.NET Identity claims principal factory. Adds platform role claims (prole) and OIDC profile claims.
+/// Adds platform role claims (prole) and OIDC profile claims to the cookie / Identity principal.
+/// Tenant claims (tid/mid/trole) are issued only on tenant JWTs via switch-tenant/subscribe.
 /// </summary>
-public sealed class KyvoUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, IdentityRole<Guid>>
+public sealed class KyvoUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>
 {
     private readonly IUserPlatformRoleRepository _userPlatformRoles;
 
     public KyvoUserClaimsPrincipalFactory(
         UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole<Guid>> roleManager,
+        RoleManager<ApplicationRole> roleManager,
         IOptions<IdentityOptions> options,
         IUserPlatformRoleRepository userPlatformRoles)
         : base(userManager, roleManager, options)

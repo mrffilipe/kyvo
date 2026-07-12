@@ -1,6 +1,0 @@
-@Kyvo.API_HostAddress = http://localhost:5251
-
-GET {{Kyvo.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

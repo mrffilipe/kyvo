@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Applications.CreateApplicationClient;
+namespace Kyvo.Application.UseCases.Applications.CreateApplicationClient;
 
 public interface ICreateApplicationClientUseCase
 {

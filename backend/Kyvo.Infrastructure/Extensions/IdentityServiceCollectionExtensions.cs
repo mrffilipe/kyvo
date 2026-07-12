@@ -39,7 +39,7 @@ public static class IdentityServiceCollectionExtensions
                 options.Lockout.MaxFailedAccessAttempts = 10;
                 options.Lockout.AllowedForNewUsers = true;
             })
-            .AddRoles<IdentityRole<Guid>>()
+            .AddRoles<ApplicationRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddPasswordValidator<KyvoPasswordValidator>()
             .AddSignInManager()

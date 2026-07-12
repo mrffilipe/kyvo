@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.IdentityProviders.DisableIdentityProvider;
+namespace Kyvo.Application.UseCases.IdentityProviders.DisableIdentityProvider;
 
 public interface IDisableIdentityProviderUseCase
 {

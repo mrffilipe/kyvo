@@ -1,4 +1,4 @@
-﻿# Getting Started — Kyvo
+# Getting Started — Kyvo
 
 [English](./GETTING_STARTED.md) | [Português](./GETTING_STARTED.pt-BR.md)
 

@@ -1,4 +1,4 @@
-﻿namespace Kyvo.Application.UseCases.Platform.BootstrapPlatform;
+namespace Kyvo.Application.UseCases.Platform.BootstrapPlatform;
 
 public interface IBootstrapPlatformUseCase
 {

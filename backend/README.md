@@ -1,54 +1,43 @@
-﻿# Kyvo Backend (.NET 8)
+# Kyvo Backend
 
-Identity Provider built with **ASP.NET Core Identity + OpenIddict**, pure OIDC at `/connect/*`, and tenant context via isolated `/api/v1/auth/switch-tenant`.
+Identity Provider (OpenIddict + ASP.NET Core Identity) with multi-tenant domain APIs.
+**No TenancyKit** — native `ITenantContext` + EF query filters.
 
-## Architecture (OIDC vs Kyvo API)
+## Dual-token
 
 ```
-OIDC pure (/connect/*)          Kyvo API (/api/v1/*)
-─────────────────────          ────────────────────
-authorize → token              switch-tenant / subscribe → tenant JWT
-Platform JWT: sub, email, sid  Tenant JWT: tid, mid, trole, token_use=tenant
+OIDC (/connect/*)                     API (/api/v1/*)
+─────────────────                     ──────────────
+authorize → token                     switch-tenant / subscribe → tenant JWT
+Platform: sub, email, sid, prole      Tenant: tid, mid, trole, token_use=tenant
 ```
 
-**Rule:** `/connect/*` never injects `tid`/`mid`/`trole`. Tenant JWT is issued only by `POST /api/v1/auth/switch-tenant` or `POST /api/v1/auth/subscribe`.
+`/connect/*` never emits `tid`/`mid`/`trole`.
 
-## Two-step auth (SDK)
+## Projects
 
-```typescript
-await kyvo.oidc.signInRedirect()
-// callback → platform token saved
+| Project | Role |
+|---------|------|
+| `Kyvo.Domain` | Entities, VOs, repository ports |
+| `Kyvo.Application` | Use cases, queries, ports |
+| `Kyvo.Infrastructure` | EF, Identity, OpenIddict, native tenancy |
+| `Kyvo.API` | OIDC host + `/api/v1` |
+| `Kyvo.Tests` | Dual-token contract tests |
 
-const ctx = await kyvo.switchTenant(tenantId)  // uses platform token
-kyvo.getAccessToken()                           // returns tenant JWT
-```
+See [UNIFIED_SCOPE.md](UNIFIED_SCOPE.md), [SECURITY.md](SECURITY.md), [docs/E2E.md](docs/E2E.md).
 
 ## Run locally
 
 ```bash
 cd backend
+docker compose up postgres -d
 dotnet ef database update --project Kyvo.Infrastructure --startup-project Kyvo.API
-dotnet run --project Kyvo.API
+dotnet run --project Kyvo.API --launch-profile https
 ```
 
-See [GETTING_STARTED.md](../GETTING_STARTED.md) for Docker Compose, `.env`, and OIDC signing keys.
+- HTTPS: `https://localhost:5101`
+- Health: `/health`
+- Discovery: `/.well-known/openid-configuration`
+- Platform: `/api/v1/platform/status`
 
-## Main endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /account/login` | Local login + federated IdP buttons |
-| `GET /login/federated/{alias}` | Upstream OIDC challenge |
-| `GET /connect/authorize` | Authorization Code + PKCE |
-| `POST /connect/token` | Code/refresh exchange (rate limited 5/min) |
-| `POST /api/v1/auth/switch-tenant` | Issues tenant JWT |
-| `POST /api/v1/auth/subscribe` | SaaS onboarding + tenant JWT |
-| `GET /api/v1/platform/status` | Bootstrap status (anonymous) |
-
-## Docker
-
-```bash
-docker compose -f backend/docker-compose.yml up --build
-```
-
-Image build: `docker build -f backend/Dockerfile -t kyvo-api .` from repository root.
+Dev bootstrap: `admin@kyvo.local` / `ChangeMe!123`
