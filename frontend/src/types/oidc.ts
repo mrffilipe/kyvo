@@ -8,6 +8,9 @@ export interface OidcTokenResponse {
 }
 
 export interface TenantContextResult {
+  accessToken?: string
+  expiresIn?: number
+  tokenType?: string
   userId: string
   email: string
   tenantId?: string | null

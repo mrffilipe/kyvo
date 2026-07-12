@@ -6,9 +6,30 @@ import { tokenExpiresAtIso } from './oidcToken'
 const SESSION_STORAGE_KEY = 'kyvo.auth.session'
 
 export interface AuthSessionStorage {
-  accessToken: string
+  /** Platform OIDC access token (no tid/mid/trole). */
+  platformAccessToken: string
+  /** Tenant JWT from switch-tenant / subscribe (token_use=tenant). */
+  tenantAccessToken?: string | null
   refreshToken: string
   expiresAtIso: string
+  tenantExpiresAtIso?: string | null
+  userId: string
+  email: string
+  tenantId?: string | null
+  membershipId?: string | null
+  tenantRoles: string[]
+  platformRoles: string[]
+  tenants: AuthTenantSummary[]
+}
+
+/** Legacy shape before dual-token storage (migrated on read). */
+interface LegacyAuthSessionStorage {
+  accessToken?: string
+  platformAccessToken?: string
+  tenantAccessToken?: string | null
+  refreshToken: string
+  expiresAtIso: string
+  tenantExpiresAtIso?: string | null
   userId: string
   email: string
   tenantId?: string | null
@@ -39,6 +60,24 @@ function normalizeRoles(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : [value]
 }
 
+function migrateSession(raw: LegacyAuthSessionStorage): AuthSessionStorage {
+  const platformAccessToken = raw.platformAccessToken ?? raw.accessToken ?? ''
+  return {
+    platformAccessToken,
+    tenantAccessToken: raw.tenantAccessToken ?? null,
+    refreshToken: raw.refreshToken,
+    expiresAtIso: raw.expiresAtIso,
+    tenantExpiresAtIso: raw.tenantExpiresAtIso ?? null,
+    userId: raw.userId,
+    email: raw.email,
+    tenantId: raw.tenantId ?? null,
+    membershipId: raw.membershipId ?? null,
+    tenantRoles: raw.tenantRoles ?? [],
+    platformRoles: raw.platformRoles ?? [],
+    tenants: raw.tenants ?? [],
+  }
+}
+
 export function getAuthSession(): AuthSessionStorage | null {
   if (!isBrowser()) {
     return null
@@ -50,7 +89,13 @@ export function getAuthSession(): AuthSessionStorage | null {
   }
 
   try {
-    return JSON.parse(raw) as AuthSessionStorage
+    const parsed = JSON.parse(raw) as LegacyAuthSessionStorage
+    const session = migrateSession(parsed)
+    if (!session.platformAccessToken) {
+      localStorage.removeItem(SESSION_STORAGE_KEY)
+      return null
+    }
+    return session
   } catch {
     localStorage.removeItem(SESSION_STORAGE_KEY)
     return null
@@ -77,18 +122,14 @@ function readClaimsFromOidcTokens(tokens: OidcTokenResponse): AccessTokenClaims 
   }
 
   const accessPlatformRoles = normalizeRoles(accessClaims?.prole)
-  const idPlatformRoles = normalizeRoles(idClaims?.prole)
 
   return {
     ...idClaims,
     ...accessClaims,
     prole: accessPlatformRoles.length > 0 ? accessClaims?.prole : idClaims?.prole,
-    trole: normalizeRoles(accessClaims?.trole).length > 0 ? accessClaims?.trole : idClaims?.trole,
     email: accessClaims?.email ?? idClaims?.email,
     sub: accessClaims?.sub ?? idClaims?.sub,
     uid: accessClaims?.uid ?? idClaims?.uid,
-    tid: accessClaims?.tid ?? idClaims?.tid,
-    mid: accessClaims?.mid ?? idClaims?.mid,
   }
 }
 
@@ -98,14 +139,16 @@ export function saveSessionFromOidcTokens(
 ): AuthSessionStorage {
   const claims = readClaimsFromOidcTokens(tokens)
   const session: AuthSessionStorage = {
-    accessToken: tokens.access_token,
+    platformAccessToken: tokens.access_token,
+    tenantAccessToken: null,
     refreshToken: tokens.refresh_token,
     expiresAtIso: tokenExpiresAtIso(tokens.expires_in),
+    tenantExpiresAtIso: null,
     userId: String(claims?.uid ?? claims?.sub ?? ''),
     email: String(claims?.email ?? ''),
-    tenantId: claims?.tid ? String(claims.tid) : null,
-    membershipId: claims?.mid ? String(claims.mid) : null,
-    tenantRoles: normalizeRoles(claims?.trole),
+    tenantId: null,
+    membershipId: null,
+    tenantRoles: [],
     platformRoles: normalizeRoles(claims?.prole),
     tenants,
   }
@@ -140,8 +183,17 @@ export function applyTenantContext(context: TenantContextResult): AuthSessionSto
     throw new Error('Sessão não encontrada.')
   }
 
+  if (!context.accessToken) {
+    throw new Error('Resposta de switch-tenant sem accessToken (tenant JWT).')
+  }
+
   return persist({
     ...current,
+    tenantAccessToken: context.accessToken,
+    tenantExpiresAtIso:
+      typeof context.expiresIn === 'number'
+        ? tokenExpiresAtIso(context.expiresIn)
+        : current.tenantExpiresAtIso ?? null,
     userId: context.userId,
     email: context.email,
     tenantId: context.tenantId,
@@ -152,18 +204,24 @@ export function applyTenantContext(context: TenantContextResult): AuthSessionSto
   })
 }
 
+/**
+ * Refresh updates the platform OIDC token and clears the tenant JWT.
+ * Call switch-tenant again when a tenant remains selected.
+ */
 export function updateSessionFromOidcRefresh(tokens: OidcTokenResponse): AuthSessionStorage {
   const current = getAuthSession()
   const claims = readClaimsFromOidcTokens(tokens)
   const updated: AuthSessionStorage = {
-    accessToken: tokens.access_token,
+    platformAccessToken: tokens.access_token,
+    tenantAccessToken: null,
     refreshToken: tokens.refresh_token,
     expiresAtIso: tokenExpiresAtIso(tokens.expires_in),
+    tenantExpiresAtIso: null,
     userId: String(claims?.uid ?? claims?.sub ?? current?.userId ?? ''),
     email: String(claims?.email ?? current?.email ?? ''),
-    tenantId: claims?.tid ? String(claims.tid) : current?.tenantId ?? null,
-    membershipId: claims?.mid ? String(claims.mid) : current?.membershipId ?? null,
-    tenantRoles: normalizeRoles(claims?.trole),
+    tenantId: current?.tenantId ?? null,
+    membershipId: current?.membershipId ?? null,
+    tenantRoles: current?.tenantRoles ?? [],
     platformRoles: normalizeRoles(claims?.prole).length > 0
       ? normalizeRoles(claims?.prole)
       : current?.platformRoles ?? [],
@@ -214,11 +272,37 @@ export function clearAccessDeniedLogoutFlag(): void {
 
 export function isAuthenticated(): boolean {
   const session = getAuthSession()
-  return Boolean(session?.accessToken)
+  return Boolean(session?.platformAccessToken)
 }
 
 export function isPlatformAdministrator(session: AuthSessionStorage | null = getAuthSession()): boolean {
   return session?.platformRoles?.includes('plat_admin') ?? false
+}
+
+/** Paths that must use the platform OIDC JWT (never the tenant JWT). */
+export function requiresPlatformAccessToken(url: string | undefined): boolean {
+  if (!url) {
+    return false
+  }
+
+  const path = url.split('?')[0]
+  return (
+    path.includes('/auth/switch-tenant') ||
+    path.includes('/Applications') ||
+    path.includes('/IdentityProviders') ||
+    path.includes('/platform/')
+  )
+}
+
+export function resolveBearerToken(
+  session: AuthSessionStorage,
+  url?: string,
+): string {
+  if (requiresPlatformAccessToken(url)) {
+    return session.platformAccessToken
+  }
+
+  return session.tenantAccessToken || session.platformAccessToken
 }
 
 export const PLATFORM_ADMIN_ACCESS_DENIED_MESSAGE =

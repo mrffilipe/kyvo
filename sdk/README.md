@@ -7,13 +7,12 @@ SDK for **product applications** (SPAs and consumer APIs), not the admin console
 | `@kyvo-client/client` | Browser: OIDC (PKCE), session, JWT claims, REST v1 |
 | `Kyvo.AspNetCore` | API: JWT validation, `IKyvoUserContext`, authorization policies |
 | `Kyvo.Client` | Server: `SubscribeAsync` + typed REST (BFF) |
-| `Kyvo.AspNetCore.TenancyKit` | Optional EF multi-tenant bridge (TenancyKit + `tid` claim) |
 
-**Versioning:** SemVer per package, aligned with API `/api/v1`. Current release: **3.0.0** (dual-token: platform OIDC JWT + tenant JWT from switch-tenant/subscribe). See [CHANGELOG.md](CHANGELOG.md).
+**Versioning:** SemVer per package, aligned with API `/api/v1`. Current release: **3.1.0** (dual-token; TenancyKit removed). See [CHANGELOG.md](CHANGELOG.md).
 
 **Publishing (maintainers):** [docs/SDK_PUBLISH.md](../docs/SDK_PUBLISH.md) — GitHub Actions workflow, NuGet + npm secrets, manual release.
 
-**API contract:** DTOs and routes follow the running Kyvo OpenAPI specs (`/swagger/v1/swagger.json`, `/swagger/oidc/swagger.json`). A snapshot for codegen lives in [`swagger-v1.json`](swagger-v1.json).
+**API contract:** DTOs and routes follow the running Kyvo OpenAPI specs (`/swagger/v1/swagger.json`, `/swagger/oidc/swagger.json`). Snapshots: [`swagger-v1.json`](swagger-v1.json), [`swagger-oidc.json`](swagger-oidc.json).
 
 ## Who calls what (typical CRM)
 
@@ -25,7 +24,7 @@ SDK for **product applications** (SPAs and consumer APIs), not the admin console
 | users, tenants, memberships, roles, audit | Yes | Optional |
 | applications, Kyvo admin, platform bootstrap | No | No |
 
-## Endpoint matrix (v1.0)
+## Endpoint matrix (v1)
 
 | Area | Methods | TS | .NET Client |
 |------|---------|----|-------------|
@@ -35,18 +34,15 @@ SDK for **product applications** (SPAs and consumer APIs), not the admin console
 | Tenants | list (+ optional `search`), get, patch, **key availability**, invite (`acceptPath`), **list/revoke invites**, accept invite | Yes | Yes |
 | Memberships | CRUD under `/tenants/{id}/memberships` | Yes | Yes |
 | Tenant roles | list/create under tenant; patch role; **delete** custom role | Yes | Yes |
-| Audit logs | list + **filter-options** (filters: userId, action, resourceType, from, to) | Yes | Yes |
+| Audit logs | list + **filter-options** | Yes | Yes |
 
-Admin-only endpoints (`GET /Users` search, `POST /Tenants`, Applications, Identity Providers, Platform) are **not** in these SDKs — use the Kyvo admin UI / `frontend` services.
+Admin-only endpoints are **not** in these SDKs — use the Kyvo admin UI / `frontend` services.
 
-Paths use prefix `/api/v1/` (`KyvoClientOptions.VersionPrefix` on .NET).
+Paths use prefix `/api/v1/`.
 
 ## TypeScript (`@kyvo-client/client`)
 
-Browser package: OIDC (authorization code + PKCE), session storage, JWT claim helpers, and typed REST resources.
-
-- Hand-written DTOs: [`typescript/@kyvo/client/src/types/api.ts`](typescript/@kyvo/client/src/types/api.ts), [`types/oidc.ts`](typescript/@kyvo/client/src/types/oidc.ts)
-- Full OpenAPI mirror (reference): [`typescript/@kyvo/client/src/generated/schema.ts`](typescript/@kyvo/client/src/generated/schema.ts)
+Browser package: OIDC (authorization code + PKCE), dual-token session storage, JWT claim helpers, and typed REST resources.
 
 ### Build and test
 
@@ -60,8 +56,8 @@ npm test
 Regenerate `schema.ts` after API changes (Kyvo API running):
 
 ```bash
-# from repo root, refresh snapshot then codegen
-curl -o sdk/swagger-v1.json http://localhost:5000/swagger/v1/swagger.json
+# from repo root — local HTTPS profile defaults to 5101
+curl -k -o sdk/swagger-v1.json https://localhost:5101/swagger/v1/swagger.json
 cd sdk/typescript && npm run generate:types
 ```
 
@@ -71,8 +67,7 @@ cd sdk/typescript && npm run generate:types
 import { createKyvoClient, hasTenant } from '@kyvo-client/client'
 
 const kyvo = createKyvoClient({
-  authority: 'http://localhost:5000',
-  apiVersion: '1.0',
+  authority: 'https://localhost:5101',
   oidc: {
     clientId: 'kyvo-spa',
     redirectUri: 'http://localhost:5173/auth/callback',
@@ -99,29 +94,22 @@ OIDC tokens are **pure** (no `tid`). Tenant context comes only from `POST /auth/
 
 See [typescript/README.md](typescript/README.md).
 
-## .NET (`Kyvo.Client`)
-
-Register and call from a BFF with the user's access token:
+## .NET (`Kyvo.Client` + `Kyvo.AspNetCore`)
 
 ```csharp
 builder.Services.AddKyvoClient(builder.Configuration);
-// Kyvo:Authority, optional Kyvo:ApiVersion (default 1.0)
+// Kyvo:Authority
 
-var token = KyvoClientServiceCollectionExtensions.GetUserAccessToken(httpContextAccessor);
-var result = await kyvo.Auth.SubscribeAsync(token!, new SubscribeTenantRequest("Acme", "acme"));
+var platformToken = httpContextAccessor.GetPlatformAccessToken();
+var result = await kyvo.Auth.SubscribeAsync(platformToken!, new SubscribeTenantRequest("Acme", "acme"));
+// result.Context.AccessToken → tenant JWT; filter EF with IKyvoUserContext.TenantId
 ```
-
-Models live in `Kyvo.Client.Models` and match Swagger (e.g. `PagedResult.Total`, invite/membership bodies use `roles`, sessions use `sessionId`). Product APIs use `IKyvoUserContext.OAuthClientId` (`client_id` JWT claim) for OAuth application context.
 
 ```bash
 dotnet build sdk/dotnet/Kyvo.sln
 dotnet test sdk/dotnet/Kyvo.sln
 ```
 
-## TenancyKit
-
-Product APIs with EF should prefer `Kyvo.AspNetCore.TenancyKit` over manual `tid` filtering. See [dotnet/TENANCYKIT.md](dotnet/TENANCYKIT.md).
-
 ## Samples
 
-[Pulse CRM](../samples/pulse-crm/) is the reference consumer.
+[Pulse CRM](../samples/pulse-crm/) is the reference consumer (native EF filter via `IKyvoUserContext`, no TenancyKit).

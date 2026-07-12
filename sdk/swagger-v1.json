@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.1",
   "info": {
     "title": "Kyvo REST API",
@@ -10,17 +10,6 @@
       "post": {
         "tags": [
           "Applications"
-        ],
-        "summary": "Registers a new application (platform administrators only).",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -118,7 +107,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Lists applications with pagination.",
         "parameters": [
           {
             "name": "Page",
@@ -134,14 +122,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -224,7 +204,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Creates an OAuth/OIDC client for the given application.",
         "parameters": [
           {
             "name": "applicationId",
@@ -233,14 +212,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -342,7 +313,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Provisions a tenant linked to an application (platform administrators only).",
         "parameters": [
           {
             "name": "applicationId",
@@ -351,14 +321,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -460,18 +422,9 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Checks whether an application slug is available.",
         "parameters": [
           {
             "name": "slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "version",
             "in": "path",
             "required": true,
             "schema": {
@@ -558,7 +511,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Returns a single application by identifier.",
         "parameters": [
           {
             "name": "id",
@@ -567,14 +519,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -657,7 +601,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Returns login branding settings for an application.",
         "parameters": [
           {
             "name": "id",
@@ -666,14 +609,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -754,7 +689,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Updates login branding (colors and enable flag) for an application.",
         "parameters": [
           {
             "name": "id",
@@ -763,14 +697,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -865,7 +791,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Uploads a logo for the application login screen.",
         "parameters": [
           {
             "name": "id",
@@ -874,14 +799,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -982,7 +899,6 @@
         "tags": [
           "Applications"
         ],
-        "summary": "Removes the custom login logo for an application.",
         "parameters": [
           {
             "name": "id",
@@ -991,14 +907,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -1074,7 +982,6 @@
         "tags": [
           "AuditLogs"
         ],
-        "summary": "Lists audit log entries for the current tenant with optional filters.",
         "parameters": [
           {
             "name": "UserId",
@@ -1128,14 +1035,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -1218,7 +1117,6 @@
         "tags": [
           "AuditLogs"
         ],
-        "summary": "Lists distinct filter values for audit log queries.",
         "parameters": [
           {
             "name": "Field",
@@ -1249,14 +1147,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -1338,18 +1228,6 @@
       "post": {
         "tags": [
           "Auth"
-        ],
-        "summary": "Creates a tenant for the current OAuth application session (SaaS onboarding).",
-        "description": "Creates a tenant for the current OAuth application session (SaaS onboarding). Callers that need fresh `tid`/`trole` claims afterwards should redeem their existing refresh token against `/connect/token` (same pattern used after `switch-tenant`).",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -1449,17 +1327,6 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Switches the active tenant for the current user session.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1558,17 +1425,6 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Lists active authentication sessions for the current user.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1646,45 +1502,11 @@
         }
       }
     },
-    "/api/v1/Auth/account": {
-      "delete": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Deletes the authenticated user's account for the current application tenant context.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/Auth/sessions/{sessionId}": {
       "delete": {
         "tags": [
           "Auth"
         ],
-        "summary": "Revokes a single authentication session.",
         "parameters": [
           {
             "name": "sessionId",
@@ -1693,14 +1515,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -1771,21 +1585,82 @@
         }
       }
     },
+    "/api/v1/Auth/account": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or malformed request.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule conflict.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/IdentityProviders": {
       "post": {
         "tags": [
           "IdentityProviders"
-        ],
-        "summary": "Registers a new identity provider.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -1883,17 +1758,6 @@
         "tags": [
           "IdentityProviders"
         ],
-        "summary": "Lists all identity providers.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1976,18 +1840,9 @@
         "tags": [
           "IdentityProviders"
         ],
-        "summary": "Checks whether an identity provider alias is available.",
         "parameters": [
           {
             "name": "alias",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "version",
             "in": "path",
             "required": true,
             "schema": {
@@ -2074,7 +1929,6 @@
         "tags": [
           "IdentityProviders"
         ],
-        "summary": "Returns a single identity provider by identifier.",
         "parameters": [
           {
             "name": "id",
@@ -2083,14 +1937,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2171,7 +2017,6 @@
         "tags": [
           "IdentityProviders"
         ],
-        "summary": "Updates display name, capabilities, or encrypted configuration.",
         "parameters": [
           {
             "name": "id",
@@ -2180,14 +2025,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2282,7 +2119,6 @@
         "tags": [
           "IdentityProviders"
         ],
-        "summary": "Enables an identity provider for login flows.",
         "parameters": [
           {
             "name": "id",
@@ -2291,14 +2127,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2374,7 +2202,6 @@
         "tags": [
           "IdentityProviders"
         ],
-        "summary": "Disables an identity provider.",
         "parameters": [
           {
             "name": "id",
@@ -2383,14 +2210,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2461,12 +2280,94 @@
         }
       }
     },
-    "/api/v1/tenants/{tenantId}/memberships": {
+    "/api/v1/Invites/{id}": {
+      "delete": {
+        "tags": [
+          "Invites"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or malformed request.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed to perform this action.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule conflict.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v{version}/tenants/{tenantId}/memberships": {
       "post": {
         "tags": [
           "Memberships"
         ],
-        "summary": "Adds a user to a tenant with the given roles.",
         "parameters": [
           {
             "name": "tenantId",
@@ -2582,7 +2483,6 @@
         "tags": [
           "Memberships"
         ],
-        "summary": "Lists memberships for a tenant.",
         "parameters": [
           {
             "name": "tenantId",
@@ -2599,6 +2499,25 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "ActorUserId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ActorPlatformRoles",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -2705,7 +2624,6 @@
         "tags": [
           "Memberships"
         ],
-        "summary": "Updates the roles assigned to a membership.",
         "parameters": [
           {
             "name": "id",
@@ -2714,14 +2632,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2814,7 +2724,6 @@
         "tags": [
           "Memberships"
         ],
-        "summary": "Revokes a membership (soft delete).",
         "parameters": [
           {
             "name": "id",
@@ -2823,14 +2732,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2906,17 +2807,6 @@
         "tags": [
           "Platform"
         ],
-        "summary": "Returns whether the platform has been bootstrapped and which OAuth client to use for admin login.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2991,12 +2881,11 @@
         }
       }
     },
-    "/api/v1/tenants/{tenantId}/roles": {
+    "/v{version}/tenants/{tenantId}/roles": {
       "post": {
         "tags": [
           "TenantRoles"
         ],
-        "summary": "Creates a custom role for the tenant.",
         "parameters": [
           {
             "name": "tenantId",
@@ -3112,7 +3001,6 @@
         "tags": [
           "TenantRoles"
         ],
-        "summary": "Lists roles defined for a tenant.",
         "parameters": [
           {
             "name": "tenantId",
@@ -3126,6 +3014,7 @@
           {
             "name": "TenantId",
             "in": "query",
+            "required": true,
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -3134,6 +3023,7 @@
           {
             "name": "IncludeInactive",
             "in": "query",
+            "required": true,
             "schema": {
               "type": "boolean"
             }
@@ -3242,7 +3132,6 @@
         "tags": [
           "TenantRoles"
         ],
-        "summary": "Updates a tenant role's name, description, or active flag.",
         "parameters": [
           {
             "name": "id",
@@ -3251,14 +3140,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -3346,23 +3227,93 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "TenantRoles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or malformed request.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed to perform this action.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule conflict.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/Tenants": {
       "post": {
         "tags": [
           "Tenants"
-        ],
-        "summary": "Creates a new tenant (platform administrators only).",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -3460,7 +3411,6 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Lists tenants the current user belongs to.",
         "parameters": [
           {
             "name": "UserId",
@@ -3480,6 +3430,7 @@
           {
             "name": "ActorPlatformRoles",
             "in": "query",
+            "required": true,
             "schema": {
               "type": "array",
               "items": {
@@ -3501,14 +3452,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -3591,7 +3534,6 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Sends an invitation to join the tenant.",
         "parameters": [
           {
             "name": "id",
@@ -3600,14 +3542,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -3707,7 +3641,6 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Lists invites for a tenant.",
         "parameters": [
           {
             "name": "id",
@@ -3719,29 +3652,48 @@
             }
           },
           {
-            "name": "version",
-            "in": "path",
+            "name": "TenantId",
+            "in": "query",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           },
           {
-            "name": "page",
+            "name": "ActorUserId",
             "in": "query",
+            "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
+              "type": "string",
+              "format": "uuid"
             }
           },
           {
-            "name": "pageSize",
+            "name": "ActorPlatformRoles",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "Page",
             "in": "query",
             "schema": {
               "type": "integer",
-              "format": "int32",
-              "default": 20
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -3765,43 +3717,51 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/v1/Invites/{id}": {
-      "delete": {
-        "tags": [
-          "Invites"
-        ],
-        "summary": "Revokes a pending tenant invite.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Validation or malformed request.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed to perform this action.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule conflict.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3815,17 +3775,6 @@
       "post": {
         "tags": [
           "Tenants"
-        ],
-        "summary": "Accepts a tenant invite using the token from the invitation email.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -3925,18 +3874,9 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Checks whether a tenant key is available.",
         "parameters": [
           {
             "name": "key",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "version",
             "in": "path",
             "required": true,
             "schema": {
@@ -4023,7 +3963,6 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Returns a tenant by identifier when the caller has access.",
         "parameters": [
           {
             "name": "id",
@@ -4032,14 +3971,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -4120,7 +4051,6 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Updates tenant metadata (name).",
         "parameters": [
           {
             "name": "id",
@@ -4129,14 +4059,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -4231,7 +4153,6 @@
         "tags": [
           "Users"
         ],
-        "summary": "Searches users by email or display name (platform or tenant administrators).",
         "parameters": [
           {
             "name": "Search",
@@ -4255,14 +4176,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -4345,17 +4258,6 @@
         "tags": [
           "Users"
         ],
-        "summary": "Returns the authenticated user's profile.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -4432,17 +4334,6 @@
       "patch": {
         "tags": [
           "Users"
-        ],
-        "summary": "Updates the authenticated user's display name and photo URL.",
-        "parameters": [
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -4535,7 +4426,6 @@
         "tags": [
           "Users"
         ],
-        "summary": "Lists tenants and roles for the authenticated user.",
         "parameters": [
           {
             "name": "UserId",
@@ -4559,14 +4449,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "version",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -4757,6 +4639,9 @@
         "additionalProperties": false
       },
       "ApplicationBrandingLogoResponse": {
+        "required": [
+          "brandingLogoUrl"
+        ],
         "type": "object",
         "properties": {
           "brandingLogoUrl": {
@@ -4766,9 +4651,65 @@
         },
         "additionalProperties": false
       },
+      "ApplicationClientSummaryDto": {
+        "required": [
+          "accessTokenTtlSeconds",
+          "allowedScopes",
+          "clientId",
+          "clientType",
+          "id",
+          "isSystem",
+          "postLogoutRedirectUris",
+          "redirectUris"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientType": {
+            "$ref": "#/components/schemas/ClientType"
+          },
+          "redirectUris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "postLogoutRedirectUris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "allowedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "accessTokenTtlSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isSystem": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "ApplicationDto": {
         "required": [
           "brandingEnabled",
+          "clients",
           "id",
           "isSystem",
           "name",
@@ -4817,6 +4758,13 @@
           "brandingHeroSubtitle": {
             "type": "string",
             "nullable": true
+          },
+          "clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationClientSummaryDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4827,17 +4775,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApplicationDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -4845,6 +4782,17 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4876,17 +4824,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuditLogFilterOptionDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -4894,6 +4831,17 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogFilterOptionDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4960,17 +4908,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuditLogItemDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -4978,6 +4915,17 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogItemDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -5080,6 +5028,8 @@
       "CreateApplicationClientRequest": {
         "required": [
           "accessTokenTtlSeconds",
+          "actorPlatformRoles",
+          "applicationId",
           "clientId",
           "clientType",
           "redirectUris"
@@ -5094,7 +5044,7 @@
             "type": "string",
             "nullable": true
           },
-          "clientSecretHash": {
+          "clientSecret": {
             "type": "string",
             "nullable": true
           },
@@ -5102,6 +5052,10 @@
             "$ref": "#/components/schemas/ClientType"
           },
           "redirectUris": {
+            "type": "string",
+            "nullable": true
+          },
+          "postLogoutRedirectUris": {
             "type": "string",
             "nullable": true
           },
@@ -5154,6 +5108,7 @@
       },
       "CreateMembershipRequest": {
         "required": [
+          "actorPlatformRoles",
           "roles",
           "userId"
         ],
@@ -5173,12 +5128,24 @@
               "type": "string"
             },
             "nullable": true
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorPlatformRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "CreateTenantRequest": {
         "required": [
+          "actorPlatformRoles",
           "key",
           "name"
         ],
@@ -5217,8 +5184,11 @@
       },
       "CreateTenantRoleRequest": {
         "required": [
+          "actorPlatformRoles",
+          "actorUserId",
           "key",
-          "name"
+          "name",
+          "tenantId"
         ],
         "type": "object",
         "properties": {
@@ -5237,11 +5207,25 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorPlatformRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "CreatedIdResponse": {
+        "required": [
+          "id"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -5249,10 +5233,12 @@
             "format": "uuid"
           }
         },
-        "additionalProperties": false,
-        "description": "Minimal response body when an endpoint creates a resource and returns its identifier."
+        "additionalProperties": false
       },
       "CreatedMembershipIdResponse": {
+        "required": [
+          "membershipId"
+        ],
         "type": "object",
         "properties": {
           "membershipId": {
@@ -5321,103 +5307,12 @@
         ],
         "type": "string"
       },
-      "InviteMemberResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "acceptPath": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TenantInviteDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "email": {
-            "type": "string",
-            "nullable": true
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "consumedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "revokedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/TenantInviteStatus"
-          },
-          "acceptPath": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TenantInviteDtoPagedResult": {
-        "required": [
-          "items"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TenantInviteDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "TenantInviteStatus": {
-        "enum": [
-          "Pending",
-          "Accepted",
-          "Expired",
-          "Revoked"
-        ],
-        "type": "string"
-      },
       "InviteMemberRequest": {
         "required": [
+          "actorPlatformRoles",
           "email",
-          "roles"
+          "roles",
+          "tenantId"
         ],
         "type": "object",
         "properties": {
@@ -5449,6 +5344,24 @@
             "items": {
               "type": "string"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InviteMemberResponse": {
+        "required": [
+          "acceptPath",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "acceptPath": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -5503,17 +5416,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MembershipDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -5521,40 +5423,16 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "OidcTokenResponse": {
-        "required": [
-          "access_token",
-          "expires_in",
-          "token_type"
-        ],
-        "type": "object",
-        "properties": {
-          "access_token": {
-            "type": "string",
-            "nullable": true
           },
-          "token_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "expires_in": {
+          "total": {
             "type": "integer",
             "format": "int32"
           },
-          "refresh_token": {
-            "type": "string",
-            "nullable": true
-          },
-          "id_token": {
-            "type": "string",
-            "nullable": true
-          },
-          "scope": {
-            "type": "string",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipDto"
+            },
             "nullable": true
           }
         },
@@ -5609,6 +5487,9 @@
       },
       "ProvisionApplicationTenantRequest": {
         "required": [
+          "actorPlatformRoles",
+          "actorUserId",
+          "applicationId",
           "tenantKey",
           "tenantName"
         ],
@@ -5683,8 +5564,7 @@
       "SessionStatus": {
         "enum": [
           "Active",
-          "Revoked",
-          "Expired"
+          "Revoked"
         ],
         "type": "string"
       },
@@ -5759,10 +5639,22 @@
               "$ref": "#/components/schemas/AuthTenantSummaryDto"
             },
             "nullable": true
+          },
+          "accessToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "tokenType": {
+            "type": "string",
+            "nullable": true
           }
         },
-        "additionalProperties": false,
-        "description": "Response for SaaS tenant subscription. Refresh tokens via /connect/token to pick up tid/trole claims."
+        "additionalProperties": false
       },
       "SwitchTenantRequest": {
         "required": [
@@ -5780,6 +5672,9 @@
       "TenantContextResult": {
         "required": [
           "email",
+          "platformRoles",
+          "tenantRoles",
+          "tenants",
           "userId"
         ],
         "type": "object",
@@ -5822,6 +5717,19 @@
               "$ref": "#/components/schemas/AuthTenantSummaryDto"
             },
             "nullable": true
+          },
+          "accessToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "tokenType": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -5855,17 +5763,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TenantDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -5873,9 +5770,106 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
+      },
+      "TenantInviteDto": {
+        "required": [
+          "email",
+          "expiresAt",
+          "id",
+          "roles",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consumedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/TenantInviteStatus"
+          },
+          "acceptPath": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TenantInviteDtoPagedResult": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantInviteDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TenantInviteStatus": {
+        "enum": [
+          "Pending",
+          "Accepted",
+          "Expired",
+          "Revoked"
+        ],
+        "type": "string"
       },
       "TenantRoleDto": {
         "required": [
@@ -5923,17 +5917,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TenantRoleDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -5941,6 +5924,17 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantRoleDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -6003,6 +5997,7 @@
       },
       "UpdateMembershipRolesRequest": {
         "required": [
+          "actorPlatformRoles",
           "roles"
         ],
         "type": "object",
@@ -6017,13 +6012,27 @@
               "type": "string"
             },
             "nullable": true
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorPlatformRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "UpdateTenantRequest": {
         "required": [
-          "name"
+          "actorPlatformRoles",
+          "actorUserId",
+          "name",
+          "tenantId"
         ],
         "type": "object",
         "properties": {
@@ -6051,8 +6060,11 @@
       },
       "UpdateTenantRoleRequest": {
         "required": [
+          "actorPlatformRoles",
+          "actorUserId",
           "isActive",
-          "name"
+          "name",
+          "roleId"
         ],
         "type": "object",
         "properties": {
@@ -6070,13 +6082,25 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorPlatformRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "UpdateUserProfileRequest": {
         "required": [
-          "displayName"
+          "displayName",
+          "userId"
         ],
         "type": "object",
         "properties": {
@@ -6172,17 +6196,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserMembershipDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -6190,6 +6203,17 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserMembershipDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -6227,17 +6251,6 @@
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserPickerDto"
-            },
-            "nullable": true
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
           "page": {
             "type": "integer",
             "format": "int32"
@@ -6245,6 +6258,17 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserPickerDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -1,14 +1,10 @@
 using System.Text.Json.Serialization;
 using Kyvo.AspNetCore;
-using Kyvo.AspNetCore.TenancyKit;
 using Kyvo.Client;
 using Microsoft.EntityFrameworkCore;
 using PulseCrm.Api.Configuration;
 using PulseCrm.Api.Data;
 using PulseCrm.Api.Services;
-using TenancyKit.AspNetCore;
-using TenancyKit.Core;
-using TenancyKit.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,22 +22,8 @@ builder.Services
     .AddKyvoClient(builder.Configuration)
     .PostConfigure<KyvoClientOptions>(o => o.AllowInvalidCertificate = allowInvalidKyvoCertificate);
 
-builder.Services
-    .AddKyvoTenancyKit<ProductTenantInfo>(options =>
-    {
-        options.UseMissingTenantBehavior(MissingTenantBehavior.Ignore);
-        options.UseClaimsTenantResolver("tid");
-        options.UseClaimPassthroughTenantStore();
-        options.ConfigureEntity<ITenantOwned, Guid>(e => e.TenantId);
-    });
-
-builder.Services.AddScoped<TenancyKitSaveChangesInterceptor<ProductTenantInfo>>();
-builder.Services.AddDbContext<PulseCrmDbContext>((provider, options) =>
-{
-    options
-        .UseSqlite(builder.Configuration.GetConnectionString("PulseCrm"))
-        .AddInterceptors(provider.GetRequiredService<TenancyKitSaveChangesInterceptor<ProductTenantInfo>>());
-});
+builder.Services.AddDbContext<PulseCrmDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("PulseCrm")));
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
@@ -85,7 +67,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("PulseCrmSpa");
 app.UseAuthentication();
-app.UseMultiTenancy<ProductTenantInfo>();
 app.UseAuthorization();
 app.MapControllers();
 

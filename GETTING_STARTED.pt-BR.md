@@ -19,6 +19,8 @@ Guia para rodar o Kyvo em **desenvolvimento** (Docker Compose + `.env` neste rep
 
 ## Desenvolvimento (seções 1–6)
 
+**Portas:** Docker Compose usa API http://localhost:5000 por padrão. dotnet run --launch-profile https local usa **https://localhost:5101** (defaults do admin SPA / Pulse fora do Docker).
+
 ---
 
 ## 1. Pré-requisitos
@@ -342,7 +344,7 @@ Passos:
 3. Manter IdP `local` habilitado (bootstrap).
 4. Teste: qualquer app OIDC → redirect → `/account/login` → **Continuar com Google** → OAuth upstream → `/callback/login/google` → cookie de sessão → `returnUrl` OAuth.
 
-**Pulse CRM com Google:** o CRM não integra Google diretamente; redireciona para o OIDC da plataforma. Com IdP Google habilitado, em `/account/login` o usuário entra via redirect, volta ao CRM com `code`, faz onboarding/subscribe, atualiza tokens para claims `tid`/`mid` e usa a API normalmente. Ver `samples/pulse-crm/backend/README.md`.
+**Pulse CRM com Google:** o CRM não integra Google diretamente; redireciona para o OIDC da plataforma. Com IdP Google habilitado, em `/account/login` o usuário entra via redirect, volta ao CRM com `code`, faz onboarding/subscribe, persiste o tenant JWT retornado pelo subscribe e usa a API normalmente. Ver `samples/pulse-crm/backend/README.md`.
 
 ### Integrar uma aplicação consumidora
 

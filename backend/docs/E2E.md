@@ -51,5 +51,16 @@ https://localhost:5101/connect/authorize?client_id=kyvo-idp-spa&response_type=co
 
 1. Obter platform token via Authorization Code + PKCE (`/connect/*`) — claims **sem** `tid`/`mid`/`trole`.
 2. `POST /api/v1/auth/subscribe` ou `POST /api/v1/auth/switch-tenant` com Bearer platform → tenant JWT.
-3. Chamar APIs tenant-scoped (`/api/v1/memberships`, etc.) com o tenant JWT (`token_use=tenant`).
+3. Chamar APIs tenant-scoped (`/api/v1/Memberships`, etc.) com o tenant JWT (`token_use=tenant`).
 4. Confirmar isolation: query filters usam claim `tid` via `TenantContextMiddleware`.
+
+## Checklist cruzado (ecossistema)
+
+| # | Fluxo | Aceite |
+|---|-------|--------|
+| 1 | Admin SPA: OIDC login → platform JWT sem `tid` | Session `platformAccessToken` set |
+| 2 | Admin: select tenant → `switch-tenant` → Memberships 200 | `tenantAccessToken` used; no OIDC refresh needed |
+| 3 | Admin: Applications / IdPs | Bearer platform JWT |
+| 4 | Decode platform JWT | No `tid` / `mid` / `trole` |
+| 5 | Decode tenant JWT | `token_use=tenant` + `tid` |
+| 6 | Pulse: OIDC → subscribe/switch → contacts CRUD | Isolated by `IKyvoUserContext.TenantId` |

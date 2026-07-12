@@ -1,4 +1,4 @@
-﻿# Publishing Kyvo SDKs — maintainers
+# Publishing Kyvo SDKs — maintainers
 
 [English](./SDK_PUBLISH.md) | [Português](./SDK_PUBLISH.pt-BR.md)
 
@@ -16,7 +16,6 @@ Platform Docker image publishing is documented separately in [DOCKER_PUBLISH.md]
 |----------|---------|-------------|
 | **npm** | `@kyvo-client/client` | [sdk/typescript/@kyvo/client](../sdk/typescript/@kyvo/client) |
 | **NuGet** | `Kyvo.AspNetCore` | [sdk/dotnet/Kyvo.AspNetCore](../sdk/dotnet/Kyvo.AspNetCore) |
-| **NuGet** | `Kyvo.AspNetCore.TenancyKit` | [sdk/dotnet/Kyvo.AspNetCore.TenancyKit](../sdk/dotnet/Kyvo.AspNetCore.TenancyKit) |
 | **NuGet** | `Kyvo.Client` | [sdk/dotnet/Kyvo.Client](../sdk/dotnet/Kyvo.Client) |
 
 **Version alignment:** SDK SemVer should match the Kyvo API contract (`v1.0` REST). Bump all packages together on each release.
@@ -82,7 +81,7 @@ No repository **variables** are required for this workflow.
 1. Resolves **semver** from the git tag (`v1.2.3` → `1.2.3`) or from the manual `version` input.
 2. Runs `dotnet test` on [sdk/dotnet/Kyvo.sln](../sdk/dotnet/Kyvo.sln).
 3. Runs `npm ci` + `npm test` in [sdk/typescript](../sdk/typescript).
-4. `dotnet pack` the three library projects with `PackageVersion=<version>`.
+4. `dotnet pack` the two library projects with `PackageVersion=<version>`.
 5. `dotnet nuget push` all `.nupkg` files (`--skip-duplicate` for re-runs).
 6. `npm version` + `npm publish` for `@kyvo-client/client` (`prepublishOnly` runs `tsc` build).
 
@@ -120,12 +119,11 @@ cd sdk/typescript && npm ci && npm test
 ### 2. NuGet
 
 ```bash
-VERSION=3.0.0
+VERSION=3.1.0
 OUT=./artifacts/nupkgs
 mkdir -p "$OUT"
 
 dotnet pack sdk/dotnet/Kyvo.AspNetCore/Kyvo.AspNetCore.csproj -c Release -o "$OUT" /p:PackageVersion="$VERSION"
-dotnet pack sdk/dotnet/Kyvo.AspNetCore.TenancyKit/Kyvo.AspNetCore.TenancyKit.csproj -c Release -o "$OUT" /p:PackageVersion="$VERSION"
 dotnet pack sdk/dotnet/Kyvo.Client/Kyvo.Client.csproj -c Release -o "$OUT" /p:PackageVersion="$VERSION"
 
 dotnet nuget push "$OUT"/*.nupkg \
@@ -134,13 +132,13 @@ dotnet nuget push "$OUT"/*.nupkg \
   --skip-duplicate
 ```
 
-Pack **Kyvo.AspNetCore** first; `Kyvo.Client` and `Kyvo.AspNetCore.TenancyKit` declare NuGet dependencies on it via project references (`PrivateAssets=none`).
+Pack **Kyvo.AspNetCore** first; `Kyvo.Client` depends on it via project reference (`PrivateAssets=none`).
 
 ### 3. npm
 
 ```bash
 cd sdk/typescript/@kyvo/client
-npm version 3.0.0 --no-git-tag-version --allow-same-version
+npm version 3.1.0 --no-git-tag-version --allow-same-version
 npm run build
 npm publish --access public
 ```
@@ -164,10 +162,8 @@ import { createKyvoClient } from '@kyvo-client/client'
 ### .NET
 
 ```bash
-dotnet add package Kyvo.Client --version 3.0.0
-dotnet add package Kyvo.AspNetCore --version 3.0.0
-# optional EF multi-tenant:
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 3.0.0
+dotnet add package Kyvo.Client --version 3.1.0
+dotnet add package Kyvo.AspNetCore --version 3.1.0
 ```
 
 ---

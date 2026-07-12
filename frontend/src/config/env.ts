@@ -5,7 +5,7 @@
 // Production Docker image: VITE_API_BASE_URL and VITE_OAUTH_REDIRECT_URI are left empty at build time;
 // in the browser the SPA uses window.location.origin (same public host as the API via external proxy).
 const ENV_DEFAULTS = {
-  VITE_API_BASE_URL: 'http://localhost:5000',
+  VITE_API_BASE_URL: 'https://localhost:5101',
   VITE_API_TIMEOUT_MS: '30000',
   VITE_OAUTH_CLIENT_ID: 'platform-admin-web',
   VITE_OAUTH_REDIRECT_URI: 'http://localhost:3000/auth/callback',

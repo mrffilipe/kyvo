@@ -19,6 +19,8 @@ Guide to run Kyvo in **development** (Docker Compose + `.env` from this repo) or
 
 ## Development (sections 1–6)
 
+**Ports:** Docker Compose defaults to API http://localhost:5000. Local dotnet run --launch-profile https uses **https://localhost:5101** (admin SPA / Pulse defaults when not using Docker).
+
 ---
 
 ## 1. Prerequisites
@@ -342,7 +344,7 @@ Steps:
 3. Keep the `local` IdP enabled (from bootstrap).
 4. Test: any OIDC app → redirect → `/account/login` → **Continue with Google** (or provider button) → upstream OAuth → `/callback/login/google` → session cookie → OAuth `returnUrl`.
 
-**Pulse CRM with Google:** the CRM does not integrate Google directly; it redirects to the platform OIDC. With a Google IdP enabled, on `/account/login` the user signs in via redirect, returns to the CRM with a `code`, completes onboarding/subscribe, refreshes tokens for `tid`/`mid` claims, and uses the API normally. See `samples/pulse-crm/backend/README.md`.
+**Pulse CRM with Google:** the CRM does not integrate Google directly; it redirects to the platform OIDC. With a Google IdP enabled, on `/account/login` the user signs in via redirect, returns to the CRM with a `code`, completes onboarding/subscribe (stores the returned tenant JWT), and uses the API normally. See `samples/pulse-crm/backend/README.md`.
 
 ### Integrate a consumer application
 

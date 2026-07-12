@@ -1,4 +1,4 @@
-﻿# PulseCRM API — autenticação e autorização (Kyvo)
+# PulseCRM API — autenticação e autorização (Kyvo)
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -18,7 +18,7 @@ API de exemplo que valida JWTs emitidos pela Kyvo e chama `POST /api/v1/auth/sub
 
 ```json
 "Kyvo": {
-  "Authority": "http://localhost:5000",
+  "Authority": "https://localhost:5101",
   "Audience": "kyvo-api"
 }
 ```
@@ -30,15 +30,15 @@ API de exemplo que valida JWTs emitidos pela Kyvo e chama `POST /api/v1/auth/sub
 2. Usuário autentica em /account/login OU cria conta em /account/register (cadastro central na Kyvo; este sample não tem tela própria de cadastro)
 3. Redirect → http://localhost:5173/auth/callback?code=...&state=...
 4. SPA → POST {Authority}/connect/token (authorization_code + code_verifier)
-5. SPA armazena access_token + refresh_token
-6. SPA → POST PulseCRM /api/onboarding/complete (Bearer access_token)
-7. PulseCRM → POST {Authority}/api/v1/auth/subscribe (repassa o mesmo Bearer)
-8. SPA → POST /connect/token (refresh_token) para obter JWT com claims tid e mid
+5. SPA armazena platform access_token + refresh_token
+6. SPA → POST PulseCRM /api/onboarding/complete (Bearer platform token)
+7. PulseCRM → POST {Authority}/api/v1/auth/subscribe (repassa o Bearer de plataforma)
+8. Resposta inclui tenant JWT (`accessToken`); SPA chama `session.saveTenantToken` — não renove OIDC esperando `tid`
 ```
 
 ## 3. Validação JWT nesta API
 
-- **Authority** = URL do issuer (mesmo valor de `Jwt:Issuer` na API Kyvo; aqui em `Kyvo:Authority`, ex. `http://localhost:5000`)
+- **Authority** = URL do issuer (mesmo valor de `Jwt:Issuer` na API Kyvo; aqui em `Kyvo:Authority`, ex. `https://localhost:5101`)
 - **Audience** = `kyvo-api` (claim `aud` do access token; `Kyvo:Audience` no appsettings)
 - Chaves públicas via JWKS: `{Authority}/.well-known/jwks.json`
 
@@ -53,17 +53,16 @@ Claims úteis no access token:
 | `trole` | Papéis no tenant |
 | `prole` | Papéis de plataforma |
 
-Sem `tid` após login: o usuário ainda não fez subscribe ou não renovou o token.
+Sem tenant JWT após login: o usuário ainda não fez subscribe ou não persistiu o `accessToken` retornado.
 
-## 4. Pacotes SDK Kyvo (NuGet `3.0.0`)
+## 4. Pacotes SDK Kyvo (NuGet `3.1.0`)
 
 | Pacote | Papel nesta API |
 |--------|-----------------|
-| `Kyvo.AspNetCore` | Validação JWT, `IKyvoUserContext` |
+| `Kyvo.AspNetCore` | Validação JWT, `IKyvoUserContext`, policies |
 | `Kyvo.Client` | `IKyvoProductClient.Auth.SubscribeAsync` |
-| `Kyvo.AspNetCore.TenancyKit` | Filtro EF por claim `tid` |
 
-Referenciados como `PackageReference` em `PulseCrm.Api.csproj`.
+Referenciados como `ProjectReference` no monorepo (ou pacotes NuGet). Isolamento de tenant via filtro EF nativo em `PulseCrmDbContext` com `IKyvoUserContext.TenantId` (sem TenancyKit).
 
 ## 5. `auth/subscribe` e ApplicationTenant
 
@@ -71,7 +70,7 @@ Referenciados como `PackageReference` em `PulseCrm.Api.csproj`.
 
 ```http
 POST /api/v1/auth/subscribe
-Authorization: Bearer {access_token}
+Authorization: Bearer {platform_access_token}
 Content-Type: application/json
 
 {
@@ -86,27 +85,17 @@ A plataforma cria:
 
 - **Tenant** + membership (owner) para o usuário da sessão OAuth
 - **ApplicationTenant** ligando a application do client `pulse-crm-web` ao tenant, com `planCode` e `externalCustomerId`
+- Retorna **tenant JWT** em `accessToken` (`token_use=tenant`) — a SPA deve persistir; refresh OIDC sozinho nunca adiciona `tid`
 
 O CRM persiste cópia local em SQLite (`Subscriptions`) para exibir plano no dashboard.
 
-## 6. Refresh após subscribe
-
-O access token emitido **antes** do subscribe não contém `tid`. O SPA deve chamar:
-
-```http
-POST /connect/token
-grant_type=refresh_token&refresh_token=...&client_id=pulse-crm-web
-```
-
-Requer scope `offline_access` no client.
-
-## 7. Troubleshooting
+## 6. Troubleshooting
 
 | Erro | Causa | Solução |
 |------|-------|---------|
 | `invalid_scope` / `offline_access` | Client sem scope | Adicionar `offline_access` nos allowed scopes |
-| 401 na API CRM | Audience/issuer incorretos | Conferir `Kyvo:Authority` e `Kyvo:Audience` |
-| Contacts 400 “missing tid” | Token antigo | Refresh token após onboarding |
+| 401 na API CRM | Audience/issuer incorretos | Conferir `Kyvo:Authority` e `Kyvo:Audience` (`https://localhost:5101` no HTTPS local) |
+| Contatos vazios / sem tenant | Sem tenant JWT | Persistir `accessToken` de subscribe / switch-tenant |
 | Subscribe 403/400 | Sessão sem client OAuth | Login via authorize do client `pulse-crm-web` |
 
 ## Endpoints locais

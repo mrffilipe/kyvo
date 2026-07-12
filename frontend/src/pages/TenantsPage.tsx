@@ -42,9 +42,7 @@ import {
   switchTenant,
   updateTenant,
 } from '../services'
-import { refreshOidcTokens } from '../services/oidcService'
 import type { Tenant, UserPickerItem } from '../types'
-import { getAuthSession, updateSessionFromOidcRefresh } from '../utils/authStorage'
 import { getApiErrorMessage } from '../utils/apiError'
 import { tenantRoleLabel } from '../utils/enumLabels'
 import { copyInviteLink } from '../utils/inviteUrl'
@@ -233,11 +231,6 @@ export function TenantsPage() {
     setSuccess(null)
     try {
       const context = await switchTenant(tenantId)
-      const session = getAuthSession()
-      if (session?.refreshToken) {
-        const tokens = await refreshOidcTokens(session.refreshToken)
-        updateSessionFromOidcRefresh(tokens)
-      }
       applyTenantSwitch(context)
       selectTenant(tenantId)
       setSuccess('Tenant selecionado e sessão atualizada.')

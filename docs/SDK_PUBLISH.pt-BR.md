@@ -1,4 +1,4 @@
-﻿# Publicar SDKs Kyvo — mantenedores
+# Publicar SDKs Kyvo — mantenedores
 
 [English](./SDK_PUBLISH.md) | [Português](./SDK_PUBLISH.pt-BR.md)
 
@@ -16,7 +16,6 @@ A publicação da **imagem Docker** da plataforma está em [DOCKER_PUBLISH.pt-BR
 |----------|--------|-------------------------|
 | **npm** | `@kyvo-client/client` | [sdk/typescript/@kyvo/client](../sdk/typescript/@kyvo/client) |
 | **NuGet** | `Kyvo.AspNetCore` | [sdk/dotnet/Kyvo.AspNetCore](../sdk/dotnet/Kyvo.AspNetCore) |
-| **NuGet** | `Kyvo.AspNetCore.TenancyKit` | [sdk/dotnet/Kyvo.AspNetCore.TenancyKit](../sdk/dotnet/Kyvo.AspNetCore.TenancyKit) |
 | **NuGet** | `Kyvo.Client` | [sdk/dotnet/Kyvo.Client](../sdk/dotnet/Kyvo.Client) |
 
 **Alinhamento de versão:** o SemVer dos SDKs deve acompanhar o contrato da API Kyvo (REST `v1.0`). Suba todos os pacotes juntos em cada release.
@@ -118,12 +117,11 @@ cd sdk/typescript && npm ci && npm test
 ### 2. NuGet
 
 ```bash
-VERSION=3.0.0
+VERSION=3.1.0
 OUT=./artifacts/nupkgs
 mkdir -p "$OUT"
 
 dotnet pack sdk/dotnet/Kyvo.AspNetCore/Kyvo.AspNetCore.csproj -c Release -o "$OUT" /p:PackageVersion="$VERSION"
-dotnet pack sdk/dotnet/Kyvo.AspNetCore.TenancyKit/Kyvo.AspNetCore.TenancyKit.csproj -c Release -o "$OUT" /p:PackageVersion="$VERSION"
 dotnet pack sdk/dotnet/Kyvo.Client/Kyvo.Client.csproj -c Release -o "$OUT" /p:PackageVersion="$VERSION"
 
 dotnet nuget push "$OUT"/*.nupkg \
@@ -132,13 +130,13 @@ dotnet nuget push "$OUT"/*.nupkg \
   --skip-duplicate
 ```
 
-Empacote **Kyvo.AspNetCore** primeiro; `Kyvo.Client` e `Kyvo.AspNetCore.TenancyKit` dependem dele no NuGet.
+Empacote **Kyvo.AspNetCore** primeiro; `Kyvo.Client` depende dele no NuGet.
 
 ### 3. npm
 
 ```bash
 cd sdk/typescript/@kyvo/client
-npm version 3.0.0 --no-git-tag-version --allow-same-version
+npm version 3.1.0 --no-git-tag-version --allow-same-version
 npm run build
 npm publish --access public
 ```
@@ -158,9 +156,8 @@ npm install @kyvo-client/client@2.0.0
 ### .NET
 
 ```bash
-dotnet add package Kyvo.Client --version 3.0.0
-dotnet add package Kyvo.AspNetCore --version 3.0.0
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 3.0.0
+dotnet add package Kyvo.Client --version 3.1.0
+dotnet add package Kyvo.AspNetCore --version 3.1.0
 ```
 
 ---

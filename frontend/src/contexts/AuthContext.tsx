@@ -45,7 +45,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      isAuthenticated: Boolean(session?.accessToken),
+      isAuthenticated: Boolean(session?.platformAccessToken),
       userId: session?.userId,
       email: session?.email,
       tenantId: session?.tenantId,

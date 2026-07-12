@@ -1,14 +1,18 @@
 import axios from 'axios'
 import { env } from './env'
 import { refreshOidcTokens } from '../services/oidcService'
+import { apiPaths } from '../services/httpPaths'
 import { completeFailedPlatformLoginCleanup, clearClientAuthState } from '../utils/authCleanup'
 import {
+  applyTenantContext,
   getAuthSession,
   isPlatformAdministrator,
+  resolveBearerToken,
   updateSessionFromOidcRefresh,
 } from '../utils/authStorage'
 import { parseApiBody } from '../utils/apiResponse'
-import type { OidcTokenResponse } from '../types/oidc'
+import type { OidcTokenResponse, TenantContextResult } from '../types/oidc'
+
 const baseURL = env.apiBaseUrl
 
 const sharedConfig = {
@@ -26,10 +30,25 @@ export const api = axios.create(sharedConfig)
 
 let refreshPromise: Promise<OidcTokenResponse> | null = null
 
+async function reapplyTenantSwitch(platformAccessToken: string, tenantId: string): Promise<void> {
+  const response = await axios.post<TenantContextResult>(
+    `${baseURL}${apiPaths.auth}/switch-tenant`,
+    { tenantId },
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${platformAccessToken}`,
+      },
+      timeout: env.apiTimeoutMs,
+    },
+  )
+  applyTenantContext(parseApiBody(response.data) as TenantContextResult)
+}
+
 api.interceptors.request.use((config) => {
   const session = getAuthSession()
-  if (session?.accessToken) {
-    config.headers.Authorization = `Bearer ${session.accessToken}`
+  if (session?.platformAccessToken) {
+    config.headers.Authorization = `Bearer ${resolveBearerToken(session, config.url)}`
   }
   return config
 })
@@ -60,7 +79,7 @@ api.interceptors.response.use(
 
     if (statusCode === 403) {
       const session = getAuthSession()
-      if (session?.accessToken && !isPlatformAdministrator(session)) {
+      if (session?.platformAccessToken && !isPlatformAdministrator(session)) {
         completeFailedPlatformLoginCleanup()
         return Promise.reject(error)
       }
@@ -84,12 +103,21 @@ api.interceptors.response.use(
       }
 
       const refreshed = await refreshPromise
-      updateSessionFromOidcRefresh(refreshed)
-      if (!isPlatformAdministrator(getAuthSession())) {
+      const afterRefresh = updateSessionFromOidcRefresh(refreshed)
+      if (!isPlatformAdministrator(afterRefresh)) {
         completeFailedPlatformLoginCleanup()
         return Promise.reject(new Error('Sessão sem permissão de administrador da plataforma.'))
       }
-      originalRequest.headers.Authorization = `Bearer ${refreshed.access_token}`
+
+      if (afterRefresh.tenantId) {
+        await reapplyTenantSwitch(afterRefresh.platformAccessToken, afterRefresh.tenantId)
+      }
+
+      const latest = getAuthSession()
+      if (latest) {
+        originalRequest.headers.Authorization = `Bearer ${resolveBearerToken(latest, originalRequest.url)}`
+      }
+
       return await api.request(originalRequest)
     } catch (refreshError) {
       completeFailedPlatformLoginCleanup()

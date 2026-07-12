@@ -1,7 +1,7 @@
 // Default values mirror samples/pulse-crm/frontend/.env.example so the sample app can run without
 // an .env file in local development. Real deployments must override these via the build environment.
 const ENV_DEFAULTS = {
-  VITE_KYVO_AUTHORITY: 'http://localhost:5000',
+  VITE_KYVO_AUTHORITY: 'https://localhost:5101',
   VITE_KYVO_CLIENT_ID: 'pulse-crm-web',
   VITE_KYVO_REDIRECT_URI: 'http://localhost:5173/auth/callback',
   VITE_KYVO_SCOPES: 'openid profile email offline_access',

@@ -11,7 +11,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists applications with pagination. */
         get: {
             parameters: {
                 query?: {
@@ -19,9 +18,7 @@ export interface paths {
                     PageSize?: number;
                 };
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -92,14 +89,11 @@ export interface paths {
             };
         };
         put?: never;
-        /** Registers a new application (platform administrators only). */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -190,14 +184,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Creates an OAuth/OIDC client for the given application. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     applicationId: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -289,14 +281,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Provisions a tenant linked to an application (platform administrators only). */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     applicationId: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -386,14 +376,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Checks whether an application slug is available. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     slug: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -479,14 +467,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns a single application by identifier. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -572,14 +558,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns login branding settings for an application. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -655,14 +639,12 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Updates login branding (colors and enable flag) for an application. */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -748,14 +730,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Uploads a logo for the application login screen. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -833,14 +813,12 @@ export interface paths {
                 };
             };
         };
-        /** Removes the custom login logo for an application. */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -921,7 +899,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists audit log entries for the current tenant with optional filters. */
         get: {
             parameters: {
                 query?: {
@@ -934,9 +911,7 @@ export interface paths {
                     PageSize?: number;
                 };
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -1021,7 +996,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists distinct filter values for audit log queries. */
         get: {
             parameters: {
                 query: {
@@ -1031,9 +1005,7 @@ export interface paths {
                     PageSize?: number;
                 };
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -1120,17 +1092,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Creates a tenant for the current OAuth application session (SaaS onboarding).
-         * @description Creates a tenant for the current OAuth application session (SaaS onboarding). Callers that need fresh `tid`/`trole` claims afterwards should redeem their existing refresh token against `/connect/token` (same pattern used after `switch-tenant`).
-         */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -1221,14 +1187,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Switches the active tenant for the current user session. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -1317,14 +1280,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists active authentication sessions for the current user. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -1402,51 +1362,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Auth/account": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Deletes the authenticated user's account for the current application tenant context. */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    version: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Auth/sessions/{sessionId}": {
         parameters: {
             query?: never;
@@ -1457,14 +1372,12 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Revokes a single authentication session. */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     sessionId: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -1538,6 +1451,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Auth/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation or malformed request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Missing or invalid authentication. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Resource was not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Business rule conflict. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unexpected server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/IdentityProviders": {
         parameters: {
             query?: never;
@@ -1545,14 +1545,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists all identity providers. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -1623,14 +1620,11 @@ export interface paths {
             };
         };
         put?: never;
-        /** Registers a new identity provider. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -1719,14 +1713,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Checks whether an identity provider alias is available. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     alias: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -1812,14 +1804,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns a single identity provider by identifier. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -1895,14 +1885,12 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Updates display name, capabilities, or encrypted configuration. */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -1988,14 +1976,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Enables an identity provider for login flows. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -2079,14 +2065,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Disables an identity provider. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -2161,18 +2145,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/tenants/{tenantId}/memberships": {
+    "/api/v1/Invites/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Lists memberships for a tenant. */
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation or malformed request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Missing or invalid authentication. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Authenticated but not allowed to perform this action. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Business rule conflict. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unexpected server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v{version}/tenants/{tenantId}/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         get: {
             parameters: {
-                query?: {
+                query: {
                     TenantId?: string;
+                    ActorUserId?: string;
+                    ActorPlatformRoles: string[];
                     Page?: number;
                     PageSize?: number;
                 };
@@ -2251,7 +2325,6 @@ export interface paths {
             };
         };
         put?: never;
-        /** Adds a user to a tenant with the given roles. */
         post: {
             parameters: {
                 query?: never;
@@ -2351,14 +2424,12 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Revokes a membership (soft delete). */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -2429,14 +2500,12 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Updates the roles assigned to a membership. */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -2520,14 +2589,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns whether the platform has been bootstrapped and which OAuth client to use for admin login. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -2605,19 +2671,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/tenants/{tenantId}/roles": {
+    "/v{version}/tenants/{tenantId}/roles": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Lists roles defined for a tenant. */
         get: {
             parameters: {
-                query?: {
-                    TenantId?: string;
-                    IncludeInactive?: boolean;
+                query: {
+                    TenantId: string;
+                    IncludeInactive: boolean;
                     Page?: number;
                     PageSize?: number;
                 };
@@ -2696,7 +2761,6 @@ export interface paths {
             };
         };
         put?: never;
-        /** Creates a custom role for the tenant. */
         post: {
             parameters: {
                 query?: never;
@@ -2796,17 +2860,88 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation or malformed request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Missing or invalid authentication. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Authenticated but not allowed to perform this action. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Business rule conflict. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unexpected server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
-        /** Updates a tenant role's name, description, or active flag. */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -2890,20 +3025,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists tenants the current user belongs to. */
         get: {
             parameters: {
-                query?: {
+                query: {
                     UserId?: string;
                     Search?: string;
-                    ActorPlatformRoles?: string[];
+                    ActorPlatformRoles: string[];
                     Page?: number;
                     PageSize?: number;
                 };
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -2974,14 +3106,11 @@ export interface paths {
             };
         };
         put?: never;
-        /** Creates a new tenant (platform administrators only). */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -3070,17 +3199,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists invites for a tenant. */
         get: {
             parameters: {
-                query?: {
-                    page?: number;
-                    pageSize?: number;
+                query: {
+                    TenantId: string;
+                    ActorUserId: string;
+                    ActorPlatformRoles: string[];
+                    Page?: number;
+                    PageSize?: number;
                 };
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -3095,6 +3225,33 @@ export interface paths {
                         "application/json": components["schemas"]["TenantInviteDtoPagedResult"];
                     };
                 };
+                /** @description Validation or malformed request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Missing or invalid authentication. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Authenticated but not allowed to perform this action. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Not Found */
                 404: {
                     headers: {
@@ -3104,17 +3261,33 @@ export interface paths {
                         "application/json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                /** @description Business rule conflict. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unexpected server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         put?: never;
-        /** Sends an invitation to join the tenant. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -3197,52 +3370,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Invites/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Revokes a pending tenant invite. */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                    version: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/invites/accept": {
         parameters: {
             query?: never;
@@ -3252,14 +3379,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Accepts a tenant invite using the token from the invitation email. */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -3348,14 +3472,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Checks whether a tenant key is available. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     key: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -3441,14 +3563,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns a tenant by identifier when the caller has access. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -3524,14 +3644,12 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Updates tenant metadata (name). */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
                     id: string;
-                    version: string;
                 };
                 cookie?: never;
             };
@@ -3615,7 +3733,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Searches users by email or display name (platform or tenant administrators). */
         get: {
             parameters: {
                 query: {
@@ -3624,9 +3741,7 @@ export interface paths {
                     PageSize?: number;
                 };
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -3711,14 +3826,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns the authenticated user's profile. */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -3793,14 +3905,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Updates the authenticated user's display name and photo URL. */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: {
@@ -3883,7 +3992,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lists tenants and roles for the authenticated user. */
         get: {
             parameters: {
                 query?: {
@@ -3892,9 +4000,7 @@ export interface paths {
                     PageSize?: number;
                 };
                 header?: never;
-                path: {
-                    version: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -4004,7 +4110,19 @@ export interface components {
             brandingHeroSubtitle?: string | null;
         };
         ApplicationBrandingLogoResponse: {
-            brandingLogoUrl?: string | null;
+            brandingLogoUrl: string | null;
+        };
+        ApplicationClientSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            clientId: string | null;
+            clientType: components["schemas"]["ClientType"];
+            redirectUris: string[] | null;
+            postLogoutRedirectUris: string[] | null;
+            allowedScopes: string[] | null;
+            /** Format: int32 */
+            accessTokenTtlSeconds: number;
+            isSystem: boolean;
         };
         ApplicationDto: {
             /** Format: uuid */
@@ -4019,15 +4137,16 @@ export interface components {
             brandingLogoUrl?: string | null;
             brandingHeroTitle?: string | null;
             brandingHeroSubtitle?: string | null;
+            clients: components["schemas"]["ApplicationClientSummaryDto"][] | null;
         };
         ApplicationDtoPagedResult: {
-            items: components["schemas"]["ApplicationDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["ApplicationDto"][] | null;
         };
         /** @enum {string} */
         ApplicationType: "Web" | "Mobile" | "Backend";
@@ -4035,13 +4154,13 @@ export interface components {
             value: string | null;
         };
         AuditLogFilterOptionDtoPagedResult: {
-            items: components["schemas"]["AuditLogFilterOptionDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["AuditLogFilterOptionDto"][] | null;
         };
         AuditLogItemDto: {
             /** Format: uuid */
@@ -4062,13 +4181,13 @@ export interface components {
             createdAt: string;
         };
         AuditLogItemDtoPagedResult: {
-            items: components["schemas"]["AuditLogItemDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["AuditLogItemDto"][] | null;
         };
         AuthSessionDto: {
             /** Format: uuid */
@@ -4099,16 +4218,17 @@ export interface components {
         ClientType: "Public" | "Confidential";
         CreateApplicationClientRequest: {
             /** Format: uuid */
-            applicationId?: string;
+            applicationId: string;
             clientId: string | null;
-            clientSecretHash?: string | null;
+            clientSecret?: string | null;
             clientType: components["schemas"]["ClientType"];
             redirectUris: string | null;
+            postLogoutRedirectUris?: string | null;
             allowedScopes?: string | null;
             allowedScopesList?: string[] | null;
             /** Format: int32 */
             accessTokenTtlSeconds: number;
-            actorPlatformRoles?: string[] | null;
+            actorPlatformRoles: string[] | null;
         };
         CreateApplicationRequest: {
             name: string | null;
@@ -4121,6 +4241,9 @@ export interface components {
             /** Format: uuid */
             tenantId?: string;
             roles: string[] | null;
+            /** Format: uuid */
+            actorUserId?: string;
+            actorPlatformRoles: string[] | null;
         };
         CreateTenantRequest: {
             name: string | null;
@@ -4130,23 +4253,25 @@ export interface components {
             /** Format: uuid */
             initialAdministratorUserId?: string | null;
             initialAdministratorEmail?: string | null;
-            actorPlatformRoles?: string[] | null;
+            actorPlatformRoles: string[] | null;
         };
         CreateTenantRoleRequest: {
             /** Format: uuid */
-            tenantId?: string;
+            tenantId: string;
             key: string | null;
             name: string | null;
             description?: string | null;
+            /** Format: uuid */
+            actorUserId: string;
+            actorPlatformRoles: string[] | null;
         };
-        /** @description Minimal response body when an endpoint creates a resource and returns its identifier. */
         CreatedIdResponse: {
             /** Format: uuid */
-            id?: string;
+            id: string;
         };
         CreatedMembershipIdResponse: {
             /** Format: uuid */
-            membershipId?: string;
+            membershipId: string;
         };
         IdentityProviderDto: {
             /** Format: uuid */
@@ -4161,46 +4286,21 @@ export interface components {
         IdentityProviderType: "Local" | "Google" | "Microsoft" | "GitHub" | "GenericOidc";
         /** @enum {string} */
         IdpCapability: "LocalPassword" | "GoogleSocial" | "MicrosoftSocial" | "AppleSocial" | "GenericOidc";
-        InviteMemberResponse: {
-            /** Format: uuid */
-            id?: string;
-            acceptPath?: string | null;
-        };
-        TenantInviteDto: {
-            /** Format: uuid */
-            id?: string;
-            email?: string | null;
-            roles?: string[] | null;
-            /** Format: date-time */
-            expiresAt?: string;
-            /** Format: date-time */
-            consumedAt?: string | null;
-            /** Format: date-time */
-            revokedAt?: string | null;
-            status?: components["schemas"]["TenantInviteStatus"];
-            acceptPath?: string | null;
-        };
-        TenantInviteDtoPagedResult: {
-            items: components["schemas"]["TenantInviteDto"][] | null;
-            /** Format: int32 */
-            total?: number;
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            pageSize?: number;
-        };
-        /** @enum {string} */
-        TenantInviteStatus: "Pending" | "Accepted" | "Expired" | "Revoked";
         InviteMemberRequest: {
             /** Format: uuid */
-            tenantId?: string;
+            tenantId: string;
             email: string | null;
             roles: string[] | null;
             /** Format: uuid */
             invitedByUserId?: string;
             /** Format: uuid */
             actorUserId?: string;
-            actorPlatformRoles?: string[] | null;
+            actorPlatformRoles: string[] | null;
+        };
+        InviteMemberResponse: {
+            /** Format: uuid */
+            id: string;
+            acceptPath: string | null;
         };
         MembershipDto: {
             /** Format: uuid */
@@ -4215,22 +4315,13 @@ export interface components {
             isActive: boolean;
         };
         MembershipDtoPagedResult: {
-            items: components["schemas"]["MembershipDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
-        };
-        OidcTokenResponse: {
-            access_token: string | null;
-            token_type: string | null;
             /** Format: int32 */
-            expires_in: number;
-            refresh_token?: string | null;
-            id_token?: string | null;
-            scope?: string | null;
+            total?: number;
+            items: components["schemas"]["MembershipDto"][] | null;
         };
         PlatformStatusResult: {
             isConfigured: boolean;
@@ -4249,7 +4340,7 @@ export interface components {
         };
         ProvisionApplicationTenantRequest: {
             /** Format: uuid */
-            applicationId?: string;
+            applicationId: string;
             tenantName: string | null;
             tenantKey: string | null;
             /** Format: uuid */
@@ -4258,8 +4349,8 @@ export interface components {
             externalCustomerId?: string | null;
             planCode?: string | null;
             /** Format: uuid */
-            actorUserId?: string;
-            actorPlatformRoles?: string[] | null;
+            actorUserId: string;
+            actorPlatformRoles: string[] | null;
         };
         ProvisionApplicationTenantResult: {
             /** Format: uuid */
@@ -4270,14 +4361,13 @@ export interface components {
             membershipId: string;
         };
         /** @enum {string} */
-        SessionStatus: "Active" | "Revoked" | "Expired";
+        SessionStatus: "Active" | "Revoked";
         SubscribeTenantRequest: {
             tenantName: string | null;
             tenantKey: string | null;
             planCode?: string | null;
             externalCustomerId?: string | null;
         };
-        /** @description Response for SaaS tenant subscription. Refresh tokens via /connect/token to pick up tid/trole claims. */
         SubscribeTenantResponse: {
             /** Format: uuid */
             userId: string;
@@ -4289,6 +4379,10 @@ export interface components {
             tenantRoles?: string[] | null;
             platformRoles?: string[] | null;
             tenants?: components["schemas"]["AuthTenantSummaryDto"][] | null;
+            accessToken?: string | null;
+            /** Format: int32 */
+            expiresIn?: number | null;
+            tokenType?: string | null;
         };
         SwitchTenantRequest: {
             /** Format: uuid */
@@ -4302,9 +4396,13 @@ export interface components {
             tenantId?: string | null;
             /** Format: uuid */
             membershipId?: string | null;
-            tenantRoles?: string[] | null;
-            platformRoles?: string[] | null;
-            tenants?: components["schemas"]["AuthTenantSummaryDto"][] | null;
+            tenantRoles: string[] | null;
+            platformRoles: string[] | null;
+            tenants: components["schemas"]["AuthTenantSummaryDto"][] | null;
+            accessToken?: string | null;
+            /** Format: int32 */
+            expiresIn?: number | null;
+            tokenType?: string | null;
         };
         TenantDto: {
             /** Format: uuid */
@@ -4313,14 +4411,39 @@ export interface components {
             key: string | null;
         };
         TenantDtoPagedResult: {
-            items: components["schemas"]["TenantDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["TenantDto"][] | null;
         };
+        TenantInviteDto: {
+            /** Format: uuid */
+            id: string;
+            email: string | null;
+            roles: string[] | null;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            consumedAt?: string | null;
+            /** Format: date-time */
+            revokedAt?: string | null;
+            status: components["schemas"]["TenantInviteStatus"];
+            acceptPath?: string | null;
+        };
+        TenantInviteDtoPagedResult: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["TenantInviteDto"][] | null;
+        };
+        /** @enum {string} */
+        TenantInviteStatus: "Pending" | "Accepted" | "Expired" | "Revoked";
         TenantRoleDto: {
             /** Format: uuid */
             id: string;
@@ -4333,13 +4456,13 @@ export interface components {
             isActive: boolean;
         };
         TenantRoleDtoPagedResult: {
-            items: components["schemas"]["TenantRoleDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["TenantRoleDto"][] | null;
         };
         UpdateApplicationBrandingBody: {
             brandingEnabled: boolean;
@@ -4359,25 +4482,31 @@ export interface components {
             /** Format: uuid */
             membershipId?: string;
             roles: string[] | null;
+            /** Format: uuid */
+            actorUserId?: string;
+            actorPlatformRoles: string[] | null;
         };
         UpdateTenantRequest: {
             /** Format: uuid */
-            tenantId?: string;
+            tenantId: string;
             name: string | null;
             /** Format: uuid */
-            actorUserId?: string;
-            actorPlatformRoles?: string[] | null;
+            actorUserId: string;
+            actorPlatformRoles: string[] | null;
         };
         UpdateTenantRoleRequest: {
             /** Format: uuid */
-            roleId?: string;
+            roleId: string;
             name: string | null;
             description?: string | null;
             isActive: boolean;
+            /** Format: uuid */
+            actorUserId: string;
+            actorPlatformRoles: string[] | null;
         };
         UpdateUserProfileRequest: {
             /** Format: uuid */
-            userId?: string;
+            userId: string;
             displayName: string | null;
             photoUrl?: string | null;
         };
@@ -4399,13 +4528,13 @@ export interface components {
             roles: string[] | null;
         };
         UserMembershipDtoPagedResult: {
-            items: components["schemas"]["UserMembershipDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["UserMembershipDto"][] | null;
         };
         UserPickerDto: {
             /** Format: uuid */
@@ -4415,13 +4544,13 @@ export interface components {
             photoUrl?: string | null;
         };
         UserPickerDtoPagedResult: {
-            items: components["schemas"]["UserPickerDto"][] | null;
-            /** Format: int32 */
-            total?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            total?: number;
+            items: components["schemas"]["UserPickerDto"][] | null;
         };
     };
     responses: never;

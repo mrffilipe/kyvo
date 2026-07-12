@@ -4,6 +4,17 @@ All SDK packages follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-07-12
+
+### Removed
+
+- **Breaking:** `Kyvo.AspNetCore.TenancyKit` package and docs. Product APIs must apply EF tenant filters locally using `IKyvoUserContext.TenantId` (see Pulse CRM sample).
+
+### Changed
+
+- Refresh OpenAPI snapshots (`swagger-v1.json`, `swagger-oidc.json`) and regenerate TypeScript `generated/schema.ts` from the unified backend.
+- Document dual-token authority defaults (`https://localhost:5101` for local HTTPS profile).
+
 ## [3.0.0] - 2026-07-07
 
 ### Changed

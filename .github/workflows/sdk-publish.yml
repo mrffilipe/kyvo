@@ -2,7 +2,7 @@
 #
 # Packages:
 #   npm  — @kyvo-client/client
-#   NuGet — Kyvo.AspNetCore, Kyvo.AspNetCore.TenancyKit, Kyvo.Client
+#   NuGet — Kyvo.AspNetCore, Kyvo.Client
 #
 # Triggers:
 #   - Push of a version tag matching v* (e.g. v1.0.0)
@@ -79,8 +79,6 @@ jobs:
           OUT="${{ runner.temp }}/nupkgs"
           mkdir -p "$OUT"
           dotnet pack sdk/dotnet/Kyvo.AspNetCore/Kyvo.AspNetCore.csproj \
-            -c Release -o "$OUT" /p:PackageVersion="$VERSION" --no-restore
-          dotnet pack sdk/dotnet/Kyvo.AspNetCore.TenancyKit/Kyvo.AspNetCore.TenancyKit.csproj \
             -c Release -o "$OUT" /p:PackageVersion="$VERSION" --no-restore
           dotnet pack sdk/dotnet/Kyvo.Client/Kyvo.Client.csproj \
             -c Release -o "$OUT" /p:PackageVersion="$VERSION" --no-restore

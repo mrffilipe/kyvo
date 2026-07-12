@@ -1,4 +1,4 @@
-﻿# Kyvo — Frontend
+# Kyvo — Frontend
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -40,12 +40,12 @@ cp .env.example .env
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `FRONTEND_PORT` | `3000` | Host port mapped to the Vite dev server in the container |
-| `VITE_API_BASE_URL` | `http://localhost:5000` | Backend API base URL |
+| `VITE_API_BASE_URL` | `https://localhost:5101` | Backend API base URL |
 | `VITE_API_TIMEOUT_MS` | `30000` | Axios request timeout (ms) |
 | `VITE_OAUTH_CLIENT_ID` | `platform-admin-web` | OAuth client registered in Kyvo |
 | `VITE_OAUTH_REDIRECT_URI` | `http://localhost:3000/auth/callback` | OIDC callback URI |
 
-Defaults match the API on port `5000` and the SPA on port `3000`. Change them only if you use different ports.
+Defaults match the API on HTTPS port `5101` (`dotnet run --launch-profile https`; Docker Compose may still use `5000`) and the SPA on port `3000`. Change them only if you use different ports.
 
 Built-in defaults also exist in `src/config/env.ts` when running Vite on the host without Docker (see **Run** below).
 
@@ -115,11 +115,16 @@ The refresh token is rotated automatically via an Axios interceptor when a reque
 
 Logout clears `localStorage` and redirects to `GET /connect/logout`.
 
-### Dual-token (3.0)
+### Dual-token (3.1)
 
-The admin SPA stores a **platform OIDC access token** after login. Most screens call Kyvo with that token.
+The admin SPA stores **both** tokens in `kyvo.auth.session`:
 
-Tenant-scoped APIs (audit logs, tenant invites, membership management under a tenant context, etc.) require a **tenant JWT** (`token_use=tenant`). Call `switchTenant(tenantId)` from [`authService.ts`](src/services/authService.ts) before those requests — [`TenantsPage.tsx`](src/pages/TenantsPage.tsx) already does this when you pick a tenant.
+| Field | Source | Use |
+|-------|--------|-----|
+| `platformAccessToken` | OIDC `/connect/token` | Applications, IdPs, `switch-tenant`, platform admin APIs |
+| `tenantAccessToken` | `POST /api/v1/auth/switch-tenant` (`accessToken`) | Memberships, Roles, Audit, invites, other `RequireTenantToken` routes |
+
+[`TenantsPage.tsx`](src/pages/TenantsPage.tsx) persists the returned tenant JWT (no OIDC refresh after select). Axios attaches the tenant JWT when present, except for platform-only paths. On 401, OIDC refresh renews the platform token and **re-applies** `switch-tenant` if a tenant remains selected.
 
 Do not expect `tid` on the OIDC access token; obtain tenant context via switch-tenant (or subscribe on the BFF in product apps).
 
@@ -236,5 +241,5 @@ TypeScript types mirror the schemas in `src/types/identityProviders.ts` (`Federa
 The `swagger.json` file at the project root (gitignored) is a local OpenAPI snapshot for TypeScript types under `src/types/`. Regenerate when the API changes:
 
 ```bash
-curl http://localhost:5000/swagger/v1/swagger.json -o swagger.json
+curl https://localhost:5101/swagger/v1/swagger.json -o swagger.json
 ```

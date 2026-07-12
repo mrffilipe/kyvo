@@ -16,7 +16,7 @@ Consumer SPA for the Pulse CRM sample. It drives the standard OIDC **authorizati
 | React | 19 | UI |
 | React Router | 7 | Routing (loaders + `RequireAuth`) |
 | Material UI | 9 | Design system |
-| `@kyvo-client/client` | npm `^3.0.0` | OIDC (PKCE), session, JWT claims, `users.getMe()`, token refresh |
+| `@kyvo-client/client` | npm `^3.1.0` | OIDC (PKCE), dual-token session, JWT claims, `users.getMe()` |
 | Axios | 1.x | Pulse CRM API only (not Kyvo REST) |
 | TypeScript | 6 | Static typing |
 | Vite | 8 | Dev server and build |
@@ -25,7 +25,7 @@ Consumer SPA for the Pulse CRM sample. It drives the standard OIDC **authorizati
 
 ## Prerequisites
 
-- Kyvo running at `http://localhost:5000` (bootstrap completed)
+- Kyvo running at `https://localhost:5101` (bootstrap completed)
 - Pulse CRM API running at `http://localhost:5100`
 - OAuth client `pulse-crm-web` registered in the admin console (see [../../README.md](../../README.md))
 
@@ -41,7 +41,7 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_KYVO_AUTHORITY` | `http://localhost:5000` | Kyvo issuer / authority |
+| `VITE_KYVO_AUTHORITY` | `https://localhost:5101` | Kyvo issuer / authority |
 | `VITE_KYVO_CLIENT_ID` | `pulse-crm-web` | OAuth public client |
 | `VITE_KYVO_REDIRECT_URI` | `http://localhost:5173/auth/callback` | OIDC callback |
 | `VITE_KYVO_SCOPES` | `openid profile email offline_access` | Requested scopes |
@@ -59,7 +59,7 @@ npm run lint
 npm run preview
 ```
 
-The app consumes `@kyvo-client/client` from npm (`npm install` resolves `^3.0.0`).
+The app consumes `@kyvo-client/client` from npm (`npm install` resolves `^3.1.0`).
 
 ---
 

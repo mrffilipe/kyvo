@@ -1,24 +1,19 @@
+using Kyvo.AspNetCore;
 using Microsoft.EntityFrameworkCore;
-using TenancyKit.Abstractions;
-using TenancyKit.Core;
-using TenancyKit.EntityFrameworkCore;
-using Kyvo.AspNetCore.TenancyKit;
 
 namespace PulseCrm.Api.Data;
 
+/// <summary>
+/// Product DbContext with native EF tenant filters from the Kyvo tenant JWT (<c>tid</c> via <see cref="IKyvoUserContext"/>).
+/// </summary>
 public sealed class PulseCrmDbContext : DbContext
 {
-    private readonly TenancyKitOptions<ProductTenantInfo> _tenancyOptions;
-    private readonly ITenantContextAccessor<ProductTenantInfo> _tenantContextAccessor;
+    private readonly IKyvoUserContext _userContext;
 
-    public PulseCrmDbContext(
-        DbContextOptions<PulseCrmDbContext> options,
-        TenancyKitOptions<ProductTenantInfo> tenancyOptions,
-        ITenantContextAccessor<ProductTenantInfo> tenantContextAccessor)
+    public PulseCrmDbContext(DbContextOptions<PulseCrmDbContext> options, IKyvoUserContext userContext)
         : base(options)
     {
-        _tenancyOptions = tenancyOptions;
-        _tenantContextAccessor = tenantContextAccessor;
+        _userContext = userContext;
     }
 
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -45,8 +40,36 @@ public sealed class PulseCrmDbContext : DbContext
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.Email).HasMaxLength(320);
             entity.Property(x => x.Phone).HasMaxLength(40);
+            entity.HasQueryFilter(c =>
+                _userContext.TenantId == null || c.TenantId == _userContext.TenantId);
         });
+    }
 
-        modelBuilder.ApplyMultiTenancy(_tenancyOptions, _tenantContextAccessor);
+    public override int SaveChanges()
+    {
+        StampTenantIds();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        StampTenantIds();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void StampTenantIds()
+    {
+        if (!_userContext.TenantId.HasValue)
+        {
+            return;
+        }
+
+        foreach (var entry in ChangeTracker.Entries<ITenantOwned>())
+        {
+            if (entry.State == EntityState.Added && entry.Entity.TenantId == Guid.Empty)
+            {
+                entry.Entity.TenantId = _userContext.TenantId.Value;
+            }
+        }
     }
 }

@@ -35,7 +35,7 @@ npm install @kyvo-client/client
 import { createKyvoClient, hasTenant } from '@kyvo-client/client'
 
 const kyvo = createKyvoClient({
-  authority: 'http://localhost:5000',
+  authority: 'https://localhost:5101',
   oidc: {
     clientId: 'pulse-crm-web',
     redirectUri: 'http://localhost:5173/auth/callback',

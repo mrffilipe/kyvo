@@ -22,14 +22,14 @@ function redirectToLoginWithAccessDenied(): never {
 export async function requireAuthLoader({ request }: LoaderFunctionArgs): Promise<null> {
   const status = await getPlatformStatus()
   if (status.requiresBootstrap) {
-    if (getAuthSession()?.accessToken) {
+    if (getAuthSession()?.platformAccessToken) {
       clearClientAuthState()
     }
     throw redirect('/login')
   }
 
   const session = getAuthSession()
-  if (!session?.accessToken) {
+  if (!session?.platformAccessToken) {
     const url = new URL(request.url)
     const returnUrl = encodeURIComponent(url.pathname + url.search)
     throw redirect(`/login?returnUrl=${returnUrl}`)
@@ -46,14 +46,14 @@ export async function loginLoader({ request }: LoaderFunctionArgs): Promise<Logi
   const status = await getPlatformStatus()
 
   if (status.requiresBootstrap) {
-    if (getAuthSession()?.accessToken) {
+    if (getAuthSession()?.platformAccessToken) {
       clearClientAuthState()
     }
     return { requiresBootstrap: true }
   }
 
   const session = getAuthSession()
-  if (session?.accessToken) {
+  if (session?.platformAccessToken) {
     if (!isPlatformAdministrator(session)) {
       clearClientAuthState()
       return { requiresBootstrap: false }

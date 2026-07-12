@@ -1,4 +1,4 @@
-﻿# PulseCRM — sample consumidor Kyvo
+# PulseCRM — sample consumidor Kyvo
 
 [English](./README.md) | [Português](./README.pt-BR.md)
 
@@ -6,7 +6,7 @@ SPA + API que simulam um CRM SaaS integrado à plataforma: login OIDC, escolha d
 
 ## Pré-requisitos
 
-- Kyvo com bootstrap concluído (`http://localhost:5000` no código-fonte ou **`https://localhost:8443`** no Docker)
+- Kyvo com bootstrap concluído (`https://localhost:5101` no código-fonte ou **`https://localhost:8443`** no Docker)
 - Application + OAuth client criados no painel (ver [../README.md](../README.md))
 - Conta de usuário na Kyvo — admin do bootstrap, convite aceito, OU nova conta criada pela página central **/account/register** da Kyvo (o sample não tem tela própria de cadastro).
 - .NET 8 SDK e Node.js LTS
@@ -15,7 +15,7 @@ SPA + API que simulam um CRM SaaS integrado à plataforma: login OIDC, escolha d
 
 | Serviço | URL |
 |---------|-----|
-| Kyvo | http://localhost:5000 |
+| Kyvo | https://localhost:5101 |
 | PulseCRM API | http://localhost:5100 |
 | PulseCRM SPA | http://localhost:5173 |
 
@@ -60,18 +60,18 @@ Abra http://localhost:5173
 ## Fluxo de teste
 
 1. **Login / Criar conta** — a SPA redireciona para `/connect/authorize`. A tela de login da Kyvo permite entrar OU seguir o link para criar conta (`/account/register`). Novos usuários ficam autenticados imediatamente após o cadastro.
-2. **Onboarding** — de volta no SPA, a ausência de `tid` direciona o usuário para escolher plano (`starter`, `professional`, `enterprise`) e nome da empresa.
+2. **Onboarding** — de volta no SPA, a ausência de tenant JWT direciona o usuário para escolher plano (`starter`, `professional`, `enterprise`) e nome da empresa.
 3. **Pagamento** — mock aprovado → a API do CRM chama `auth/subscribe` na plataforma para criar Tenant + Membership + ApplicationTenant.
-4. **Refresh do token** — o SPA renova o token para obter claims `tid` / `mid`.
+4. **Sessão** — o SPA persiste o tenant JWT via `session.saveTenantToken` (OIDC não inclui `tid`).
 5. **Dashboard** — plano contratado + claims do JWT decodificado.
-6. **Contatos** — CRUD local isolado por tenant (`tid` no token).
+6. **Contatos** — CRUD local isolado por tenant (`IKyvoUserContext.TenantId` + filtro EF).
 
 ## SDKs (pacotes publicados)
 
 | App | Pacotes | Instalação |
 |-----|---------|------------|
-| SPA | `@kyvo-client/client@^3.0.0` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
-| API | `Kyvo.Client`, `Kyvo.AspNetCore`, `Kyvo.AspNetCore.TenancyKit` `3.0.0` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
+| SPA | `@kyvo-client/client@^3.1.0` | `npm install` em `frontend/` ([npm](https://www.npmjs.com/package/@kyvo-client/client)) |
+| API | `Kyvo.Client`, `Kyvo.AspNetCore` `3.1.0` | `dotnet restore` em `backend/PulseCrm.Api` ([NuGet](https://www.nuget.org/packages?q=Kyvo)) |
 
 Para desenvolver contra os fontes do SDK no monorepo, volte a `file:` / `ProjectReference` — ver [sdk/README.md](../../sdk/README.md).
 

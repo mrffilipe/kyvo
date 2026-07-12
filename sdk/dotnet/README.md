@@ -6,32 +6,28 @@ Cross-language overview and endpoint matrix: [../README.md](../README.md).
 
 ## Architecture
 
-The solution is split into small packages so consumers can reference only the pieces they need:
-
 | Package | Responsibility |
 | --- | --- |
 | `Kyvo.AspNetCore` | JWT validation, `IKyvoUserContext`, and authorization policies for incoming requests. |
 | `Kyvo.Client` | Typed HTTP client for Kyvo REST v1 — `SubscribeAsync`, users, tenants, memberships, roles, audit logs. |
-| `Kyvo.AspNetCore.TenancyKit` | Optional bridge to [TenancyKit](https://www.nuget.org/packages/TenancyKit) for EF Core multi-tenancy using the `tid` JWT claim. |
 | `Kyvo.Client.Tests` | Contract tests against the OpenAPI snapshot (not published). |
 
 Runtime flow:
 
 ```text
 Browser SPA (OIDC PKCE)
-  -> access token on BFF requests
-  -> Kyvo.AspNetCore validates JWT
-  -> optional Kyvo.AspNetCore.TenancyKit resolves tenant from tid claim
-  -> Kyvo.Client calls Kyvo REST API with the user's token
+  -> platform JWT on switch-tenant / subscribe
+  -> tenant JWT (token_use=tenant) on BFF / tenant APIs
+  -> Kyvo.AspNetCore validates JWT → IKyvoUserContext
+  -> product DbContext applies EF filters with IKyvoUserContext.TenantId
+  -> Kyvo.Client calls Kyvo REST with the appropriate token
 ```
 
 ## Install
 
 ```bash
-dotnet add package Kyvo.AspNetCore --version 3.0.0
-dotnet add package Kyvo.Client --version 3.0.0
-# optional EF multi-tenant:
-dotnet add package Kyvo.AspNetCore.TenancyKit --version 3.0.0
+dotnet add package Kyvo.AspNetCore --version 3.1.0
+dotnet add package Kyvo.Client --version 3.1.0
 ```
 
 ## Kyvo.AspNetCore
@@ -58,14 +54,23 @@ app.UseAuthorization();
 
 `IKyvoUserContext` exposes the authenticated user id, tenant id (`tid`), membership id (`mid`), tenant roles (`trole`), and platform roles (`prole`) from the access token.
 
-Use `[Authorize(Policy = KyvoAuthorizationPolicies.RequireTenantToken)]` on endpoints that require a tenant JWT (`token_use=tenant`). Platform OIDC tokens are valid for user profile and tenant listing; tenant-scoped APIs (audit logs, invites, memberships) need a tenant token from switch-tenant or subscribe.
+Use `[Authorize(Policy = KyvoAuthorizationPolicies.RequireTenantToken)]` on endpoints that require a tenant JWT (`token_use=tenant`). Platform OIDC tokens are valid for user profile and tenant listing; tenant-scoped APIs need a tenant token from switch-tenant or subscribe.
+
+### Product EF filtering (no TenancyKit)
+
+Apply a query filter in your own `DbContext` using `IKyvoUserContext.TenantId` (see [Pulse CRM](../../samples/pulse-crm/backend/)):
+
+```csharp
+modelBuilder.Entity<Contact>().HasQueryFilter(c =>
+    _userContext.TenantId == null || c.TenantId == _userContext.TenantId);
+```
 
 Configuration (`appsettings.json`):
 
 ```json
 {
   "Kyvo": {
-    "Authority": "https://idp.example.com"
+    "Authority": "https://localhost:5101"
   }
 }
 ```
@@ -78,7 +83,6 @@ Register the typed client and call Kyvo from your BFF with the user's access tok
 builder.Services.AddKyvoClient(builder.Configuration);
 // Kyvo:Authority — REST paths use /api/v1
 
-// In a controller or minimal API handler:
 var platformToken = httpContextAccessor.GetPlatformAccessToken();
 var result = await kyvo.Auth.SubscribeAsync(
     platformToken!,
@@ -91,44 +95,7 @@ var logs = await kyvo.AuditLogs.ListAsync(tenantToken!, cancellationToken);
 
 `POST /auth/subscribe` is intentionally **server-only** — browsers should not call it directly. Use `Kyvo.Client` from your BFF.
 
-Models live in `Kyvo.Client.Models` and match the Kyvo OpenAPI contract (e.g. `PagedResult.Total`, invite bodies use `roles`).
-
-## Kyvo.AspNetCore.TenancyKit
-
-For product APIs with Entity Framework Core, prefer `Kyvo.AspNetCore.TenancyKit` over manual `tid` filtering.
-
-Pipeline order:
-
-```text
-UseAuthentication -> UseMultiTenancy -> UseAuthorization
-```
-
-| Claim | Use |
-| --- | --- |
-| `tid` | Tenant id (Guid) — TenancyKit resolver default |
-| `mid` | Membership id — `IKyvoUserContext` only |
-| `trole` | Tenant roles |
-| `prole` | Platform roles |
-
-Example:
-
-```csharp
-builder.Services
-    .AddKyvoAuthentication(o => { o.Authority = "https://idp.example"; o.Audience = "kyvo-api"; })
-    .AddKyvoTenancyKit<PulseTenantInfo>(options =>
-    {
-        options.UseMissingTenantBehavior(MissingTenantBehavior.Throw);
-        options.UseClaimsTenantResolver("tid");
-        options.UseClaimPassthroughTenantStore();
-        options.ConfigureEntity<ITenantOwned, Guid>(e => e.TenantId);
-    });
-
-app.UseAuthentication();
-app.UseMultiTenancy<PulseTenantInfo>();
-app.UseAuthorization();
-```
-
-Full integration guide: [TENANCYKIT.md](TENANCYKIT.md).
+Models live in `Kyvo.Client.Models` and match the Kyvo OpenAPI contract.
 
 ## Verification
 
