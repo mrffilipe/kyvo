@@ -1,0 +1,77 @@
+@page "/account/login"
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<HeadContent>
+    <title>Entrar - Kyvo IDP</title>
+</HeadContent>
+
+<div class="account-page">
+    <header class="account-header">
+        <p class="account-brand">Kyvo</p>
+        <h1>Bem-vindo de volta</h1>
+        <p class="account-subtitle">Entre para continuar nas suas aplicações.</p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <div class="account-alert" role="alert">@ResolveError(Error)</div>
+    }
+
+    <form method="post" action="/account/signin" class="account-form" novalidate>
+        <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+        <div class="account-field">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" name="email" autocomplete="username" required placeholder="voce@empresa.com" />
+        </div>
+
+        <div class="account-field">
+            <label for="password">Senha</label>
+            <input id="password" type="password" name="password" autocomplete="current-password" required placeholder="••••••••" />
+        </div>
+
+        <button type="submit" class="account-btn account-btn-primary">Entrar</button>
+    </form>
+
+    <div class="account-divider"><span>ou</span></div>
+
+    <a class="account-btn account-btn-google"
+       href="@($"/login/federated/google?returnUrl={Uri.EscapeDataString(ReturnUrl ?? "/")}")">
+        Continuar com Google
+    </a>
+
+    <footer class="account-footer">
+        <span>Não tem uma conta?</span>
+        <a href="@($"/account/register?returnUrl={Uri.EscapeDataString(ReturnUrl ?? string.Empty)}")">Cadastre-se</a>
+    </footer>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Error { get; set; }
+
+    private string _antiforgeryToken = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        var httpContext = HttpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available.");
+        _antiforgeryToken = Antiforgery.GetAndStoreTokens(httpContext).RequestToken ?? string.Empty;
+    }
+
+    private static string ResolveError(string code) => code switch
+    {
+        "invalid_credentials" => "E-mail ou senha inválidos.",
+        "missing_fields" => "Preencha e-mail e senha.",
+        "locked_out" => "Conta temporariamente bloqueada. Tente novamente mais tarde.",
+        "session_expired" => "Sessão expirada. Tente novamente.",
+        "invalid_provider" => "Não foi possível entrar com o provedor externo.",
+        _ => "Não foi possível entrar."
+    };
+}
